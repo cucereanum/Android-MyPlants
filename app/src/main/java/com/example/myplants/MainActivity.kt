@@ -31,15 +31,15 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 Scaffold(modifier = Modifier.fillMaxSize()) {
 
-                    NavHost(navController =navController, startDestination = Route.PLANT_LIST) {
+                    NavHost(navController = navController, startDestination = Route.PLANT_LIST) {
                         composable(Route.PLANT_LIST) {
-                            PlantListScreen()
+                            PlantListScreen(navController)
                         }
                         composable(Route.ADD_EDIT_PLANT) {
-                            AddEditPlantScreen()
+                            AddEditPlantScreen(navController)
                         }
                         composable(Route.PLANT_DETAILS) {
-                           PlantDetailsScreen()
+                            PlantDetailsScreen(navController)
                         }
                     }
                 }

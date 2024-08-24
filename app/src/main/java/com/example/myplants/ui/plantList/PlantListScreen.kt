@@ -40,10 +40,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.myplants.R
+import com.example.myplants.navigation.Route
 
 @Composable
-fun PlantListScreen() {
+fun PlantListScreen(
+    navController: NavController
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -140,7 +144,9 @@ fun PlantListScreen() {
                     .width(320.dp)
                     .height(54.dp),
                 shape = RoundedCornerShape(12.dp),
-                onClick = { /*TODO*/ }) {
+                onClick = {
+                    navController.navigate(Route.ADD_EDIT_PLANT)
+                }) {
                 Text(
                     text = "Add Your First Plant",
                     color = Color.White,
