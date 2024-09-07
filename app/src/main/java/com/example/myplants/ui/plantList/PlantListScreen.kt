@@ -1,7 +1,9 @@
 package com.example.myplants.ui.plantList
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,10 +20,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -31,9 +35,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -43,72 +51,84 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myplants.R
 import com.example.myplants.navigation.Route
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun PlantListScreen(
-    navController: NavController
+    navController: NavController,
+    viewModel: PlantListViewModel = viewModel()
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
 
     ) {
-        Box {
+        Box(
+
+        ) {
             Image(
                 modifier = Modifier.fillMaxWidth(),
                 painter = painterResource(id = R.drawable.bg_plants),
                 contentScale = ContentScale.FillWidth,
                 contentDescription = "Background plants"
             )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = 90.dp,
-                    )
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-
+            Column(
+                modifier = Modifier.padding(top = 90.dp)
             ) {
-                Text(
-                    text = "Let's Care \nMy Plants!",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 26.sp,
-                    lineHeight = 32.sp
-                )
-                Box(
-                    contentAlignment = Alignment.Center,
+                Row(
                     modifier = Modifier
-                        .size(40.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+
                 ) {
+                    Text(
+                        text = "Let's Care \nMy Plants!",
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 26.sp,
+                        lineHeight = 32.sp
+                    )
                     Box(
+                        contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(60.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.background)
-                            .clickable { /* Handle button click */ }
+                            .size(40.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Notifications,
-                            contentDescription = "Notifications",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.align(Alignment.Center)
+                        Box(
+                            modifier = Modifier
+                                .size(60.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.background)
+                                .clickable { /* Handle button click */ }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Notifications,
+                                contentDescription = "Notifications",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .offset(x = -2.dp, y = 2.dp)
+                                .align(Alignment.TopEnd)
+                                .background(Color.Red, CircleShape)
                         )
                     }
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .offset(x = -2.dp, y = 2.dp)
-                            .align(Alignment.TopEnd)
-                            .background(Color.Red, CircleShape)
-                    )
+
                 }
+
+                FilterRow(
+                    filterList = viewModel.filterList,
+                    selectFilter = viewModel::selectFilter,
+                    selectedFilterType = viewModel.selectedFilterType
+                )
             }
 
         }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
