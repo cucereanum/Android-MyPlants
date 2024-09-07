@@ -1,5 +1,8 @@
 package com.example.myplants.ui.addEditPlant
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,15 +26,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.rounded.ThumbUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,11 +45,52 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myplants.R
-import com.example.myplants.navigation.Route
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 
 
 @Composable
-fun AddEditPlantScreen(navController: NavController) {
+fun AddEditPlantScreen(
+    navController: NavController,
+    viewModel: AddEditPlantViewModel = viewModel()
+) {
+
+    val photoPickerLauncher =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia(),
+            onResult = { uri ->
+                viewModel.updateImageUri(uri)
+            }
+        )
+
+    if (viewModel.showDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.updateShowDialog(false) },
+            title = { Text("Choose Image Source") },
+            text = {
+                Column {
+                    TextButton(onClick = {
+                        viewModel.updateShowDialog(false)
+                    }) {
+                        Text("Take Photo")
+                    }
+                    TextButton(onClick = {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                        viewModel.updateShowDialog(false)
+                    }) {
+                        Text("Choose from Gallery")
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { viewModel.updateShowDialog(false) }) {
+                    Text("Cancel", color = Color.White)
+                }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -54,13 +101,20 @@ fun AddEditPlantScreen(navController: NavController) {
                 .background(MaterialTheme.colorScheme.onBackground)
         ) {
             Box {
-
-                Image(
-                    modifier = Modifier.fillMaxWidth(),
-                    painter = painterResource(id = R.drawable.bg_plants),
-                    contentScale = ContentScale.FillWidth,
-                    contentDescription = "Background plants"
-                )
+                if (viewModel.imageUri != null) {
+                    AsyncImage(
+                        model = viewModel.imageUri,
+                        contentScale = ContentScale.FillWidth,
+                        contentDescription = "Background plants"
+                    )
+                } else {
+                    Image(
+                        modifier = Modifier.fillMaxWidth(),
+                        painter = painterResource(id = R.drawable.bg_plants),
+                        contentScale = ContentScale.FillWidth,
+                        contentDescription = "Background plants"
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -73,7 +127,7 @@ fun AddEditPlantScreen(navController: NavController) {
                 ) {
                     Icon(
                         imageVector = Icons.Default.ChevronLeft,
-                        contentDescription = "Cloud Upload",
+                        contentDescription = "Go Back",
                         modifier = Modifier
                             .size(30.dp)
                             .align(Alignment.Center),
@@ -88,19 +142,24 @@ fun AddEditPlantScreen(navController: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(90.dp))
+
                     Image(
                         modifier = Modifier
                             .width(100.dp)
-                            .height(180.dp),
+                            .height(180.dp)
+                            .graphicsLayer(if (viewModel.imageUri == null) 1.0f else 0.0f),
                         painter = painterResource(id = R.drawable.plant),
                         contentScale = ContentScale.Fit,
                         contentDescription = "Single plant"
+
                     )
+
+
                     Spacer(modifier = Modifier.height(30.dp))
                     Button(
                         shape = RoundedCornerShape(12.dp),
                         onClick = {
-                            navController.navigate(Route.ADD_EDIT_PLANT)
+                            viewModel.updateShowDialog(true)
                         }) {
                         Row(
                             horizontalArrangement = Arrangement.Center,
@@ -108,7 +167,7 @@ fun AddEditPlantScreen(navController: NavController) {
                         ) {
                             Icon(
                                 imageVector = Icons.Default.CloudUpload,
-                                contentDescription = "Cloud Upload",
+                                contentDescription = "Upload Image",
                                 modifier = Modifier.size(20.dp),
                                 tint = Color.White
                             )
