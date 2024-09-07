@@ -23,6 +23,13 @@ class AddEditPlantViewModel : ViewModel() {
     var showDialog by mutableStateOf<Boolean>(false)
         private set
 
+    var showCameraView by mutableStateOf<Boolean>(false)
+        private set
+
+    fun updateCameraView(value: Boolean) {
+        showCameraView = value
+    }
+
     fun updateImageUri(uri: Uri?) {
         imageUri = uri;
     }
