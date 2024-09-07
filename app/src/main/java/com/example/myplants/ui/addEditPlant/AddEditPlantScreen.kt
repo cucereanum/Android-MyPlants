@@ -25,18 +25,24 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.rounded.ThumbUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -60,6 +66,7 @@ import java.io.File
 import java.util.concurrent.ExecutorService
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditPlantScreen(
     navController: NavController,
@@ -258,8 +265,51 @@ fun AddEditPlantScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(0.6f)
+                    .verticalScroll(rememberScrollState())
                     .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
             ) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                ) {
+                    CustomTextField(
+                        value = viewModel.plantName,
+                        onValueChange = {
+                            viewModel.updatePlantName(it)
+                        },
+                        label = "Plant name*"
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        CustomTextField(
+                            modifier = Modifier
+                                .weight(0.45f)
+                                .padding(end = 10.dp),
+                            value = viewModel.waterAmount, onValueChange = {
+                                viewModel.updateWaterAmount(it)
+                            }, label = "The amount of water*"
+                        )
+                        CustomTextField(
+                            modifier = Modifier
+                                .weight(0.45f)
+                                .padding(end = 10.dp),
+                            value = viewModel.plantSize, onValueChange = {
+                                viewModel.updatePlantSize(it)
+                            }, label = "Plant size*"
+                        )
+                    }
+                    CustomTextField(
+                        value = viewModel.description,
+                        onValueChange = {
+                            viewModel.updateDescription(it)
+                        },
+                        label = "Description",
+                        multiline = true
+                    )
+                }
 
             }
         }

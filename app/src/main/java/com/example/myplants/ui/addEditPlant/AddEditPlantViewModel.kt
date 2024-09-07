@@ -26,6 +26,25 @@ class AddEditPlantViewModel : ViewModel() {
     var showCameraView by mutableStateOf<Boolean>(false)
         private set
 
+    var plantName by mutableStateOf<String>("")
+        private set
+
+    var dates by mutableStateOf<List<String>>(listOf(""))
+        private set
+
+    var time by mutableStateOf<Date>(Date())
+        private set
+
+    var waterAmount by mutableStateOf<String>("")
+        private set
+
+    var plantSize by mutableStateOf<String>("")
+        private set
+
+    var description by mutableStateOf<String>("")
+        private set
+
+
     fun updateCameraView(value: Boolean) {
         showCameraView = value
     }
@@ -36,6 +55,30 @@ class AddEditPlantViewModel : ViewModel() {
 
     fun updateShowDialog(value: Boolean) {
         showDialog = value
+    }
+
+    fun updatePlantName(value: String) {
+        plantName = value
+    }
+
+    fun updateDates(value: List<String>) {
+        dates = value
+    }
+
+    fun updateTime(value: Date) {
+        time = value
+    }
+
+    fun updateWaterAmount(value: String) {
+        waterAmount = value
+    }
+
+    fun updatePlantSize(value: String) {
+        plantSize = value
+    }
+
+    fun updateDescription(value: String) {
+        description = value
     }
 
 
