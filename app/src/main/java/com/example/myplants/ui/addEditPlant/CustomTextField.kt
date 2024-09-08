@@ -38,7 +38,7 @@ fun CustomTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 10.dp)
-                .height(if (multiline) 100.dp else 50.dp)
+                .height(if (multiline) 100.dp else 60.dp)
                 .clip(
                     RoundedCornerShape(14.dp)
                 ),

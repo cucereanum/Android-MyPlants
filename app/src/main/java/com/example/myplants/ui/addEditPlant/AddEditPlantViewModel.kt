@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Environment
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -13,7 +14,9 @@ import androidx.lifecycle.ViewModel
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 
 class AddEditPlantViewModel : ViewModel() {
 
@@ -29,8 +32,6 @@ class AddEditPlantViewModel : ViewModel() {
     var plantName by mutableStateOf<String>("")
         private set
 
-    var dates by mutableStateOf<List<String>>(listOf(""))
-        private set
 
     var time by mutableStateOf<Date>(Date())
         private set
@@ -44,6 +45,55 @@ class AddEditPlantViewModel : ViewModel() {
     var description by mutableStateOf<String>("")
         private set
 
+    var showDatesDialog by mutableStateOf<Boolean>(false)
+        private set
+
+
+    var selectedDays = mutableStateListOf<DayOfWeek>().apply {
+        val currentDay = getCurrentDayOfWeek()
+        add(DayOfWeek.valueOf(currentDay))
+    }
+    //todo: Improve the Add dates solution by removing "EveryDay"
+
+    fun toggleDaySelection(selectedDay: String) {
+        when (selectedDay) {
+            "EveryDay" -> {
+                if (selectedDays.isEmpty() || !selectedDays.containsAll(DayOfWeek.allDays())) {
+                    selectedDays.clear()
+                    selectedDays.addAll(DayOfWeek.allDays())
+                } else {
+                    selectedDays.clear()
+                }
+            }
+
+            else -> {
+                val day = DayOfWeek.fromDisplayName(selectedDay)
+                day?.let {
+                    if (selectedDays.contains(it)) {
+                        selectedDays.remove(it)
+
+                        if (selectedDays.size < DayOfWeek.allDays().size) {
+                            selectedDays.removeIf { it != it }
+                        }
+                    } else {
+                        selectedDays.add(it)
+                        if (selectedDays.size == DayOfWeek.allDays().size) {
+                            selectedDays.remove(DayOfWeek.fromDisplayName("EveryDay"))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Convert the selected days to a comma-separated string
+    fun getSelectedDaysString(): String {
+        return selectedDays.joinToString(", ") { it.dayName }
+    }
+
+    fun updateShowDatesDialog(value: Boolean) {
+        showDatesDialog = value
+    }
 
     fun updateCameraView(value: Boolean) {
         showCameraView = value
@@ -61,9 +111,6 @@ class AddEditPlantViewModel : ViewModel() {
         plantName = value
     }
 
-    fun updateDates(value: List<String>) {
-        dates = value
-    }
 
     fun updateTime(value: Date) {
         time = value
@@ -81,5 +128,10 @@ class AddEditPlantViewModel : ViewModel() {
         description = value
     }
 
+    // Create a function to get the current day as a string
+    fun getCurrentDayOfWeek(): String {
+        val sdf = SimpleDateFormat("EEEE", Locale.getDefault()) // "EEEE" for full day name
+        return sdf.format(Calendar.getInstance().time)
+    }
 
 }

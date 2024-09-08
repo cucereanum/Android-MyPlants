@@ -70,7 +70,7 @@ fun CameraView(
 
         preview.setSurfaceProvider(previewView.surfaceProvider)
     }
-
+    //todo: Add rotate camera button + cancel button
     Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.fillMaxSize()) {
         AndroidView({ previewView }, modifier = Modifier.fillMaxSize())
 

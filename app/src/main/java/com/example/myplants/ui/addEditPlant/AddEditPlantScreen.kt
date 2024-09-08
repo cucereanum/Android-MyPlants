@@ -10,8 +10,9 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,19 +33,20 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.rounded.ThumbUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -122,10 +124,19 @@ fun AddEditPlantScreen(
         }
     }
 
+    //todo: update UI accordingly + refactor code
     fun handleImageCapture(uri: Uri) {
         viewModel.updateCameraView(false)
         viewModel.updateImageUri(uri)
 
+    }
+
+    if (viewModel.showDatesDialog) {
+        DatesDialog(selectedDays = viewModel.selectedDays, onDismissRequest = {
+            viewModel.updateShowDatesDialog(false)
+        }) {
+            viewModel.toggleDaySelection(it.toString())
+        }
     }
 
 
@@ -279,6 +290,65 @@ fun AddEditPlantScreen(
                         },
                         label = "Plant name*"
                     )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(top = 15.dp)
+                        ) {
+                            Text(
+                                text = "Dates",
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+
+                            )
+                            TextField(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp)
+                                    .height(60.dp)
+                                    .clip(
+                                        RoundedCornerShape(14.dp)
+                                    ),
+                                maxLines = 1,
+                                readOnly = true,
+                                interactionSource = remember { MutableInteractionSource() }
+                                    .also { interactionSource ->
+                                        LaunchedEffect(interactionSource) {
+                                            interactionSource.interactions.collect {
+                                                if (it is PressInteraction.Release) {
+                                                    viewModel.updateShowDatesDialog(true)
+                                                }
+                                            }
+                                        }
+                                    },
+                                trailingIcon = {
+                                    IconButton(onClick = {
+                                    }) {
+                                        Icon(
+                                            Icons.Default.KeyboardArrowDown,
+                                            contentDescription = "Dropdown Icon"
+                                        )
+                                    }
+                                },
+                                colors = TextFieldDefaults.textFieldColors(
+                                    containerColor = MaterialTheme.colorScheme.onBackground,
+                                    focusedTextColor = MaterialTheme.colorScheme.secondary,
+                                    unfocusedTextColor = MaterialTheme.colorScheme.secondary,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                ),
+                                value = viewModel.getSelectedDaysString(),
+                                onValueChange = {}
+                            )
+
+
+                        }
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
