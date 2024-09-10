@@ -9,8 +9,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +41,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -55,7 +58,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -132,10 +137,13 @@ fun AddEditPlantScreen(
     }
 
     if (viewModel.showDatesDialog) {
-        DatesDialog(selectedDays = viewModel.selectedDays, onDismissRequest = {
-            viewModel.updateShowDatesDialog(false)
-        }) {
-            viewModel.toggleDaySelection(it.toString())
+        DatesDialog(
+            modifier = Modifier.width(400.dp),
+            selectedDays = viewModel.selectedDays,
+            onDismissRequest = {
+                viewModel.updateShowDatesDialog(false)
+            }) {
+            viewModel.toggleDaySelection(it)
         }
     }
 
@@ -314,6 +322,7 @@ fun AddEditPlantScreen(
                                     .clip(
                                         RoundedCornerShape(14.dp)
                                     ),
+                                singleLine = true,
                                 maxLines = 1,
                                 readOnly = true,
                                 interactionSource = remember { MutableInteractionSource() }
