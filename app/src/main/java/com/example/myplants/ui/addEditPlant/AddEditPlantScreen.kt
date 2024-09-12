@@ -181,6 +181,13 @@ fun AddEditPlantScreen(
         CameraView(
             outputDirectory = outputDirectory,
             executor = cameraExecutor,
+            lensFacing = viewModel.lensFacing,
+            updateLensFacing = {
+                viewModel.updateLensFacing(it)
+            },
+            removeCameraView = {
+                viewModel.updateCameraView(false)
+            },
             onImageCaptured = ::handleImageCapture
         ) {
 

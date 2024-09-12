@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.camera.core.CameraSelector
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -48,12 +49,14 @@ class AddEditPlantViewModel : ViewModel() {
     var showDatesDialog by mutableStateOf<Boolean>(false)
         private set
 
+    var lensFacing by mutableStateOf<Int>(CameraSelector.LENS_FACING_BACK)
+        private set
+
 
     var selectedDays = mutableStateListOf<DayOfWeek>().apply {
         val currentDay = getCurrentDayOfWeek()
         add(DayOfWeek.valueOf(currentDay))
     }
-    //todo: Improve the Add dates solution by removing "EveryDay"
 
     fun toggleDaySelection(selectedDay: String) {
         when (selectedDay) {
@@ -132,6 +135,10 @@ class AddEditPlantViewModel : ViewModel() {
     fun getCurrentDayOfWeek(): String {
         val sdf = SimpleDateFormat("EEEE", Locale.getDefault()) // "EEEE" for full day name
         return sdf.format(Calendar.getInstance().time)
+    }
+
+    fun updateLensFacing(value: Int) {
+        lensFacing = value
     }
 
 }

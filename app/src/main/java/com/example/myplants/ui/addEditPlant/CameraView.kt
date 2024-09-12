@@ -9,13 +9,29 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PhotoCameraBack
+import androidx.compose.material.icons.filled.SwitchCamera
+import androidx.compose.material.icons.sharp.CameraFront
+import androidx.compose.material.icons.sharp.Close
 import androidx.compose.material.icons.sharp.Lens
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,11 +58,13 @@ import kotlin.coroutines.suspendCoroutine
 fun CameraView(
     outputDirectory: File,
     executor: Executor,
+    lensFacing: Int,
+    updateLensFacing: (Int) -> Unit,
+    removeCameraView: () -> Unit,
     onImageCaptured: (Uri) -> Unit,
     onError: (ImageCaptureException) -> Unit
 ) {
 
-    val lensFacing = CameraSelector.LENS_FACING_FRONT
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -74,32 +92,76 @@ fun CameraView(
     Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.fillMaxSize()) {
         AndroidView({ previewView }, modifier = Modifier.fillMaxSize())
 
-        IconButton(
-            modifier = Modifier
 
-                .padding(bottom = 40.dp),
-            onClick = {
-                takePhoto(
-                    filenameFormat = "yyyy-MM-dd-HH-mm-ss-SSS",
-                    imageCapture = imageCapture,
-                    outputDirectory = outputDirectory,
-                    executor = executor,
-                    onImageCaptured = onImageCaptured,
-                    onError = onError
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 30.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .padding(bottom = 30.dp)
+                    .clickable {
+                        updateLensFacing(if (lensFacing == 1) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK)
+                    }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.SwitchCamera,
+                    contentDescription = "Switch Camera",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(50.dp)
+                        .padding(1.dp)
+
                 )
-            },
-            content = {
+            }
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .padding(bottom = 30.dp)
+                    .clickable {
+                        takePhoto(
+                            filenameFormat = "yyyy-MM-dd-HH-mm-ss-SSS",
+                            imageCapture = imageCapture,
+                            outputDirectory = outputDirectory,
+                            executor = executor,
+                            onImageCaptured = onImageCaptured,
+                            onError = onError
+                        )
+                    }
+            ) {
                 Icon(
                     imageVector = Icons.Sharp.Lens,
                     contentDescription = "Take picture",
                     tint = Color.White,
                     modifier = Modifier
-                        .size(1100.dp)
+                        .size(50.dp)
                         .padding(1.dp)
                         .border(1.dp, Color.White, CircleShape)
                 )
             }
-        )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .padding(bottom = 30.dp)
+                    .clickable {
+                        removeCameraView()
+                    }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Cancel,
+                    contentDescription = "Go Back",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(55.dp)
+                        .padding(1.dp)
+
+                )
+            }
+        }
     }
 }
 
