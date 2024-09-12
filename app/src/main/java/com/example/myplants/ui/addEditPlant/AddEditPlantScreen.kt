@@ -4,15 +4,15 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +41,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -58,9 +57,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -73,6 +70,7 @@ import java.io.File
 import java.util.concurrent.ExecutorService
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditPlantScreen(
@@ -136,7 +134,16 @@ fun AddEditPlantScreen(
 
     }
 
-    if (viewModel.showDatesDialog) {
+    if (viewModel.showTimeDialog) {
+        SelectTimeDialog(
+            modifier = Modifier.width(400.dp),
+            updateTime = { hour, minute ->
+                viewModel.updateTime(hour, minute)
+            },
+            onDismissRequest = {
+                viewModel.updateShowTimeDialog(false)
+            })
+    } else if (viewModel.showDatesDialog) {
         DatesDialog(
             modifier = Modifier.width(400.dp),
             selectedDays = viewModel.selectedDays,
@@ -145,10 +152,7 @@ fun AddEditPlantScreen(
             }) {
             viewModel.toggleDaySelection(it)
         }
-    }
-
-
-    if (viewModel.showDialog) {
+    } else if (viewModel.showDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.updateShowDialog(false) },
             title = { Text("Choose Image Source") },
@@ -313,6 +317,7 @@ fun AddEditPlantScreen(
                         Column(
                             modifier = Modifier
                                 .padding(top = 15.dp)
+                                .weight(0.5f)
                         ) {
                             Text(
                                 text = "Dates",
@@ -359,6 +364,61 @@ fun AddEditPlantScreen(
                                     unfocusedIndicatorColor = Color.Transparent
                                 ),
                                 value = viewModel.getSelectedDaysString(),
+                                onValueChange = {}
+                            )
+
+
+                        }
+                        Column(
+                            modifier = Modifier
+                                .padding(top = 15.dp)
+                                .weight(0.5f)
+                        ) {
+                            Text(
+                                text = "Time",
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+
+                            )
+                            TextField(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp)
+                                    .height(60.dp)
+                                    .clip(
+                                        RoundedCornerShape(14.dp)
+                                    ),
+                                singleLine = true,
+                                maxLines = 1,
+                                readOnly = true,
+                                interactionSource = remember { MutableInteractionSource() }
+                                    .also { interactionSource ->
+                                        LaunchedEffect(interactionSource) {
+                                            interactionSource.interactions.collect {
+                                                if (it is PressInteraction.Release) {
+                                                    viewModel.updateShowTimeDialog(true)
+                                                }
+                                            }
+                                        }
+                                    },
+                                trailingIcon = {
+                                    IconButton(onClick = {
+                                    }) {
+                                        Icon(
+                                            Icons.Default.KeyboardArrowDown,
+                                            contentDescription = "Dropdown Icon"
+                                        )
+                                    }
+                                },
+                                colors = TextFieldDefaults.textFieldColors(
+                                    containerColor = MaterialTheme.colorScheme.onBackground,
+                                    focusedTextColor = MaterialTheme.colorScheme.secondary,
+                                    unfocusedTextColor = MaterialTheme.colorScheme.secondary,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                ),
+                                value = viewModel.displaySelectedTime(),
                                 onValueChange = {}
                             )
 

@@ -1,24 +1,22 @@
 package com.example.myplants.ui.addEditPlant
 
-import android.content.Context
+
 import android.net.Uri
-import android.os.Environment
-import androidx.activity.compose.ManagedActivityResultLauncher
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
-import java.io.File
-import java.io.IOException
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.O)
 class AddEditPlantViewModel : ViewModel() {
 
     var imageUri by mutableStateOf<Uri?>(null)
@@ -34,7 +32,7 @@ class AddEditPlantViewModel : ViewModel() {
         private set
 
 
-    var time by mutableStateOf<Date>(Date())
+    var time by mutableStateOf<LocalDateTime>(LocalDateTime.now())
         private set
 
     var waterAmount by mutableStateOf<String>("")
@@ -47,6 +45,12 @@ class AddEditPlantViewModel : ViewModel() {
         private set
 
     var showDatesDialog by mutableStateOf<Boolean>(false)
+        private set
+
+    var showTimeDialog by mutableStateOf<Boolean>(false)
+        private set
+
+    var showPlantSizeDialog by mutableStateOf<Boolean>(false)
         private set
 
     var lensFacing by mutableStateOf<Int>(CameraSelector.LENS_FACING_BACK)
@@ -89,7 +93,7 @@ class AddEditPlantViewModel : ViewModel() {
         }
     }
 
-    // Convert the selected days to a comma-separated string
+
     fun getSelectedDaysString(): String {
         return selectedDays.joinToString(", ") { it.dayName }
     }
@@ -110,13 +114,32 @@ class AddEditPlantViewModel : ViewModel() {
         showDialog = value
     }
 
+    fun updateShowTimeDialog(value: Boolean) {
+        showTimeDialog = value
+    }
+
+    fun updateShowPlantSizeDialog(value: Boolean) {
+        showPlantSizeDialog = value
+    }
+
+
     fun updatePlantName(value: String) {
         plantName = value
     }
 
 
-    fun updateTime(value: Date) {
-        time = value
+    fun updateTime(hour: Int, minute: Int) {
+        val now = LocalDateTime.now()
+        time = now.withHour(hour).withMinute(minute)
+        showTimeDialog = false
+    }
+
+
+    fun displaySelectedTime(): String {
+        val formatter = DateTimeFormatter.ofPattern("HH:mm")
+        val formattedTime = time.format(formatter)
+
+        return formattedTime
     }
 
     fun updateWaterAmount(value: String) {
