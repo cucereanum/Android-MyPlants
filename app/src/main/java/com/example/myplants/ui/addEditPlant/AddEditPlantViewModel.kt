@@ -38,7 +38,7 @@ class AddEditPlantViewModel : ViewModel() {
     var waterAmount by mutableStateOf<String>("")
         private set
 
-    var plantSize by mutableStateOf<String>("")
+    var plantSize by mutableStateOf<PlantSizeType>(PlantSizeType.Medium)
         private set
 
     var description by mutableStateOf<String>("")
@@ -147,7 +147,7 @@ class AddEditPlantViewModel : ViewModel() {
     }
 
     fun updatePlantSize(value: String) {
-        plantSize = value
+        plantSize = PlantSizeType.valueOf(value)
     }
 
     fun updateDescription(value: String) {

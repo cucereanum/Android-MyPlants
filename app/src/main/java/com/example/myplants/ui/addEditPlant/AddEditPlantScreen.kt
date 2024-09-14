@@ -152,7 +152,18 @@ fun AddEditPlantScreen(
             }) {
             viewModel.toggleDaySelection(it)
         }
+    } else if (viewModel.showPlantSizeDialog) {
+        PlantSizeDialog(
+            modifier = Modifier.width(400.dp),
+            selectedPlant = viewModel.plantSize,
+            togglePlantSizeSelection = {
+                viewModel.updatePlantSize(it)
+            },
+            onDismissRequest = {
+                viewModel.updateShowPlantSizeDialog(false)
+            })
     } else if (viewModel.showDialog) {
+
         AlertDialog(
             onDismissRequest = { viewModel.updateShowDialog(false) },
             title = { Text("Choose Image Source") },
@@ -379,7 +390,6 @@ fun AddEditPlantScreen(
                                 color = MaterialTheme.colorScheme.secondary,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
-
                             )
                             TextField(
                                 modifier = Modifier
@@ -438,14 +448,8 @@ fun AddEditPlantScreen(
                                 viewModel.updateWaterAmount(it)
                             }, label = "The amount of water*"
                         )
-                        CustomTextField(
-                            modifier = Modifier
-                                .weight(0.45f)
-                                .padding(end = 10.dp),
-                            value = viewModel.plantSize, onValueChange = {
-                                viewModel.updatePlantSize(it)
-                            }, label = "Plant size*"
-                        )
+
+
                     }
                     CustomTextField(
                         value = viewModel.description,

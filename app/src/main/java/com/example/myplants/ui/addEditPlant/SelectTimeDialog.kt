@@ -38,7 +38,6 @@ fun SelectTimeDialog(
         initialMinute = currentTime.get(Calendar.MINUTE),
         is24Hour = true,
     )
-
     Dialog(
         onDismissRequest,
         properties = DialogProperties(
