@@ -18,8 +18,8 @@ interface PlantDao {
     suspend fun getPlantById(id: Int): Plant?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPlant(note: Plant)
+    suspend fun insertPlant(plant: Plant)
 
     @Delete
-    suspend fun deletePlant(note: Plant)
+    suspend fun deletePlant(plant: Plant)
 }

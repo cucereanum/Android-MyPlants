@@ -1,15 +1,13 @@
 package com.example.myplants.data
 
-import android.net.Uri
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.time.LocalDateTime
 
 @Entity
 data class Plant(
     val plantName: String,
-    val imageUri: Uri,
-    val time: LocalDateTime,
+    val imageUri: String,
+    val time: Long,
     val selectedDays: DayOfWeek,
     val waterAmount: String,
     val description: String,
