@@ -1,4 +1,4 @@
-package com.example.myplants.ui.addEditPlant
+package com.example.myplants.data
 
 enum class DayOfWeek(val dayName: String) {
     Monday("Monday"),

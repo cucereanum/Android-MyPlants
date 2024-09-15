@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.myplants.data.PlantSizeType
 
 @Composable
 fun PlantSizeDialog(
@@ -61,7 +63,7 @@ fun PlantSizeDialog(
                         .padding(vertical = 20.dp, horizontal = 20.dp)
                 ) {
                     Text(
-                        modifier = Modifier.padding(bottom = 30.dp),
+                        modifier = Modifier.padding(bottom = 20.dp),
                         text = "Plant Size",
                         color = MaterialTheme.colorScheme.onPrimary,
                         fontWeight = FontWeight.Medium,
@@ -75,11 +77,11 @@ fun PlantSizeDialog(
                             Box(
                                 modifier = Modifier
                                     .size(24.dp)
-                                    .clip(RoundedCornerShape(size = 6.dp))
+                                    .clip(CircleShape)
                                     .border(
-                                        width = 2.dp, // Set the border width
+                                        width = 2.dp,
                                         color = if (plant == selectedPlant) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondary, // Set the border color
-                                        shape = RoundedCornerShape(size = 6.dp) // Make the border shape match the clip shape
+                                        shape = CircleShape
                                     )
                                     .background(if (plant == selectedPlant) MaterialTheme.colorScheme.primary else Color.White)
                                     .clickable {

@@ -10,6 +10,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.example.myplants.data.DayOfWeek
+import com.example.myplants.data.PlantSizeType
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -22,38 +24,38 @@ class AddEditPlantViewModel : ViewModel() {
     var imageUri by mutableStateOf<Uri?>(null)
         private set
 
-    var showDialog by mutableStateOf<Boolean>(false)
+    var showDialog by mutableStateOf(false)
         private set
 
-    var showCameraView by mutableStateOf<Boolean>(false)
+    var showCameraView by mutableStateOf(false)
         private set
 
-    var plantName by mutableStateOf<String>("")
+    var plantName by mutableStateOf("")
         private set
 
 
     var time by mutableStateOf<LocalDateTime>(LocalDateTime.now())
         private set
 
-    var waterAmount by mutableStateOf<String>("")
+    var waterAmount by mutableStateOf("")
         private set
 
-    var plantSize by mutableStateOf<PlantSizeType>(PlantSizeType.Medium)
+    var plantSize by mutableStateOf(PlantSizeType.Medium)
         private set
 
-    var description by mutableStateOf<String>("")
+    var description by mutableStateOf("")
         private set
 
-    var showDatesDialog by mutableStateOf<Boolean>(false)
+    var showDatesDialog by mutableStateOf(false)
         private set
 
-    var showTimeDialog by mutableStateOf<Boolean>(false)
+    var showTimeDialog by mutableStateOf(false)
         private set
 
-    var showPlantSizeDialog by mutableStateOf<Boolean>(false)
+    var showPlantSizeDialog by mutableStateOf(false)
         private set
 
-    var lensFacing by mutableStateOf<Int>(CameraSelector.LENS_FACING_BACK)
+    var lensFacing by mutableStateOf(CameraSelector.LENS_FACING_BACK)
         private set
 
 

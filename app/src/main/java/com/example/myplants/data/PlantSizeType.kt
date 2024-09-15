@@ -1,4 +1,4 @@
-package com.example.myplants.ui.addEditPlant
+package com.example.myplants.data
 
 enum class PlantSizeType(val plantSize: String) {
     Small("Small"),

@@ -328,7 +328,7 @@ fun AddEditPlantScreen(
                         Column(
                             modifier = Modifier
                                 .padding(top = 15.dp)
-                                .weight(0.5f)
+                                .weight(0.45f)
                         ) {
                             Text(
                                 text = "Dates",
@@ -380,10 +380,11 @@ fun AddEditPlantScreen(
 
 
                         }
+                        Spacer(modifier = Modifier.padding(5.dp))
                         Column(
                             modifier = Modifier
                                 .padding(top = 15.dp)
-                                .weight(0.5f)
+                                .weight(0.45f)
                         ) {
                             Text(
                                 text = "Time",
@@ -440,15 +441,98 @@ fun AddEditPlantScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        CustomTextField(
+                        Column(
                             modifier = Modifier
+                                .padding(top = 15.dp)
                                 .weight(0.45f)
-                                .padding(end = 10.dp),
-                            value = viewModel.waterAmount, onValueChange = {
-                                viewModel.updateWaterAmount(it)
-                            }, label = "The amount of water*"
-                        )
+                        ) {
+                            Text(
+                                text = "The amount of water*",
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
 
+                            )
+                            TextField(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp)
+                                    .height(60.dp)
+                                    .clip(
+                                        RoundedCornerShape(14.dp)
+                                    ),
+                                singleLine = true,
+                                maxLines = 1,
+                                colors = TextFieldDefaults.textFieldColors(
+                                    containerColor = MaterialTheme.colorScheme.onBackground,
+                                    focusedTextColor = MaterialTheme.colorScheme.secondary,
+                                    unfocusedTextColor = MaterialTheme.colorScheme.secondary,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                ),
+                                value = viewModel.waterAmount,
+                                onValueChange = {
+                                    viewModel.updateWaterAmount(it)
+                                }
+                            )
+
+
+                        }
+                        Spacer(modifier = Modifier.padding(5.dp))
+                        Column(
+                            modifier = Modifier
+                                .padding(top = 15.dp)
+                                .weight(0.45f)
+                        ) {
+                            Text(
+                                text = "Plant Size*",
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            TextField(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp)
+                                    .height(60.dp)
+                                    .clip(
+                                        RoundedCornerShape(14.dp)
+                                    ),
+                                singleLine = true,
+                                maxLines = 1,
+                                readOnly = true,
+                                interactionSource = remember { MutableInteractionSource() }
+                                    .also { interactionSource ->
+                                        LaunchedEffect(interactionSource) {
+                                            interactionSource.interactions.collect {
+                                                if (it is PressInteraction.Release) {
+                                                    viewModel.updateShowPlantSizeDialog(true)
+                                                }
+                                            }
+                                        }
+                                    },
+                                trailingIcon = {
+                                    IconButton(onClick = {
+                                    }) {
+                                        Icon(
+                                            Icons.Default.KeyboardArrowDown,
+                                            contentDescription = "Dropdown Icon"
+                                        )
+                                    }
+                                },
+                                colors = TextFieldDefaults.textFieldColors(
+                                    containerColor = MaterialTheme.colorScheme.onBackground,
+                                    focusedTextColor = MaterialTheme.colorScheme.secondary,
+                                    unfocusedTextColor = MaterialTheme.colorScheme.secondary,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                ),
+                                value = viewModel.plantSize.toString(),
+                                onValueChange = {}
+                            )
+
+
+                        }
 
                     }
                     CustomTextField(
