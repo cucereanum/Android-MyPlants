@@ -21,6 +21,7 @@ import java.util.Locale
 @RequiresApi(Build.VERSION_CODES.O)
 class AddEditPlantViewModel : ViewModel() {
     //todo: 1. change imageUri type to string; time to Long;
+    // todo 2. refactor code!
     var imageUri by mutableStateOf<Uri?>(null)
         private set
 
