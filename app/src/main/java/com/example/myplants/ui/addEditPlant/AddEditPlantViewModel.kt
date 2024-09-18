@@ -10,18 +10,31 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.myplants.data.DayOfWeek
+import com.example.myplants.data.Plant
 import com.example.myplants.data.PlantSizeType
+import com.example.myplants.domain.repository.PlantRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
+import javax.inject.Inject
 
+@HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
-class AddEditPlantViewModel : ViewModel() {
+class AddEditPlantViewModel @Inject constructor(
+    private val repository: PlantRepository
+) : ViewModel() {
     //todo: 1. change imageUri type to string; time to Long;
-    // todo 2. refactor code!
+    // todo 2. events to check if the plant was created; Toasts! Error Messages!
+    // todo 3. Blur View on bottom of the screen; Background Blur and not dark for dialogs;
+    // todo 4: refactor code!
+    // todo 5: Improve floating button?
+
     var imageUri by mutableStateOf<Uri?>(null)
         private set
 
@@ -93,6 +106,21 @@ class AddEditPlantViewModel : ViewModel() {
                     }
                 }
             }
+        }
+    }
+
+    fun addPlant() {
+        viewModelScope.launch {
+            repository.insertPlant(
+                Plant(
+                    plantName = plantName,
+                    description = description,
+                    waterAmount = waterAmount,
+                    imageUri = imageUri.toString(),
+                    time = 0,
+                    selectedDays = DayOfWeek.valueOf("Friday")
+                )
+            )
         }
     }
 

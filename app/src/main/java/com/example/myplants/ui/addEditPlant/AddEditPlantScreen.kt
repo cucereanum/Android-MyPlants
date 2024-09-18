@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.myplants.R
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -77,7 +78,7 @@ fun AddEditPlantScreen(
     navController: NavController,
     outputDirectory: File,
     cameraExecutor: ExecutorService,
-    viewModel: AddEditPlantViewModel = viewModel(),
+    viewModel: AddEditPlantViewModel = hiltViewModel()
 ) {
 
     val context = LocalContext.current
@@ -543,6 +544,27 @@ fun AddEditPlantScreen(
                         label = "Description",
                         multiline = true
                     )
+                    Spacer(modifier = Modifier.height(30.dp))
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        onClick = {
+                            viewModel.addPlant()
+                        }) {
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Add a Plant",
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 16.sp
+                            )
+                        }
+
+
+                    }
                 }
 
             }

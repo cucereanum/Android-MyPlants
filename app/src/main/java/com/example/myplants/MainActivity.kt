@@ -21,10 +21,12 @@ import com.example.myplants.ui.addEditPlant.AddEditPlantScreen
 import com.example.myplants.ui.plantDetails.PlantDetailsScreen
 import com.example.myplants.ui.plantList.PlantListScreen
 import com.example.myplants.ui.theme.MyPlantsTheme
+import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private lateinit var outputDirectory: File
     private lateinit var cameraExecutor: ExecutorService

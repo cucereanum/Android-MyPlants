@@ -34,15 +34,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.myplants.R
 import com.example.myplants.navigation.Route
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun PlantListScreen(
     navController: NavController,
-    viewModel: PlantListViewModel = viewModel()
+    viewModel: PlantListViewModel = hiltViewModel()
 ) {
     Column(
         modifier = Modifier
