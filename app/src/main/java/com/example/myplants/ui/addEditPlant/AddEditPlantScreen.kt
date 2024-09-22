@@ -86,8 +86,10 @@ fun AddEditPlantScreen(
     val photoPickerLauncher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia(),
             onResult = { uri ->
-                val newImagePath = saveImageToInternalStorage(context, uri)
-                viewModel.updateImageUri(newImagePath)
+                if (uri !== null) {
+                    val newImagePath = saveImageToInternalStorage(context, uri)
+                    viewModel.updateImageUri(newImagePath)
+                }
             }
         )
 

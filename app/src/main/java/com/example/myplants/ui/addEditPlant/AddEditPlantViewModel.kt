@@ -30,6 +30,7 @@ class AddEditPlantViewModel @Inject constructor(
     private val repository: PlantRepository
 ) : ViewModel() {
     //todo: 1. time to Long;
+    //todo: 2. add loading state for most of the functionalities!
     // todo 2. events to check if the plant was created; Toasts! Error Messages!
     // todo 3. Blur View on bottom of the screen; Background Blur and not dark for dialogs;
     // todo 4: refactor code!
