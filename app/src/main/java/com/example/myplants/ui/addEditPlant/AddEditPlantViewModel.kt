@@ -29,13 +29,13 @@ import javax.inject.Inject
 class AddEditPlantViewModel @Inject constructor(
     private val repository: PlantRepository
 ) : ViewModel() {
-    //todo: 1. change imageUri type to string; time to Long;
+    //todo: 1. time to Long;
     // todo 2. events to check if the plant was created; Toasts! Error Messages!
     // todo 3. Blur View on bottom of the screen; Background Blur and not dark for dialogs;
     // todo 4: refactor code!
     // todo 5: Improve floating button?
 
-    var imageUri by mutableStateOf<Uri?>(null)
+    var imageUri by mutableStateOf<String?>(null)
         private set
 
     var showDialog by mutableStateOf(false)
@@ -116,7 +116,7 @@ class AddEditPlantViewModel @Inject constructor(
                     plantName = plantName,
                     description = description,
                     waterAmount = waterAmount,
-                    imageUri = imageUri.toString(),
+                    imageUri = imageUri!!,
                     time = 0,
                     selectedDays = DayOfWeek.valueOf("Friday")
                 )
@@ -137,7 +137,7 @@ class AddEditPlantViewModel @Inject constructor(
         showCameraView = value
     }
 
-    fun updateImageUri(uri: Uri?) {
+    fun updateImageUri(uri: String?) {
         imageUri = uri;
     }
 

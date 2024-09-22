@@ -2,6 +2,7 @@ package com.example.myplants.ui.addEditPlant
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -85,7 +86,8 @@ fun AddEditPlantScreen(
     val photoPickerLauncher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia(),
             onResult = { uri ->
-                viewModel.updateImageUri(uri)
+                val newImagePath = saveImageToInternalStorage(context, uri)
+                viewModel.updateImageUri(newImagePath)
             }
         )
 
@@ -131,7 +133,7 @@ fun AddEditPlantScreen(
     //todo: update UI accordingly + refactor code
     fun handleImageCapture(uri: Uri) {
         viewModel.updateCameraView(false)
-        viewModel.updateImageUri(uri)
+        viewModel.updateImageUri(uri.toString())
 
     }
 
@@ -177,9 +179,7 @@ fun AddEditPlantScreen(
                         Text("Take Photo")
                     }
                     TextButton(onClick = {
-                        photoPickerLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
+                        photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                         viewModel.updateShowDialog(false)
                     }) {
                         Text("Choose from Gallery")
@@ -550,6 +550,7 @@ fun AddEditPlantScreen(
                         shape = RoundedCornerShape(12.dp),
                         onClick = {
                             viewModel.addPlant()
+                            navController.popBackStack()
                         }) {
                         Row(
                             horizontalArrangement = Arrangement.Center,
@@ -570,4 +571,15 @@ fun AddEditPlantScreen(
             }
         }
     }
+}
+
+private fun saveImageToInternalStorage(context: Context, uri: Uri?): String? {
+    val contentResolver = context.contentResolver
+    val inputStream = contentResolver.openInputStream(uri!!) ?: return null
+    val file = File(context.filesDir, "saved_plant_image_${System.currentTimeMillis()}.jpg")
+
+    file.outputStream().use { outputStream ->
+        inputStream.copyTo(outputStream)
+    }
+    return file.absolutePath // Return the path of the saved file
 }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,11 +25,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -44,6 +49,13 @@ fun PlantListScreen(
     navController: NavController,
     viewModel: PlantListViewModel = hiltViewModel()
 ) {
+    val plants by viewModel.items.collectAsState()
+    val rows = plants.chunked(2)
+
+//    val context = LocalContext.current
+//
+//    context.deleteDatabase("plant_db")
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -115,36 +127,74 @@ fun PlantListScreen(
 
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-
-            ) {
-            Image(
+        if (plants.isEmpty()) {
+            Column(
                 modifier = Modifier
-                    .width(360.dp)
-                    .height(240.dp), painter = painterResource(id = R.drawable.plants_center),
-                contentScale = ContentScale.Fit,
-                contentDescription = "Cactus plants"
-            )
-            Spacer(modifier = Modifier.padding(top = 30.dp))
-            Text(
-                modifier = Modifier.padding(top = 10.dp),
-                fontWeight = FontWeight.Medium,
-                text = "Sorry.",
-                color = MaterialTheme.colorScheme.onPrimary, fontSize = 18.sp
-            )
-            Text(
-                modifier = Modifier.padding(top = 6.dp),
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.secondary,
-                fontSize = 16.sp,
-                text = "There are no plants in the list, please add your first plant."
-            )
-            Spacer(modifier = Modifier.padding(top = 20.dp))
+                    .fillMaxSize()
+                    .padding(horizontal = 40.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+
+                ) {
+                Image(
+                    modifier = Modifier
+                        .width(360.dp)
+                        .height(240.dp), painter = painterResource(id = R.drawable.plants_center),
+                    contentScale = ContentScale.Fit,
+                    contentDescription = "Cactus plants"
+                )
+                Spacer(modifier = Modifier.padding(top = 30.dp))
+                Text(
+                    modifier = Modifier.padding(top = 10.dp),
+                    fontWeight = FontWeight.Medium,
+                    text = "Sorry.",
+                    color = MaterialTheme.colorScheme.onPrimary, fontSize = 18.sp
+                )
+                Text(
+                    modifier = Modifier.padding(top = 6.dp),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontSize = 16.sp,
+                    text = "There are no plants in the list, please add your first plant."
+                )
+                Spacer(modifier = Modifier.padding(top = 20.dp))
+                Button(
+                    modifier = Modifier
+                        .width(320.dp)
+                        .height(54.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    onClick = {
+                        navController.navigate(Route.ADD_EDIT_PLANT)
+                    }) {
+                    Text(
+                        text = "Add Your First Plant",
+                        color = Color.White,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 18.sp
+                    )
+
+                }
+            }
+        } else {
+
+
+            LazyColumn {
+                items(rows.size) { rowIndex ->
+                    val rowItems = rows[rowIndex]
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        rowItems.forEach { plant ->
+                            PlantListItem(plant, modifier = Modifier.weight(1f))
+                        }
+                        if (rowItems.size < 2) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
             Button(
                 modifier = Modifier
                     .width(320.dp)
