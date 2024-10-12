@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,8 +20,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,8 +49,7 @@ import com.example.myplants.navigation.Route
 
 @Composable
 fun PlantListScreen(
-    navController: NavController,
-    viewModel: PlantListViewModel = hiltViewModel()
+    navController: NavController, viewModel: PlantListViewModel = hiltViewModel()
 ) {
     val plants by viewModel.items.collectAsState()
     val rows = plants.chunked(2)
@@ -57,8 +59,7 @@ fun PlantListScreen(
 //    context.deleteDatabase("plant_db")
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
 
     ) {
         Box(
@@ -89,17 +90,13 @@ fun PlantListScreen(
                         lineHeight = 32.sp
                     )
                     Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(40.dp)
+                        contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(60.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.background)
-                                .clickable { /* Handle button click */ }
-                        ) {
+                        Box(modifier = Modifier
+                            .size(60.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.background)
+                            .clickable { /* Handle button click */ }) {
                             Icon(
                                 imageVector = Icons.Outlined.Notifications,
                                 contentDescription = "Notifications",
@@ -138,7 +135,8 @@ fun PlantListScreen(
                 Image(
                     modifier = Modifier
                         .width(360.dp)
-                        .height(240.dp), painter = painterResource(id = R.drawable.plants_center),
+                        .height(240.dp),
+                    painter = painterResource(id = R.drawable.plants_center),
                     contentScale = ContentScale.Fit,
                     contentDescription = "Cactus plants"
                 )
@@ -147,7 +145,8 @@ fun PlantListScreen(
                     modifier = Modifier.padding(top = 10.dp),
                     fontWeight = FontWeight.Medium,
                     text = "Sorry.",
-                    color = MaterialTheme.colorScheme.onPrimary, fontSize = 18.sp
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontSize = 18.sp
                 )
                 Text(
                     modifier = Modifier.padding(top = 6.dp),
@@ -158,10 +157,9 @@ fun PlantListScreen(
                     text = "There are no plants in the list, please add your first plant."
                 )
                 Spacer(modifier = Modifier.padding(top = 20.dp))
-                Button(
-                    modifier = Modifier
-                        .width(320.dp)
-                        .height(54.dp),
+                Button(modifier = Modifier
+                    .width(320.dp)
+                    .height(54.dp),
                     shape = RoundedCornerShape(12.dp),
                     onClick = {
                         navController.navigate(Route.ADD_EDIT_PLANT)
@@ -177,39 +175,47 @@ fun PlantListScreen(
             }
         } else {
 
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
 
-            LazyColumn {
-                items(rows.size) { rowIndex ->
-                    val rowItems = rows[rowIndex]
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(rows.size) { rowIndex ->
+                        val rowItems = rows[rowIndex]
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        rowItems.forEach { plant ->
-                            PlantListItem(plant, modifier = Modifier.weight(1f))
-                        }
-                        if (rowItems.size < 2) {
-                            Spacer(modifier = Modifier.weight(1f))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            rowItems.forEach { plant ->
+                                PlantListItem(plant, modifier = Modifier.weight(1f))
+                            }
+                            if (rowItems.size < 2) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
                 }
-            }
-            Button(
-                modifier = Modifier
-                    .width(320.dp)
-                    .height(54.dp),
-                shape = RoundedCornerShape(12.dp),
-                onClick = {
-                    navController.navigate(Route.ADD_EDIT_PLANT)
-                }) {
-                Text(
-                    text = "Add Your First Plant",
-                    color = Color.White,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 18.sp
-                )
 
+                FloatingActionButton(
+                    onClick = {
+                        navController.navigate(Route.ADD_EDIT_PLANT)
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                        .padding(bottom = 30.dp),
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = "Add",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
         }
     }
