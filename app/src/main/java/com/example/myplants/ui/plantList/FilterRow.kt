@@ -32,7 +32,6 @@ fun FilterRow(
             .padding(
                 top = 20.dp,
             )
-            .padding(horizontal = 20.dp),
     ) {
 
         filterList.forEachIndexed { _, name ->

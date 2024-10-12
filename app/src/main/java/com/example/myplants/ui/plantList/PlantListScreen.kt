@@ -54,33 +54,29 @@ fun PlantListScreen(
     val plants by viewModel.items.collectAsState()
     val rows = plants.chunked(2)
 
-//    val context = LocalContext.current
-//
-//    context.deleteDatabase("plant_db")
-
-    Column(
+    Box(
         modifier = Modifier.fillMaxSize()
-
     ) {
-        Box(
+        Image(
+            modifier = Modifier.fillMaxWidth(),
+            painter = painterResource(id = R.drawable.bg_plants),
+            contentScale = ContentScale.FillWidth,
+            contentDescription = "Background plants"
+        )
 
+        Column(
+            modifier = Modifier.fillMaxSize()
         ) {
-            Image(
-                modifier = Modifier.fillMaxWidth(),
-                painter = painterResource(id = R.drawable.bg_plants),
-                contentScale = ContentScale.FillWidth,
-                contentDescription = "Background plants"
-            )
             Column(
-                modifier = Modifier.padding(top = 90.dp)
+                modifier = Modifier
+                    .padding(top = 90.dp)
+                    .padding(horizontal = 20.dp)
             ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
-
                 ) {
                     Text(
                         text = "Let's Care \nMy Plants!",
@@ -92,11 +88,13 @@ fun PlantListScreen(
                     Box(
                         contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)
                     ) {
-                        Box(modifier = Modifier
-                            .size(60.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.background)
-                            .clickable { /* Handle button click */ }) {
+                        Box(
+                            modifier = Modifier
+                                .size(60.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.background)
+                                .clickable { /* Handle button click */ }
+                        ) {
                             Icon(
                                 imageVector = Icons.Outlined.Notifications,
                                 contentDescription = "Notifications",
@@ -112,7 +110,6 @@ fun PlantListScreen(
                                 .background(Color.Red, CircleShape)
                         )
                     }
-
                 }
 
                 FilterRow(
@@ -122,65 +119,15 @@ fun PlantListScreen(
                 )
             }
 
-        }
 
-        if (plants.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 40.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-
-                ) {
-                Image(
-                    modifier = Modifier
-                        .width(360.dp)
-                        .height(240.dp),
-                    painter = painterResource(id = R.drawable.plants_center),
-                    contentScale = ContentScale.Fit,
-                    contentDescription = "Cactus plants"
-                )
-                Spacer(modifier = Modifier.padding(top = 30.dp))
-                Text(
-                    modifier = Modifier.padding(top = 10.dp),
-                    fontWeight = FontWeight.Medium,
-                    text = "Sorry.",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontSize = 18.sp
-                )
-                Text(
-                    modifier = Modifier.padding(top = 6.dp),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.secondary,
-                    fontSize = 16.sp,
-                    text = "There are no plants in the list, please add your first plant."
-                )
-                Spacer(modifier = Modifier.padding(top = 20.dp))
-                Button(modifier = Modifier
-                    .width(320.dp)
-                    .height(54.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    onClick = {
-                        navController.navigate(Route.ADD_EDIT_PLANT)
-                    }) {
-                    Text(
-                        text = "Add Your First Plant",
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 18.sp
-                    )
-
-                }
-            }
-        } else {
-
-            Box(
-                modifier = Modifier.fillMaxSize()
-            ) {
-
+            Spacer(modifier = Modifier.padding(top = 20.dp))
+            if (plants.isEmpty()) {
+                EmptyState(navController = navController)
+            } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 16.dp)
                 ) {
                     items(rows.size) { rowIndex ->
                         val rowItems = rows[rowIndex]
@@ -198,25 +145,75 @@ fun PlantListScreen(
                         }
                     }
                 }
-
-                FloatingActionButton(
-                    onClick = {
-                        navController.navigate(Route.ADD_EDIT_PLANT)
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(16.dp)
-                        .padding(bottom = 30.dp),
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Icon(
-                        Icons.Filled.Add,
-                        contentDescription = "Add",
-                        tint = Color.White,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
             }
+        }
+
+        FloatingActionButton(
+            onClick = {
+                navController.navigate(Route.ADD_EDIT_PLANT)
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .padding(bottom = 30.dp),
+            containerColor = MaterialTheme.colorScheme.primary
+        ) {
+            Icon(
+                Icons.Filled.Add,
+                contentDescription = "Add",
+                tint = Color.White,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun EmptyState(navController: NavController) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            modifier = Modifier
+                .width(360.dp)
+                .height(240.dp),
+            painter = painterResource(id = R.drawable.plants_center),
+            contentScale = ContentScale.Fit,
+            contentDescription = "Cactus plants"
+        )
+        Spacer(modifier = Modifier.padding(top = 30.dp))
+        Text(
+            modifier = Modifier.padding(top = 10.dp),
+            fontWeight = FontWeight.Medium,
+            text = "Sorry.",
+            color = MaterialTheme.colorScheme.onPrimary,
+            fontSize = 18.sp
+        )
+        Text(
+            modifier = Modifier.padding(top = 6.dp),
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.secondary,
+            fontSize = 16.sp,
+            text = "There are no plants in the list, please add your first plant."
+        )
+        Spacer(modifier = Modifier.padding(top = 20.dp))
+        Button(modifier = Modifier
+            .width(320.dp)
+            .height(54.dp),
+            shape = RoundedCornerShape(12.dp),
+            onClick = {
+                navController.navigate(Route.ADD_EDIT_PLANT)
+            }) {
+            Text(
+                text = "Add Your First Plant",
+                color = Color.White,
+                fontWeight = FontWeight.Medium,
+                fontSize = 18.sp
+            )
         }
     }
 }
