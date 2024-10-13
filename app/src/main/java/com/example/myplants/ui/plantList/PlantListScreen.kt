@@ -57,7 +57,7 @@ fun PlantListScreen(
 
     val plants by viewModel.items.collectAsState()
     val rows = plants.chunked(2)
-    println("isLoading ---> ${viewModel.isLoading}")
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -133,7 +133,7 @@ fun PlantListScreen(
                 }
 
 
-                Spacer(modifier = Modifier.padding(top = 20.dp))
+                Spacer(modifier = Modifier.padding(top = if (plants.isEmpty()) 40.dp else 0.dp))
                 if (plants.isEmpty()) {
                     EmptyState(navController = navController)
                 } else {
