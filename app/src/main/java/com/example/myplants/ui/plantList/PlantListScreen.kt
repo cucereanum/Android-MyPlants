@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +34,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -51,9 +54,10 @@ import com.example.myplants.navigation.Route
 fun PlantListScreen(
     navController: NavController, viewModel: PlantListViewModel = hiltViewModel()
 ) {
+
     val plants by viewModel.items.collectAsState()
     val rows = plants.chunked(2)
-
+    println("isLoading ---> ${viewModel.isLoading}")
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -63,107 +67,139 @@ fun PlantListScreen(
             contentScale = ContentScale.FillWidth,
             contentDescription = "Background plants"
         )
-
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Column(
+        if (viewModel.isLoading) {
+            CircularProgressIndicator(
                 modifier = Modifier
-                    .padding(top = 90.dp)
-                    .padding(horizontal = 20.dp)
+                    .align(Alignment.Center)
+                    .size(60.dp),
+                strokeWidth = 6.dp,
+                color = MaterialTheme.colorScheme.primary
+            )
+        } else {
+
+            Column(
+                modifier = Modifier.fillMaxSize()
             ) {
-                Row(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(top = 90.dp)
+                        .padding(horizontal = 20.dp)
                 ) {
-                    Text(
-                        text = "Let's Care \nMy Plants!",
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 26.sp,
-                        lineHeight = 32.sp
-                    )
-                    Box(
-                        contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Text(
+                            text = "Let's Care \nMy Plants!",
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 26.sp,
+                            lineHeight = 32.sp
+                        )
                         Box(
-                            modifier = Modifier
-                                .size(60.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.background)
-                                .clickable { /* Handle button click */ }
+                            contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Notifications,
-                                contentDescription = "Notifications",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.align(Alignment.Center)
+                            Box(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.background)
+                                    .clickable { /* Handle button click */ }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Notifications,
+                                    contentDescription = "Notifications",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .offset(x = -2.dp, y = 2.dp)
+                                    .align(Alignment.TopEnd)
+                                    .background(Color.Red, CircleShape)
                             )
                         }
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .offset(x = -2.dp, y = 2.dp)
-                                .align(Alignment.TopEnd)
-                                .background(Color.Red, CircleShape)
-                        )
                     }
+
+                    FilterRow(
+                        filterList = viewModel.filterList,
+                        selectFilter = viewModel::selectFilter,
+                        selectedFilterType = viewModel.selectedFilterType
+                    )
                 }
 
-                FilterRow(
-                    filterList = viewModel.filterList,
-                    selectFilter = viewModel::selectFilter,
-                    selectedFilterType = viewModel.selectedFilterType
-                )
-            }
 
+                Spacer(modifier = Modifier.padding(top = 20.dp))
+                if (plants.isEmpty()) {
+                    EmptyState(navController = navController)
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 16.dp)
 
-            Spacer(modifier = Modifier.padding(top = 20.dp))
-            if (plants.isEmpty()) {
-                EmptyState(navController = navController)
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 16.dp)
-                ) {
-                    items(rows.size) { rowIndex ->
-                        val rowItems = rows[rowIndex]
+                    ) {
+                        items(rows.size) { rowIndex ->
+                            val rowItems = rows[rowIndex]
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            rowItems.forEach { plant ->
-                                PlantListItem(plant, modifier = Modifier.weight(1f))
-                            }
-                            if (rowItems.size < 2) {
-                                Spacer(modifier = Modifier.weight(1f))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = if (rowIndex == rows.size - 1) 30.dp else 0.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                rowItems.forEach { plant ->
+                                    PlantListItem(plant, modifier = Modifier.weight(1f))
+                                }
+                                if (rowItems.size < 2) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
                             }
                         }
                     }
+
                 }
             }
-        }
 
-        FloatingActionButton(
-            onClick = {
-                navController.navigate(Route.ADD_EDIT_PLANT)
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-                .padding(bottom = 30.dp),
-            containerColor = MaterialTheme.colorScheme.primary
-        ) {
-            Icon(
-                Icons.Filled.Add,
-                contentDescription = "Add",
-                tint = Color.White,
-                modifier = Modifier.size(32.dp)
-            )
+            if (plants.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0f),
+                                    Color.White.copy(alpha = 0.8f)
+                                )
+                            )
+                        )
+                        .blur(20.dp)
+                )
+                FloatingActionButton(
+                    onClick = {
+                        navController.navigate(Route.ADD_EDIT_PLANT)
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                        .padding(bottom = 30.dp),
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = "Add",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+            }
         }
     }
 }

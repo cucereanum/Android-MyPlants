@@ -12,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -33,6 +34,9 @@ class PlantListViewModel @Inject constructor(
     // Expose the list of items as StateFlow (immutable)
     val items: StateFlow<List<Plant>> = _items.asStateFlow()
 
+    var isLoading by mutableStateOf(false)
+        private set
+
     init {
         viewModelScope.launch {
             getPlants()
@@ -45,14 +49,14 @@ class PlantListViewModel @Inject constructor(
     }
 
     private suspend fun getPlants() {
-
+        isLoading = true
         try {
-            repository.getPlants()
-                .collect { itemsList ->
-                    _items.value = itemsList
-                }
+            val itemsList = repository.getPlants().first()
+            _items.value = itemsList
         } catch (e: Exception) {
             e.message?.let { Log.e("Get Plant List Error", it) }
+        } finally {
+            isLoading = false
         }
 
     }
