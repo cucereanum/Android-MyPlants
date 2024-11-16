@@ -13,9 +13,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.myplants.navigation.Route
 import com.example.myplants.ui.addEditPlant.AddEditPlantScreen
 import com.example.myplants.ui.plantDetails.PlantDetailsScreen
@@ -50,8 +52,12 @@ class MainActivity : ComponentActivity() {
                         composable(Route.ADD_EDIT_PLANT) {
                             AddEditPlantScreen(navController, outputDirectory, cameraExecutor)
                         }
-                        composable(Route.PLANT_DETAILS) {
-                            PlantDetailsScreen(navController)
+                        composable(
+                            Route.PLANT_DETAILS,
+                            arguments = listOf(navArgument("plantId") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            val plantId = backStackEntry.arguments?.getInt("plantId") ?: 0
+                            PlantDetailsScreen(navController, plantId)
                         }
                     }
                 }
