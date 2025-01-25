@@ -19,6 +19,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
@@ -34,43 +35,8 @@ class AddEditPlantViewModel @Inject constructor(
     // todo 4. Blur View on bottom of the screen; Background Blur and not dark for dialogs;
     // todo 5: refactor code!
 
-    var imageUri by mutableStateOf<String?>(null)
+    var state by mutableStateOf(AddEditPlantState())
         private set
-
-    var showDialog by mutableStateOf(false)
-        private set
-
-    var showCameraView by mutableStateOf(false)
-        private set
-
-    var plantName by mutableStateOf("")
-        private set
-
-
-    var time by mutableStateOf<LocalDateTime>(LocalDateTime.now())
-        private set
-
-    var waterAmount by mutableStateOf("")
-        private set
-
-    var plantSize by mutableStateOf(PlantSizeType.Medium)
-        private set
-
-    var description by mutableStateOf("")
-        private set
-
-    var showDatesDialog by mutableStateOf(false)
-        private set
-
-    var showTimeDialog by mutableStateOf(false)
-        private set
-
-    var showPlantSizeDialog by mutableStateOf(false)
-        private set
-
-    var lensFacing by mutableStateOf(CameraSelector.LENS_FACING_BACK)
-        private set
-
 
     var selectedDays = mutableStateListOf<DayOfWeek>().apply {
         val currentDay = getCurrentDayOfWeek()
@@ -93,7 +59,6 @@ class AddEditPlantViewModel @Inject constructor(
                 day?.let {
                     if (selectedDays.contains(it)) {
                         selectedDays.remove(it)
-
                         if (selectedDays.size < DayOfWeek.allDays().size) {
                             selectedDays.removeIf { it != it }
                         }
@@ -109,89 +74,109 @@ class AddEditPlantViewModel @Inject constructor(
     }
 
     fun addPlant() {
-        viewModelScope.launch {
-            repository.insertPlant(
-                Plant(
-                    plantName = plantName,
-                    description = description,
-                    waterAmount = waterAmount,
-                    imageUri = imageUri!!,
-                    time = 0,
-                    selectedDays = DayOfWeek.valueOf("Friday")
+        if (validate()) {
+            viewModelScope.launch {
+                repository.insertPlant(
+                    Plant(
+                        plantName = state.plantName,
+                        description = state.description,
+                        waterAmount = state.waterAmount,
+                        imageUri = state.imageUri ?: "",
+                        time = state.time.toInstant(ZoneOffset.UTC).toEpochMilli(),
+                        selectedDays = DayOfWeek.valueOf("Friday")
+                    )
                 )
-            )
+            }
         }
     }
-
 
     fun getSelectedDaysString(): String {
         return selectedDays.joinToString(", ") { it.dayName }
     }
 
-    fun updateShowDatesDialog(value: Boolean) {
-        showDatesDialog = value
-    }
+    fun updateState(event: UpdateEventWithValue) {
+        when (event) {
+            is UpdateEventWithValue.UpdateTime -> {
+                val now = LocalDateTime.now()
+                state = state.copy(
+                    time = now.withHour(event.hour).withMinute(event.minute),
+                    showTimeDialog = false
+                )
+            }
 
-    fun updateCameraView(value: Boolean) {
-        showCameraView = value
-    }
-
-    fun updateImageUri(uri: String?) {
-        imageUri = uri;
-    }
-
-    fun updateShowDialog(value: Boolean) {
-        showDialog = value
-    }
-
-    fun updateShowTimeDialog(value: Boolean) {
-        showTimeDialog = value
-    }
-
-    fun updateShowPlantSizeDialog(value: Boolean) {
-        showPlantSizeDialog = value
-    }
-
-
-    fun updatePlantName(value: String) {
-        plantName = value
-    }
-
-
-    fun updateTime(hour: Int, minute: Int) {
-        val now = LocalDateTime.now()
-        time = now.withHour(hour).withMinute(minute)
-        showTimeDialog = false
+            is UpdateEventWithValue.UpdateState -> {
+                state = when (event.type) {
+                    UpdateEvent.IMAGE_URI -> state.copy(imageUri = event.value as String?)
+                    UpdateEvent.SHOW_DIALOG -> state.copy(showDialog = event.value as Boolean)
+                    UpdateEvent.SHOW_CAMERA_VIEW -> state.copy(showCameraView = event.value as Boolean)
+                    UpdateEvent.PLANT_NAME -> state.copy(plantName = event.value as String)
+                    UpdateEvent.WATER_AMOUNT -> state.copy(waterAmount = event.value as String)
+                    UpdateEvent.DESCRIPTION -> state.copy(description = event.value as String)
+                    UpdateEvent.SHOW_DATES_DIALOG -> state.copy(showDatesDialog = event.value as Boolean)
+                    UpdateEvent.SHOW_TIME_DIALOG -> state.copy(showTimeDialog = event.value as Boolean)
+                    UpdateEvent.SHOW_PLANT_SIZE_DIALOG -> state.copy(showPlantSizeDialog = event.value as Boolean)
+                    UpdateEvent.LENS_FACING -> state.copy(lensFacing = event.value as Int)
+                    UpdateEvent.TIME -> TODO() // Do nothing here, handled above
+                    UpdateEvent.PLANT_SIZE -> state.copy(plantSize = PlantSizeType.valueOf(event.value.toString()))
+                }
+            }
+        }
     }
 
 
     fun displaySelectedTime(): String {
         val formatter = DateTimeFormatter.ofPattern("HH:mm")
-        val formattedTime = time.format(formatter)
-
-        return formattedTime
+        return state.time.format(formatter)
     }
 
-    fun updateWaterAmount(value: String) {
-        waterAmount = value
+    fun validate(): Boolean {
+        var isValid = true
+
+        if (state.imageUri.isNullOrEmpty()) {
+            state = state.copy(imageUriError = "Image is required.")
+            isValid = false
+        } else {
+            state = state.copy(imageUriError = null)
+        }
+
+        if (state.plantName.isBlank()) {
+            state = state.copy(plantNameError = "Plant name cannot be empty.")
+            isValid = false
+        } else {
+            state = state.copy(plantNameError = null)
+        }
+
+        if (state.waterAmount.isBlank()) {
+            state = state.copy(waterAmountError = "Water amount cannot be empty.")
+            isValid = false
+        } else {
+            state = state.copy(waterAmountError = null)
+        }
+
+        if (state.description.isBlank()) {
+            state = state.copy(descriptionError = "Description cannot be empty.")
+            isValid = false
+        } else if (state.description.length > 150) {
+            state = state.copy(descriptionError = "Description cannot exceed 150 characters.")
+            isValid = false
+        } else {
+            state = state.copy(descriptionError = null)
+        }
+
+        return isValid
     }
 
-    fun updatePlantSize(value: String) {
-        plantSize = PlantSizeType.valueOf(value)
-    }
-
-    fun updateDescription(value: String) {
-        description = value
-    }
-
-    // Create a function to get the current day as a string
-    fun getCurrentDayOfWeek(): String {
+    private fun getCurrentDayOfWeek(): String {
         val sdf = SimpleDateFormat("EEEE", Locale.getDefault()) // "EEEE" for full day name
         return sdf.format(Calendar.getInstance().time)
     }
 
-    fun updateLensFacing(value: Int) {
-        lensFacing = value
+    fun getErrorMessages(): List<String> {
+        return listOfNotNull(
+            state.imageUriError,
+            state.plantNameError,
+            state.waterAmountError,
+            state.descriptionError
+        )
     }
-
 }

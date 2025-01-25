@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -81,23 +82,30 @@ fun AddEditPlantScreen(
     cameraExecutor: ExecutorService,
     viewModel: AddEditPlantViewModel = hiltViewModel()
 ) {
-
+    val state = viewModel.state
     val context = LocalContext.current
-    val photoPickerLauncher =
-        rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia(),
-            onResult = { uri ->
-                if (uri !== null) {
-                    val newImagePath = saveImageToInternalStorage(context, uri)
-                    viewModel.updateImageUri(newImagePath)
-                }
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            if (uri !== null) {
+                val newImagePath = saveImageToInternalStorage(context, uri)
+                viewModel.updateState(
+                    UpdateEventWithValue.UpdateState(
+                        UpdateEvent.IMAGE_URI, newImagePath ?: ""
+                    )
+                )
             }
-        )
+        })
 
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            viewModel.updateCameraView(true)
+            viewModel.updateState(
+                UpdateEventWithValue.UpdateState(
+                    UpdateEvent.SHOW_CAMERA_VIEW, true
+                )
+            )
         } else {
             // Handle the case where permission is denied
             Toast.makeText(
@@ -108,19 +116,26 @@ fun AddEditPlantScreen(
         }
     }
 
+    val errorMessages = viewModel.getErrorMessages()
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(errorMessages) {
+        if (errorMessages.isNotEmpty()) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
     // Function to request camera permission
     fun requestCameraPermission() {
         when {
             ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
+                context, Manifest.permission.CAMERA
             ) == PackageManager.PERMISSION_GRANTED -> {
                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
 
             ActivityCompat.shouldShowRequestPermissionRationale(
-                context as Activity,
-                Manifest.permission.CAMERA
+                context as Activity, Manifest.permission.CAMERA
             ) -> {
                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
@@ -134,77 +149,114 @@ fun AddEditPlantScreen(
 
     //todo: update UI accordingly + refactor code
     fun handleImageCapture(uri: Uri) {
-        viewModel.updateCameraView(false)
-        viewModel.updateImageUri(uri.toString())
-
+        viewModel.updateState(UpdateEventWithValue.UpdateState(UpdateEvent.SHOW_CAMERA_VIEW, false))
+        viewModel.updateState(
+            UpdateEventWithValue.UpdateState(
+                UpdateEvent.IMAGE_URI, uri.toString()
+            )
+        )
     }
 
-    if (viewModel.showTimeDialog) {
-        SelectTimeDialog(
-            modifier = Modifier.width(400.dp),
-            updateTime = { hour, minute ->
-                viewModel.updateTime(hour, minute)
-            },
-            onDismissRequest = {
-                viewModel.updateShowTimeDialog(false)
-            })
-    } else if (viewModel.showDatesDialog) {
-        DatesDialog(
-            modifier = Modifier.width(400.dp),
+    if (state.showTimeDialog) {
+        SelectTimeDialog(modifier = Modifier.width(400.dp), updateTime = { hour, minute ->
+            viewModel.updateState(UpdateEventWithValue.UpdateTime(hour, minute))
+        }, onDismissRequest = {
+            viewModel.updateState(
+                UpdateEventWithValue.UpdateState(
+                    UpdateEvent.SHOW_TIME_DIALOG, false
+                )
+            )
+        })
+    } else if (state.showDatesDialog) {
+        DatesDialog(modifier = Modifier.width(400.dp),
             selectedDays = viewModel.selectedDays,
             onDismissRequest = {
-                viewModel.updateShowDatesDialog(false)
+                viewModel.updateState(
+                    UpdateEventWithValue.UpdateState(
+                        UpdateEvent.SHOW_DATES_DIALOG, false
+                    )
+                )
             }) {
             viewModel.toggleDaySelection(it)
         }
-    } else if (viewModel.showPlantSizeDialog) {
-        PlantSizeDialog(
-            modifier = Modifier.width(400.dp),
-            selectedPlant = viewModel.plantSize,
+    } else if (state.showPlantSizeDialog) {
+        PlantSizeDialog(modifier = Modifier.width(400.dp),
+            selectedPlant = state.plantSize,
             togglePlantSizeSelection = {
-                viewModel.updatePlantSize(it)
+                viewModel.updateState(UpdateEventWithValue.UpdateState(UpdateEvent.PLANT_SIZE, it))
             },
             onDismissRequest = {
-                viewModel.updateShowPlantSizeDialog(false)
+                viewModel.updateState(
+                    UpdateEventWithValue.UpdateState(
+                        UpdateEvent.SHOW_PLANT_SIZE_DIALOG,
+                        false
+                    )
+                )
             })
-    } else if (viewModel.showDialog) {
-
-        AlertDialog(
-            onDismissRequest = { viewModel.updateShowDialog(false) },
+    } else if (state.showDialog) {
+        AlertDialog(onDismissRequest = {
+            viewModel.updateState(
+                UpdateEventWithValue.UpdateState(
+                    UpdateEvent.SHOW_DIALOG,
+                    false
+                )
+            )
+        },
             title = { Text("Choose Image Source") },
             text = {
                 Column {
                     TextButton(onClick = {
                         requestCameraPermission()
-                        viewModel.updateShowDialog(false)
+                        viewModel.updateState(
+                            UpdateEventWithValue.UpdateState(
+                                UpdateEvent.SHOW_DIALOG,
+                                false
+                            )
+                        )
                     }) {
                         Text("Take Photo")
                     }
                     TextButton(onClick = {
                         photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        viewModel.updateShowDialog(false)
+                        viewModel.updateState(
+                            UpdateEventWithValue.UpdateState(
+                                UpdateEvent.SHOW_DIALOG,
+                                false
+                            )
+                        )
                     }) {
                         Text("Choose from Gallery")
                     }
                 }
             },
             confirmButton = {
-                Button(onClick = { viewModel.updateShowDialog(false) }) {
+                Button(onClick = {
+                    viewModel.updateState(
+                        UpdateEventWithValue.UpdateState(
+                            UpdateEvent.SHOW_DIALOG,
+                            false
+                        )
+                    )
+                }) {
                     Text("Cancel", color = Color.White)
                 }
-            }
-        )
+            })
     }
-    if (viewModel.showCameraView) {
+    if (state.showCameraView) {
         CameraView(
             outputDirectory = outputDirectory,
             executor = cameraExecutor,
-            lensFacing = viewModel.lensFacing,
+            lensFacing = state.lensFacing,
             updateLensFacing = {
-                viewModel.updateLensFacing(it)
+                viewModel.updateState(UpdateEventWithValue.UpdateState(UpdateEvent.LENS_FACING, it))
             },
             removeCameraView = {
-                viewModel.updateCameraView(false)
+                viewModel.updateState(
+                    UpdateEventWithValue.UpdateState(
+                        UpdateEvent.SHOW_CAMERA_VIEW,
+                        false
+                    )
+                )
             },
             onImageCaptured = ::handleImageCapture
         ) {
@@ -221,9 +273,9 @@ fun AddEditPlantScreen(
                     .background(MaterialTheme.colorScheme.onBackground)
             ) {
                 Box {
-                    if (viewModel.imageUri != null) {
+                    if (state.imageUri != null) {
                         AsyncImage(
-                            model = viewModel.imageUri,
+                            model = state.imageUri,
                             contentScale = ContentScale.FillWidth,
                             contentDescription = "Background plants"
                         )
@@ -235,16 +287,14 @@ fun AddEditPlantScreen(
                             contentDescription = "Background plants"
                         )
                     }
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .offset(x = 20.dp, y = 60.dp)
-                            .align(Alignment.TopStart)
-                            .background(Color.White, CircleShape)
-                            .clickable {
-                                navController.popBackStack()
-                            }
-                    ) {
+                    Box(modifier = Modifier
+                        .size(40.dp)
+                        .offset(x = 20.dp, y = 60.dp)
+                        .align(Alignment.TopStart)
+                        .background(Color.White, CircleShape)
+                        .clickable {
+                            navController.popBackStack()
+                        }) {
                         Icon(
                             imageVector = Icons.Default.ChevronLeft,
                             contentDescription = "Go Back",
@@ -267,7 +317,7 @@ fun AddEditPlantScreen(
                             modifier = Modifier
                                 .width(100.dp)
                                 .height(180.dp)
-                                .graphicsLayer(if (viewModel.imageUri == null) 1.0f else 0.0f),
+                                .graphicsLayer(if (state.imageUri == null) 1.0f else 0.0f),
                             painter = painterResource(id = R.drawable.plant),
                             contentScale = ContentScale.Fit,
                             contentDescription = "Single plant"
@@ -276,11 +326,14 @@ fun AddEditPlantScreen(
 
 
                         Spacer(modifier = Modifier.height(30.dp))
-                        Button(
-                            shape = RoundedCornerShape(12.dp),
-                            onClick = {
-                                viewModel.updateShowDialog(true)
-                            }) {
+                        Button(shape = RoundedCornerShape(12.dp), onClick = {
+                            viewModel.updateState(
+                                UpdateEventWithValue.UpdateState(
+                                    UpdateEvent.SHOW_DIALOG,
+                                    true
+                                )
+                            )
+                        }) {
                             Row(
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
@@ -309,19 +362,21 @@ fun AddEditPlantScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(0.6f)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
             ) {
                 Column(
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
                     CustomTextField(
-                        value = viewModel.plantName,
-                        onValueChange = {
-                            viewModel.updatePlantName(it)
-                        },
-                        label = "Plant name*"
+                        value = state.plantName, onValueChange = {
+                            viewModel.updateState(
+                                UpdateEventWithValue.UpdateState(
+                                    UpdateEvent.PLANT_NAME,
+                                    it
+                                )
+                            )
+                        }, label = "Plant name*"
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -340,30 +395,32 @@ fun AddEditPlantScreen(
                                 fontWeight = FontWeight.Medium
 
                             )
-                            TextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp)
-                                    .height(60.dp)
-                                    .clip(
-                                        RoundedCornerShape(14.dp)
-                                    ),
+                            TextField(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp)
+                                .height(60.dp)
+                                .clip(
+                                    RoundedCornerShape(14.dp)
+                                ),
                                 singleLine = true,
                                 maxLines = 1,
                                 readOnly = true,
-                                interactionSource = remember { MutableInteractionSource() }
-                                    .also { interactionSource ->
-                                        LaunchedEffect(interactionSource) {
-                                            interactionSource.interactions.collect {
-                                                if (it is PressInteraction.Release) {
-                                                    viewModel.updateShowDatesDialog(true)
-                                                }
+                                interactionSource = remember { MutableInteractionSource() }.also { interactionSource ->
+                                    LaunchedEffect(interactionSource) {
+                                        interactionSource.interactions.collect {
+                                            if (it is PressInteraction.Release) {
+                                                viewModel.updateState(
+                                                    UpdateEventWithValue.UpdateState(
+                                                        UpdateEvent.SHOW_DATES_DIALOG,
+                                                        true
+                                                    )
+                                                )
                                             }
                                         }
-                                    },
+                                    }
+                                },
                                 trailingIcon = {
-                                    IconButton(onClick = {
-                                    }) {
+                                    IconButton(onClick = {}) {
                                         Icon(
                                             Icons.Default.KeyboardArrowDown,
                                             contentDescription = "Dropdown Icon"
@@ -378,8 +435,7 @@ fun AddEditPlantScreen(
                                     unfocusedIndicatorColor = Color.Transparent
                                 ),
                                 value = viewModel.getSelectedDaysString(),
-                                onValueChange = {}
-                            )
+                                onValueChange = {})
 
 
                         }
@@ -395,30 +451,32 @@ fun AddEditPlantScreen(
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
                             )
-                            TextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp)
-                                    .height(60.dp)
-                                    .clip(
-                                        RoundedCornerShape(14.dp)
-                                    ),
+                            TextField(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp)
+                                .height(60.dp)
+                                .clip(
+                                    RoundedCornerShape(14.dp)
+                                ),
                                 singleLine = true,
                                 maxLines = 1,
                                 readOnly = true,
-                                interactionSource = remember { MutableInteractionSource() }
-                                    .also { interactionSource ->
-                                        LaunchedEffect(interactionSource) {
-                                            interactionSource.interactions.collect {
-                                                if (it is PressInteraction.Release) {
-                                                    viewModel.updateShowTimeDialog(true)
-                                                }
+                                interactionSource = remember { MutableInteractionSource() }.also { interactionSource ->
+                                    LaunchedEffect(interactionSource) {
+                                        interactionSource.interactions.collect {
+                                            if (it is PressInteraction.Release) {
+                                                viewModel.updateState(
+                                                    UpdateEventWithValue.UpdateState(
+                                                        UpdateEvent.SHOW_TIME_DIALOG,
+                                                        true
+                                                    )
+                                                )
                                             }
                                         }
-                                    },
+                                    }
+                                },
                                 trailingIcon = {
-                                    IconButton(onClick = {
-                                    }) {
+                                    IconButton(onClick = {}) {
                                         Icon(
                                             Icons.Default.KeyboardArrowDown,
                                             contentDescription = "Dropdown Icon"
@@ -433,8 +491,7 @@ fun AddEditPlantScreen(
                                     unfocusedIndicatorColor = Color.Transparent
                                 ),
                                 value = viewModel.displaySelectedTime(),
-                                onValueChange = {}
-                            )
+                                onValueChange = {})
 
 
                         }
@@ -456,14 +513,13 @@ fun AddEditPlantScreen(
                                 fontWeight = FontWeight.Medium
 
                             )
-                            TextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp)
-                                    .height(60.dp)
-                                    .clip(
-                                        RoundedCornerShape(14.dp)
-                                    ),
+                            TextField(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp)
+                                .height(60.dp)
+                                .clip(
+                                    RoundedCornerShape(14.dp)
+                                ),
                                 singleLine = true,
                                 maxLines = 1,
                                 colors = TextFieldDefaults.textFieldColors(
@@ -473,11 +529,15 @@ fun AddEditPlantScreen(
                                     focusedIndicatorColor = Color.Transparent,
                                     unfocusedIndicatorColor = Color.Transparent
                                 ),
-                                value = viewModel.waterAmount,
+                                value = state.waterAmount,
                                 onValueChange = {
-                                    viewModel.updateWaterAmount(it)
-                                }
-                            )
+                                    viewModel.updateState(
+                                        UpdateEventWithValue.UpdateState(
+                                            UpdateEvent.WATER_AMOUNT,
+                                            it
+                                        )
+                                    )
+                                })
 
 
                         }
@@ -493,30 +553,32 @@ fun AddEditPlantScreen(
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
                             )
-                            TextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp)
-                                    .height(60.dp)
-                                    .clip(
-                                        RoundedCornerShape(14.dp)
-                                    ),
+                            TextField(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp)
+                                .height(60.dp)
+                                .clip(
+                                    RoundedCornerShape(14.dp)
+                                ),
                                 singleLine = true,
                                 maxLines = 1,
                                 readOnly = true,
-                                interactionSource = remember { MutableInteractionSource() }
-                                    .also { interactionSource ->
-                                        LaunchedEffect(interactionSource) {
-                                            interactionSource.interactions.collect {
-                                                if (it is PressInteraction.Release) {
-                                                    viewModel.updateShowPlantSizeDialog(true)
-                                                }
+                                interactionSource = remember { MutableInteractionSource() }.also { interactionSource ->
+                                    LaunchedEffect(interactionSource) {
+                                        interactionSource.interactions.collect {
+                                            if (it is PressInteraction.Release) {
+                                                viewModel.updateState(
+                                                    UpdateEventWithValue.UpdateState(
+                                                        UpdateEvent.SHOW_PLANT_SIZE_DIALOG,
+                                                        true
+                                                    )
+                                                )
                                             }
                                         }
-                                    },
+                                    }
+                                },
                                 trailingIcon = {
-                                    IconButton(onClick = {
-                                    }) {
+                                    IconButton(onClick = {}) {
                                         Icon(
                                             Icons.Default.KeyboardArrowDown,
                                             contentDescription = "Dropdown Icon"
@@ -530,29 +592,46 @@ fun AddEditPlantScreen(
                                     focusedIndicatorColor = Color.Transparent,
                                     unfocusedIndicatorColor = Color.Transparent
                                 ),
-                                value = viewModel.plantSize.toString(),
-                                onValueChange = {}
-                            )
+                                value = state.plantSize.toString(),
+                                onValueChange = {})
 
 
                         }
 
                     }
                     CustomTextField(
-                        value = viewModel.description,
-                        onValueChange = {
-                            viewModel.updateDescription(it)
-                        },
-                        label = "Description",
-                        multiline = true
+                        value = state.description, onValueChange = {
+                            viewModel.updateState(
+                                UpdateEventWithValue.UpdateState(
+                                    UpdateEvent.DESCRIPTION,
+                                    it
+                                )
+                            )
+                        }, label = "Description", multiline = true
                     )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    if (errorMessages.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            errorMessages.forEach { errorMessage ->
+                                Text(
+                                    text = errorMessage,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
                     Spacer(modifier = Modifier.height(30.dp))
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
+
+
+                    Button(modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         onClick = {
                             viewModel.addPlant()
-                            navController.popBackStack()
+                            //navController.popBackStack()
                         }) {
                         Row(
                             horizontalArrangement = Arrangement.Center,

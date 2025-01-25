@@ -45,7 +45,6 @@ fun PlantDetailsScreen(
 
 
     LaunchedEffect(plantId) {
-        println("Called!!!")
         viewModel.loadPlant(plantId)
     }
 
