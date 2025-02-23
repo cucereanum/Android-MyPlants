@@ -14,6 +14,7 @@ class PlantRepositoryImpl(
     }
 
     override suspend fun deletePlant(plant: Plant) {
+        println("called $plant")
         return dao.deletePlant(plant)
     }
 

@@ -6,7 +6,7 @@ import com.example.myplants.data.Plant
 
 @Database(
     entities = [Plant::class],
-    version = 1
+    version = 2
 )
 abstract class PlantDatabase : RoomDatabase() {
     abstract val plantDao: PlantDao

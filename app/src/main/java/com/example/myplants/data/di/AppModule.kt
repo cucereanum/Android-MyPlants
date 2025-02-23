@@ -22,7 +22,7 @@ object AppModule {
             app,
             PlantDatabase::class.java,
             PlantDatabase.DATABASE_NAME
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     @Provides

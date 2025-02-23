@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -54,6 +55,10 @@ fun PlantListScreen(
 
     val plants by viewModel.items.collectAsState()
     val rows = plants.chunked(2)
+
+    LaunchedEffect(Unit) {
+        viewModel.getPlants()
+    }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -83,8 +88,7 @@ fun PlantListScreen(
                         .padding(horizontal = 20.dp)
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -98,13 +102,11 @@ fun PlantListScreen(
                         Box(
                             contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(60.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.background)
-                                    .clickable { /* Handle button click */ }
-                            ) {
+                            Box(modifier = Modifier
+                                .size(60.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.background)
+                                .clickable { /* Handle button click */ }) {
                                 Icon(
                                     imageVector = Icons.Outlined.Notifications,
                                     contentDescription = "Notifications",
@@ -150,8 +152,7 @@ fun PlantListScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 rowItems.forEach { plant ->
-                                    PlantListItem(
-                                        plant,
+                                    PlantListItem(plant,
                                         modifier = Modifier.weight(1f),
                                         onNavigateToPlantDetails = {
                                             navController.navigate(Route.plantDetailsRoute(plant.id))
@@ -176,8 +177,7 @@ fun PlantListScreen(
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    Color.White.copy(alpha = 0f),
-                                    Color.White.copy(alpha = 0.8f)
+                                    Color.White.copy(alpha = 0f), Color.White.copy(alpha = 0.8f)
                                 )
                             )
                         )

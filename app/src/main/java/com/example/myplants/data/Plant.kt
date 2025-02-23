@@ -11,6 +11,7 @@ data class Plant(
     val selectedDays: DayOfWeek,
     val waterAmount: String,
     val description: String,
+    val isWatered: Boolean = false,
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0
 )

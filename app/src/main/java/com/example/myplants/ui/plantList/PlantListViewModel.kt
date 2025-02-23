@@ -20,44 +20,66 @@ import javax.inject.Inject
 class PlantListViewModel @Inject constructor(
     private val repository: PlantRepository
 ) : ViewModel() {
-    // List of filter settings
-    var filterList by mutableStateOf(listOf("Upcoming", "Forgot to Water", "History"))
+
+    var filterList by mutableStateOf(PlantListFilter.entries)
         private set
 
-    // Selected filter index
-    var selectedFilterType by mutableStateOf("Upcoming")
+    var selectedFilterType by mutableStateOf(PlantListFilter.UPCOMING)
         private set
 
-    // Backing property for state
     private val _items = MutableStateFlow<List<Plant>>(emptyList())
 
-    // Expose the list of items as StateFlow (immutable)
     val items: StateFlow<List<Plant>> = _items.asStateFlow()
 
     var isLoading by mutableStateOf(false)
         private set
 
-    init {
-        viewModelScope.launch {
-            getPlants()
-        }
-    }
+//    init {
+//        viewModelScope.launch {
+//            getPlants()
+//        }
+//    }
 
-    // Function to update the selected filter
-    fun selectFilter(type: String) {
+    fun selectFilter(type: PlantListFilter) {
         selectedFilterType = type
+        filterPlants()
     }
 
-    private suspend fun getPlants() {
+    suspend fun getPlants() {
         isLoading = true
         try {
             val itemsList = repository.getPlants().first()
             _items.value = itemsList
+            filterPlants()
         } catch (e: Exception) {
             e.message?.let { Log.e("Get Plant List Error", it) }
         } finally {
             isLoading = false
         }
+    }
 
+    private fun filterPlants() {
+        viewModelScope.launch {
+            val allPlants = repository.getPlants().first()
+            val currentTime = System.currentTimeMillis()
+
+            val filteredList = when (selectedFilterType) {
+                PlantListFilter.UPCOMING -> allPlants.filter {
+                    println("time, ${it.time}, currentTime, $currentTime")
+                    !it.isWatered && it.time > currentTime
+                }
+
+                PlantListFilter.FORGOT_TO_WATER -> allPlants.filter {
+                    !it.isWatered && it.time < currentTime
+                }
+
+                PlantListFilter.HISTORY -> allPlants.filter {
+                    it.isWatered
+                }
+
+            }
+
+            _items.value = filteredList
+        }
     }
 }

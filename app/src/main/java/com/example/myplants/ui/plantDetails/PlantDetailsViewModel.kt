@@ -27,4 +27,10 @@ class PlantDetailsViewModel @Inject constructor(
         }
     }
 
+    fun deletePlant(plant: Plant) {
+        viewModelScope.launch {
+            repository.deletePlant(plant)
+        }
+    }
+
 }

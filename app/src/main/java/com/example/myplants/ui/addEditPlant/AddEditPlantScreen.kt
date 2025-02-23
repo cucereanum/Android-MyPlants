@@ -84,18 +84,18 @@ fun AddEditPlantScreen(
 ) {
     val state = viewModel.state
     val context = LocalContext.current
-    val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { uri ->
-            if (uri !== null) {
-                val newImagePath = saveImageToInternalStorage(context, uri)
-                viewModel.updateState(
-                    UpdateEventWithValue.UpdateState(
-                        UpdateEvent.IMAGE_URI, newImagePath ?: ""
+    val photoPickerLauncher =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia(),
+            onResult = { uri ->
+                if (uri !== null) {
+                    val newImagePath = saveImageToInternalStorage(context, uri)
+                    viewModel.updateState(
+                        UpdateEventWithValue.UpdateState(
+                            UpdateEvent.IMAGE_URI, newImagePath ?: ""
+                        )
                     )
-                )
-            }
-        })
+                }
+            })
 
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -188,8 +188,7 @@ fun AddEditPlantScreen(
             onDismissRequest = {
                 viewModel.updateState(
                     UpdateEventWithValue.UpdateState(
-                        UpdateEvent.SHOW_PLANT_SIZE_DIALOG,
-                        false
+                        UpdateEvent.SHOW_PLANT_SIZE_DIALOG, false
                     )
                 )
             })
@@ -197,50 +196,43 @@ fun AddEditPlantScreen(
         AlertDialog(onDismissRequest = {
             viewModel.updateState(
                 UpdateEventWithValue.UpdateState(
-                    UpdateEvent.SHOW_DIALOG,
-                    false
+                    UpdateEvent.SHOW_DIALOG, false
                 )
             )
-        },
-            title = { Text("Choose Image Source") },
-            text = {
-                Column {
-                    TextButton(onClick = {
-                        requestCameraPermission()
-                        viewModel.updateState(
-                            UpdateEventWithValue.UpdateState(
-                                UpdateEvent.SHOW_DIALOG,
-                                false
-                            )
-                        )
-                    }) {
-                        Text("Take Photo")
-                    }
-                    TextButton(onClick = {
-                        photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        viewModel.updateState(
-                            UpdateEventWithValue.UpdateState(
-                                UpdateEvent.SHOW_DIALOG,
-                                false
-                            )
-                        )
-                    }) {
-                        Text("Choose from Gallery")
-                    }
-                }
-            },
-            confirmButton = {
-                Button(onClick = {
+        }, title = { Text("Choose Image Source") }, text = {
+            Column {
+                TextButton(onClick = {
+                    requestCameraPermission()
                     viewModel.updateState(
                         UpdateEventWithValue.UpdateState(
-                            UpdateEvent.SHOW_DIALOG,
-                            false
+                            UpdateEvent.SHOW_DIALOG, false
                         )
                     )
                 }) {
-                    Text("Cancel", color = Color.White)
+                    Text("Take Photo")
                 }
-            })
+                TextButton(onClick = {
+                    photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    viewModel.updateState(
+                        UpdateEventWithValue.UpdateState(
+                            UpdateEvent.SHOW_DIALOG, false
+                        )
+                    )
+                }) {
+                    Text("Choose from Gallery")
+                }
+            }
+        }, confirmButton = {
+            Button(onClick = {
+                viewModel.updateState(
+                    UpdateEventWithValue.UpdateState(
+                        UpdateEvent.SHOW_DIALOG, false
+                    )
+                )
+            }) {
+                Text("Cancel", color = Color.White)
+            }
+        })
     }
     if (state.showCameraView) {
         CameraView(
@@ -253,8 +245,7 @@ fun AddEditPlantScreen(
             removeCameraView = {
                 viewModel.updateState(
                     UpdateEventWithValue.UpdateState(
-                        UpdateEvent.SHOW_CAMERA_VIEW,
-                        false
+                        UpdateEvent.SHOW_CAMERA_VIEW, false
                     )
                 )
             },
@@ -329,8 +320,7 @@ fun AddEditPlantScreen(
                         Button(shape = RoundedCornerShape(12.dp), onClick = {
                             viewModel.updateState(
                                 UpdateEventWithValue.UpdateState(
-                                    UpdateEvent.SHOW_DIALOG,
-                                    true
+                                    UpdateEvent.SHOW_DIALOG, true
                                 )
                             )
                         }) {
@@ -372,8 +362,7 @@ fun AddEditPlantScreen(
                         value = state.plantName, onValueChange = {
                             viewModel.updateState(
                                 UpdateEventWithValue.UpdateState(
-                                    UpdateEvent.PLANT_NAME,
-                                    it
+                                    UpdateEvent.PLANT_NAME, it
                                 )
                             )
                         }, label = "Plant name*"
@@ -411,8 +400,7 @@ fun AddEditPlantScreen(
                                             if (it is PressInteraction.Release) {
                                                 viewModel.updateState(
                                                     UpdateEventWithValue.UpdateState(
-                                                        UpdateEvent.SHOW_DATES_DIALOG,
-                                                        true
+                                                        UpdateEvent.SHOW_DATES_DIALOG, true
                                                     )
                                                 )
                                             }
@@ -467,8 +455,7 @@ fun AddEditPlantScreen(
                                             if (it is PressInteraction.Release) {
                                                 viewModel.updateState(
                                                     UpdateEventWithValue.UpdateState(
-                                                        UpdateEvent.SHOW_TIME_DIALOG,
-                                                        true
+                                                        UpdateEvent.SHOW_TIME_DIALOG, true
                                                     )
                                                 )
                                             }
@@ -533,8 +520,7 @@ fun AddEditPlantScreen(
                                 onValueChange = {
                                     viewModel.updateState(
                                         UpdateEventWithValue.UpdateState(
-                                            UpdateEvent.WATER_AMOUNT,
-                                            it
+                                            UpdateEvent.WATER_AMOUNT, it
                                         )
                                     )
                                 })
@@ -569,8 +555,7 @@ fun AddEditPlantScreen(
                                             if (it is PressInteraction.Release) {
                                                 viewModel.updateState(
                                                     UpdateEventWithValue.UpdateState(
-                                                        UpdateEvent.SHOW_PLANT_SIZE_DIALOG,
-                                                        true
+                                                        UpdateEvent.SHOW_PLANT_SIZE_DIALOG, true
                                                     )
                                                 )
                                             }
@@ -603,8 +588,7 @@ fun AddEditPlantScreen(
                         value = state.description, onValueChange = {
                             viewModel.updateState(
                                 UpdateEventWithValue.UpdateState(
-                                    UpdateEvent.DESCRIPTION,
-                                    it
+                                    UpdateEvent.DESCRIPTION, it
                                 )
                             )
                         }, label = "Description", multiline = true
@@ -630,8 +614,10 @@ fun AddEditPlantScreen(
                     Button(modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         onClick = {
-                            viewModel.addPlant()
-                            //navController.popBackStack()
+                            if (viewModel.validate()) {
+                                viewModel.addPlant()
+                                navController.popBackStack()
+                            }
                         }) {
                         Row(
                             horizontalArrangement = Arrangement.Center,

@@ -6,17 +6,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -85,20 +88,39 @@ fun PlantDetailsScreen(
                         tint = Color.Black
                     )
                 }
-                Box(modifier = Modifier
-                    .size(40.dp)
-                    .background(Color.White, CircleShape)
-                    .clickable {
-                        navController.popBackStack()
-                    }) {
-                    Icon(
-                        imageVector = Icons.Outlined.Edit,
-                        contentDescription = "Edit",
-                        modifier = Modifier
-                            .size(30.dp)
-                            .align(Alignment.Center),
-                        tint = Color.Black
-                    )
+                Row {
+                    Box(modifier = Modifier
+                        .size(40.dp)
+                        .background(Color.White, CircleShape)
+                        .clickable {
+                            navController.popBackStack()
+                        }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Edit,
+                            contentDescription = "Edit",
+                            modifier = Modifier
+                                .size(30.dp)
+                                .align(Alignment.Center),
+                            tint = Color.Black
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Box(modifier = Modifier
+                        .size(40.dp)
+                        .background(Color.White, CircleShape)
+                        .clickable {
+                            plant?.let { viewModel.deletePlant(it) }
+                            navController.popBackStack()
+                        }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "Delete",
+                            modifier = Modifier
+                                .size(30.dp)
+                                .align(Alignment.Center),
+                            tint = Color.Black
+                        )
+                    }
                 }
             }
         }

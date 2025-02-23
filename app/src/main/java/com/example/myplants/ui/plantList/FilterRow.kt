@@ -21,11 +21,11 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun FilterRow(
     modifier: Modifier = Modifier,
-    filterList: List<String>,
-    selectFilter: (String) -> Unit,
-    selectedFilterType: String
+    filterList: List<PlantListFilter>,
+    selectFilter: (PlantListFilter) -> Unit,
+    selectedFilterType: PlantListFilter
 ) {
-
+    println("selectedFilterType, $selectedFilterType")
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -35,7 +35,8 @@ fun FilterRow(
     ) {
 
         filterList.forEachIndexed { _, name ->
-            FilterRowListItem(name = name, isSelected = selectedFilterType === name,
+            FilterRowListItem(name = name,
+                isSelected = selectedFilterType == name,
                 onClick = { selectFilter(name) }
             )
         }
@@ -45,7 +46,7 @@ fun FilterRow(
 @Composable
 fun FilterRowListItem(
     modifier: Modifier = Modifier,
-    name: String,
+    name: PlantListFilter,
     isSelected: Boolean = false,
     onClick: () -> Unit,
 ) {
@@ -57,7 +58,7 @@ fun FilterRowListItem(
         ) {
         Text(
             modifier = Modifier.padding(end = 10.dp),
-            text = name,
+            text = name.displayName,
             color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             fontSize = 16.sp,

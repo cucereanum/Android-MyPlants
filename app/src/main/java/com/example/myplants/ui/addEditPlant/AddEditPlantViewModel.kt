@@ -74,19 +74,18 @@ class AddEditPlantViewModel @Inject constructor(
     }
 
     fun addPlant() {
-        if (validate()) {
-            viewModelScope.launch {
-                repository.insertPlant(
-                    Plant(
-                        plantName = state.plantName,
-                        description = state.description,
-                        waterAmount = state.waterAmount,
-                        imageUri = state.imageUri ?: "",
-                        time = state.time.toInstant(ZoneOffset.UTC).toEpochMilli(),
-                        selectedDays = DayOfWeek.valueOf("Friday")
-                    )
+        viewModelScope.launch {
+            repository.insertPlant(
+                Plant(
+                    plantName = state.plantName,
+                    description = state.description,
+                    waterAmount = state.waterAmount,
+                    imageUri = state.imageUri ?: "",
+                    time = state.time.toInstant(ZoneOffset.UTC).toEpochMilli(),
+                    selectedDays = DayOfWeek.valueOf("Friday"),
+                    isWatered = false
                 )
-            }
+            )
         }
     }
 
