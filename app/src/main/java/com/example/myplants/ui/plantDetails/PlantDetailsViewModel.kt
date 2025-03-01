@@ -27,9 +27,23 @@ class PlantDetailsViewModel @Inject constructor(
         }
     }
 
-    fun deletePlant(plant: Plant) {
-        viewModelScope.launch {
-            repository.deletePlant(plant)
+    fun deletePlant() {
+        _plant.value?.let { plant ->
+            viewModelScope.launch {
+                repository.deletePlant(plant)
+                _plant.value = null // Clear state after deletion
+            }
+        }
+    }
+
+    fun onMarkAsWatered() {
+        _plant.value?.let { currentPlant ->
+            val updatedPlant = currentPlant.copy(isWatered = true)
+
+            viewModelScope.launch {
+                repository.updatePlant(updatedPlant)
+                _plant.value = updatedPlant // Update state after API call
+            }
         }
     }
 

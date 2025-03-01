@@ -13,4 +13,6 @@ interface PlantRepository {
     suspend fun insertPlant(plant: Plant)
 
     suspend fun deletePlant(plant: Plant)
+
+    suspend fun updatePlant(plant: Plant)
 }

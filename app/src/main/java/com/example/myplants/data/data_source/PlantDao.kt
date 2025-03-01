@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.example.myplants.data.Plant
 import kotlinx.coroutines.flow.Flow
 
@@ -22,4 +23,7 @@ interface PlantDao {
 
     @Delete
     suspend fun deletePlant(plant: Plant)
+
+    @Update
+    suspend fun updatePlant(plant: Plant)
 }

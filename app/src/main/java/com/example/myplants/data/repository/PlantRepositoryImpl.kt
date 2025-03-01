@@ -25,4 +25,8 @@ class PlantRepositoryImpl(
     override suspend fun insertPlant(plant: Plant) {
         return dao.insertPlant(plant)
     }
+
+    override suspend fun updatePlant(plant: Plant) {
+        return dao.updatePlant(plant)
+    }
 }

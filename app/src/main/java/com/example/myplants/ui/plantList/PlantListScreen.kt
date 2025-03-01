@@ -134,7 +134,10 @@ fun PlantListScreen(
 
                 Spacer(modifier = Modifier.padding(top = if (plants.isEmpty()) 40.dp else 0.dp))
                 if (plants.isEmpty()) {
-                    EmptyState(navController = navController)
+                    EmptyState(
+                        navController = navController,
+                        selectedFilterType = viewModel.selectedFilterType
+                    )
                 } else {
                     LazyColumn(
                         modifier = Modifier
@@ -207,7 +210,30 @@ fun PlantListScreen(
 }
 
 @Composable
-fun EmptyState(navController: NavController) {
+fun EmptyState(
+    navController: NavController,
+    selectedFilterType: PlantListFilter
+) {
+    val (title, message, buttonText) = when (selectedFilterType) {
+        PlantListFilter.UPCOMING -> Triple(
+            "No Upcoming Plants",
+            "There are no upcoming plants to water. Please add a new plant to keep track of your watering schedule.",
+            "Add a Plant"
+        )
+
+        PlantListFilter.FORGOT_TO_WATER -> Triple(
+            "No Missed Waterings",
+            "Great job! You have no plants that you forgot to water. Stay on top of your schedule to keep your plants healthy.",
+            "View Plants"
+        )
+
+        PlantListFilter.HISTORY -> Triple(
+            "No Watering History",
+            "Your watering history is empty. Once you water a plant, it will appear here.",
+            "View Plants"
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -226,7 +252,7 @@ fun EmptyState(navController: NavController) {
         Text(
             modifier = Modifier.padding(top = 10.dp),
             fontWeight = FontWeight.Medium,
-            text = "Sorry.",
+            text = title,
             color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 18.sp
         )
@@ -236,22 +262,26 @@ fun EmptyState(navController: NavController) {
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.secondary,
             fontSize = 16.sp,
-            text = "There are no plants in the list, please add your first plant."
+            text = message
         )
         Spacer(modifier = Modifier.padding(top = 20.dp))
-        Button(modifier = Modifier
-            .width(320.dp)
-            .height(54.dp),
-            shape = RoundedCornerShape(12.dp),
-            onClick = {
-                navController.navigate(Route.ADD_EDIT_PLANT)
-            }) {
-            Text(
-                text = "Add Your First Plant",
-                color = Color.White,
-                fontWeight = FontWeight.Medium,
-                fontSize = 18.sp
-            )
+        if (selectedFilterType === PlantListFilter.UPCOMING) {
+            Button(
+                modifier = Modifier
+                    .width(320.dp)
+                    .height(54.dp),
+                shape = RoundedCornerShape(12.dp),
+                onClick = {
+                    navController.navigate(Route.ADD_EDIT_PLANT)
+                }
+            ) {
+                Text(
+                    text = buttonText,
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 18.sp
+                )
+            }
         }
     }
 }
