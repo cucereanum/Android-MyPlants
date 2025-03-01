@@ -80,6 +80,7 @@ class AddEditPlantViewModel @Inject constructor(
                     plantName = state.plantName,
                     description = state.description,
                     waterAmount = state.waterAmount,
+                    size = state.plantSize.toString(),
                     imageUri = state.imageUri ?: "",
                     time = state.time.toInstant(ZoneOffset.UTC).toEpochMilli(),
                     selectedDays = DayOfWeek.valueOf("Friday"),

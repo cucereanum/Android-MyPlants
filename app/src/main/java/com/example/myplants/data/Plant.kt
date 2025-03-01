@@ -10,6 +10,7 @@ data class Plant(
     val time: Long,
     val selectedDays: DayOfWeek,
     val waterAmount: String,
+    val size: String,
     val description: String,
     val isWatered: Boolean = false,
     @PrimaryKey(autoGenerate = true)

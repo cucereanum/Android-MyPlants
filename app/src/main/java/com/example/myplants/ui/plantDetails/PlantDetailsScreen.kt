@@ -53,8 +53,12 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import android.graphics.RenderEffect
 import android.graphics.Shader
-import androidx.compose.ui.graphics.GraphicsLayerScope
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.text.style.TextOverflow
+
+//todo: create reusable components
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
@@ -141,6 +145,92 @@ fun PlantDetailsScreen(
                     }
                 }
             }
+            Box(
+                modifier = Modifier
+                    .height(180.dp)
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.White.copy(alpha = 0.45f),
+                                Color.White
+                            )
+                        )
+                    )
+                    .align(Alignment.BottomCenter)
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .height(160.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .height(70.dp)
+                        .padding(horizontal = 30.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .fillMaxWidth()
+                        .background(Color.White)
+
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 30.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Size",
+                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6F),
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 12.sp
+                            )
+                            plant?.size?.let {
+                                Text(
+                                    text = it,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = "Water",
+                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6F),
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 12.sp
+                            )
+                            plant?.waterAmount.let {
+                                Text(
+                                    text = "$it ml",
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = "Frequency",
+                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6F),
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                text = plant?.selectedDays.toString(),
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+
+            }
         }
 
         Column(
@@ -152,6 +242,7 @@ fun PlantDetailsScreen(
                 .background(MaterialTheme.colorScheme.onBackground)
                 .padding(all = 20.dp)
         ) {
+
             plant?.plantName?.let {
                 Text(
                     text = it,
@@ -177,16 +268,14 @@ fun PlantDetailsScreen(
             }
 
             if (plant?.isWatered != true) {
-                Button(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp),
+                Button(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
                     shape = RoundedCornerShape(12.dp),
                     onClick = {
                         viewModel.onMarkAsWatered()
                         navController.popBackStack()
-                    }
-                ) {
+                    }) {
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
@@ -203,37 +292,31 @@ fun PlantDetailsScreen(
         }
     }
     if (showModal) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White.copy(alpha = 0.5f))
-                .graphicsLayer {
-                    renderEffect = RenderEffect
-                        .createBlurEffect(
-                            100f, 100f, Shader.TileMode.CLAMP
-                        )
-                        .asComposeRenderEffect()
-                }
-                .clickable { showModal = false } // Close modal when tapping outside
-        )
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White.copy(alpha = 0.5f))
+            .graphicsLayer {
+                renderEffect = RenderEffect
+                    .createBlurEffect(
+                        100f, 100f, Shader.TileMode.CLAMP
+                    )
+                    .asComposeRenderEffect()
+            }
+            .clickable { showModal = false })
 
         Box(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
+            modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .clickable {
-                        showModal = true
-                    }
-                    .background(Color.White, RoundedCornerShape(16.dp))
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .clickable {
+                    showModal = true
+                }
+                .background(Color.White, RoundedCornerShape(16.dp))
+                .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Delete Plant?",
+                    text = "Are You Sure?",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                     color = Color.Black
@@ -242,26 +325,46 @@ fun PlantDetailsScreen(
                 Text(
                     text = "Are you sure you want to delete this plant? This action cannot be undone.",
                     textAlign = TextAlign.Center,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
+                    OutlinedButton(
+                        onClick = { showModal = false },
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(
+                            1.dp,
+                            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1F)
+                        ),
+                        modifier = Modifier
+                            .width(140.dp)
+                            .height(40.dp),
+                    ) {
+                        Text(
+                            text = "Cancel",
+                            color = MaterialTheme.colorScheme.secondary,
+                            fontSize = 16.sp
+                        )
+                    }
                     Button(
                         onClick = {
                             plant?.let { viewModel.deletePlant() }
                             navController.popBackStack()
                             showModal = false
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .width(140.dp)
+                            .height(40.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     ) {
-                        Text(text = "Delete", color = Color.White)
+                        Text(text = "Delete", color = Color.White, fontSize = 16.sp)
                     }
-                    OutlinedButton(onClick = { showModal = false }) {
-                        Text(text = "Cancel", color = Color.Black)
-                    }
+
                 }
             }
         }
