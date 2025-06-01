@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.example.myplants"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.myplants"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -62,6 +62,9 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.common)
+    implementation(libs.androidx.hilt.work)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -75,6 +78,7 @@ dependencies {
     // CameraX core library using the camera2 implementation
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
+    kapt(libs.androidx.hilt.compiler)
     // If you want to additionally use the CameraX Lifecycle library
     implementation(libs.androidx.camera.lifecycle)
     // If you want to additionally use the CameraX VideoCapture library

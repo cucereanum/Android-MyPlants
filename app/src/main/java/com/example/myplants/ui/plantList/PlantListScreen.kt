@@ -47,6 +47,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.myplants.R
 import com.example.myplants.navigation.Route
+import com.example.myplants.ui.notifications.RequestNotificationPermission
 
 @Composable
 fun PlantListScreen(
@@ -59,16 +60,19 @@ fun PlantListScreen(
     LaunchedEffect(Unit) {
         viewModel.getPlants()
     }
+    RequestNotificationPermission()
 
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
+
         Image(
             modifier = Modifier.fillMaxWidth(),
             painter = painterResource(id = R.drawable.bg_plants),
             contentScale = ContentScale.FillWidth,
             contentDescription = "Background plants"
         )
+
         if (viewModel.isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier
@@ -205,14 +209,14 @@ fun PlantListScreen(
                 }
 
             }
+
         }
     }
 }
 
 @Composable
 fun EmptyState(
-    navController: NavController,
-    selectedFilterType: PlantListFilter
+    navController: NavController, selectedFilterType: PlantListFilter
 ) {
     val (title, message, buttonText) = when (selectedFilterType) {
         PlantListFilter.UPCOMING -> Triple(
@@ -266,15 +270,13 @@ fun EmptyState(
         )
         Spacer(modifier = Modifier.padding(top = 20.dp))
         if (selectedFilterType === PlantListFilter.UPCOMING) {
-            Button(
-                modifier = Modifier
-                    .width(320.dp)
-                    .height(54.dp),
+            Button(modifier = Modifier
+                .width(320.dp)
+                .height(54.dp),
                 shape = RoundedCornerShape(12.dp),
                 onClick = {
                     navController.navigate(Route.ADD_EDIT_PLANT)
-                }
-            ) {
+                }) {
                 Text(
                     text = buttonText,
                     color = Color.White,
