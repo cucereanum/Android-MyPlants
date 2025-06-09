@@ -37,9 +37,9 @@ import com.example.myplants.data.DayOfWeek
 @Composable
 fun DatesDialog(
     modifier: Modifier = Modifier,
-    selectedDays: SnapshotStateList<DayOfWeek>,
+    selectedDays: List<DayOfWeek>,
     onDismissRequest: () -> Unit,
-    toggleDaySelection: (String) -> Unit,
+    toggleDaySelection: (DayOfWeek?) -> Unit
 ) {
     val allDays = DayOfWeek.entries.toTypedArray()
 
@@ -84,9 +84,8 @@ fun DatesDialog(
                                 )
                                 .background(if (selectedDays.size == allDays.size) MaterialTheme.colorScheme.primary else Color.White)
                                 .clickable {
-                                    toggleDaySelection("EveryDay")
-                                },
-                            contentAlignment = Alignment.Center
+                                    toggleDaySelection(null)   // 👈 pass actual enum, not string
+                                }, contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 modifier = Modifier.size(20.dp),
@@ -118,9 +117,8 @@ fun DatesDialog(
                                     )
                                     .background(if (selectedDays.contains(day)) MaterialTheme.colorScheme.primary else Color.White)
                                     .clickable {
-                                        toggleDaySelection(day.toString())
-                                    },
-                                contentAlignment = Alignment.Center
+                                        toggleDaySelection(day)
+                                    }, contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     modifier = Modifier.size(20.dp),
@@ -150,8 +148,7 @@ fun DatesDialog(
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(Color.White)
                                 .border(
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    width = 1.dp
+                                    color = MaterialTheme.colorScheme.onBackground, width = 1.dp
                                 )
                                 .clickable {
                                     onDismissRequest()
@@ -175,8 +172,7 @@ fun DatesDialog(
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(MaterialTheme.colorScheme.primary)
                                 .border(
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    width = 1.dp
+                                    color = MaterialTheme.colorScheme.onBackground, width = 1.dp
                                 )
                                 .clickable {
                                     onDismissRequest()

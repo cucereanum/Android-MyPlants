@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.Plant
 import com.example.myplants.domain.repository.PlantRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -61,22 +63,22 @@ class PlantListViewModel @Inject constructor(
     private fun filterPlants() {
         viewModelScope.launch {
             val allPlants = repository.getPlants().first()
-            val currentTime = System.currentTimeMillis()
+            val today = DayOfWeek.today()
+            val currentMillis = System.currentTimeMillis()
 
             val filteredList = when (selectedFilterType) {
                 PlantListFilter.UPCOMING -> allPlants.filter {
-                    println("time, ${it.time}, currentTime, $currentTime")
-                    !it.isWatered && it.time > currentTime
+                    !it.isWatered && it.selectedDays.contains(today) && it.time > currentMillis
                 }
 
                 PlantListFilter.FORGOT_TO_WATER -> allPlants.filter {
-                    !it.isWatered && it.time < currentTime
+                    println("it + ${it.time} + ${it.selectedDays} + $today + ${currentMillis}")
+                    !it.isWatered && it.selectedDays.contains(today) && it.time < currentMillis
                 }
 
                 PlantListFilter.HISTORY -> allPlants.filter {
                     it.isWatered
                 }
-
             }
 
             _items.value = filteredList

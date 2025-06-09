@@ -1,5 +1,7 @@
 package com.example.myplants.data
 
+import java.util.Calendar
+
 enum class DayOfWeek(val dayName: String) {
     Monday("Monday"),
     Tuesday("Tuesday"),
@@ -15,6 +17,20 @@ enum class DayOfWeek(val dayName: String) {
         }
 
         fun allDays(): List<DayOfWeek> = entries
+
+        fun today(): DayOfWeek {
+            return when (Calendar.getInstance().get(Calendar.DAY_OF_WEEK)) {
+                Calendar.MONDAY -> Monday
+                Calendar.TUESDAY -> Tuesday
+                Calendar.WEDNESDAY -> Wednesday
+                Calendar.THURSDAY -> Thursday
+                Calendar.FRIDAY -> Friday
+                Calendar.SATURDAY -> Saturday
+                Calendar.SUNDAY -> Sunday
+                else -> throw IllegalStateException("Invalid day of week")
+            }
+        }
+        
     }
 
 }

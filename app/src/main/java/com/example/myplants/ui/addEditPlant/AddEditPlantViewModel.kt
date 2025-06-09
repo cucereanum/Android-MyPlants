@@ -38,43 +38,33 @@ class AddEditPlantViewModel @Inject constructor(
     var state by mutableStateOf(AddEditPlantState())
         private set
 
-    var selectedDays = mutableStateListOf<DayOfWeek>().apply {
-        val currentDay = getCurrentDayOfWeek()
-        add(DayOfWeek.valueOf(currentDay))
-    }
 
-    fun toggleDaySelection(selectedDay: String) {
-        when (selectedDay) {
-            "EveryDay" -> {
-                if (selectedDays.isEmpty() || !selectedDays.containsAll(DayOfWeek.allDays())) {
-                    selectedDays.clear()
-                    selectedDays.addAll(DayOfWeek.allDays())
-                } else {
-                    selectedDays.clear()
-                }
-            }
+    fun toggleDaySelection(day: DayOfWeek?) {
+        val allDays = DayOfWeek.entries.toList()
+        val current = state.selectedDays.toMutableList()
 
-            else -> {
-                val day = DayOfWeek.fromDisplayName(selectedDay)
-                day?.let {
-                    if (selectedDays.contains(it)) {
-                        selectedDays.remove(it)
-                        if (selectedDays.size < DayOfWeek.allDays().size) {
-                            selectedDays.removeIf { it != it }
-                        }
-                    } else {
-                        selectedDays.add(it)
-                        if (selectedDays.size == DayOfWeek.allDays().size) {
-                            selectedDays.remove(DayOfWeek.fromDisplayName("EveryDay"))
-                        }
-                    }
-                }
+        if (day == null) {
+            val updated = if (current.containsAll(allDays)) {
+                emptyList()
+            } else {
+                allDays
             }
+            state = state.copy(selectedDays = updated)
+            return
         }
+
+        if (current.contains(day)) {
+            current.remove(day)
+        } else {
+            current.add(day)
+        }
+
+        state = state.copy(selectedDays = current)
     }
 
     fun addPlant() {
         viewModelScope.launch {
+            println("state + ${state.selectedDays}")
             repository.insertPlant(
                 Plant(
                     plantName = state.plantName,
@@ -83,7 +73,7 @@ class AddEditPlantViewModel @Inject constructor(
                     size = state.plantSize.toString(),
                     imageUri = state.imageUri ?: "",
                     time = state.time.toInstant(ZoneOffset.UTC).toEpochMilli(),
-                    selectedDays = DayOfWeek.valueOf("Friday"),
+                    selectedDays = state.selectedDays,
                     isWatered = false
                 )
             )
@@ -91,7 +81,7 @@ class AddEditPlantViewModel @Inject constructor(
     }
 
     fun getSelectedDaysString(): String {
-        return selectedDays.joinToString(", ") { it.dayName }
+        return state.selectedDays.joinToString(", ") { it.dayName }
     }
 
     fun updateState(event: UpdateEventWithValue) {
@@ -99,8 +89,7 @@ class AddEditPlantViewModel @Inject constructor(
             is UpdateEventWithValue.UpdateTime -> {
                 val now = LocalDateTime.now()
                 state = state.copy(
-                    time = now.withHour(event.hour).withMinute(event.minute),
-                    showTimeDialog = false
+                    time = now.withHour(event.hour).withMinute(event.minute), showTimeDialog = false
                 )
             }
 

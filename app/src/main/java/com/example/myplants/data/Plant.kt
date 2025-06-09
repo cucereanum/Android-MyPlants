@@ -8,7 +8,7 @@ data class Plant(
     val plantName: String,
     val imageUri: String,
     val time: Long,
-    val selectedDays: DayOfWeek,
+    val selectedDays: List<DayOfWeek>,
     val waterAmount: String,
     val size: String,
     val description: String,

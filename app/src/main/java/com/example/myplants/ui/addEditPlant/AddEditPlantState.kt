@@ -3,6 +3,7 @@ package com.example.myplants.ui.addEditPlant
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector
+import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.PlantSizeType
 import java.time.LocalDateTime
 
@@ -20,6 +21,7 @@ data class AddEditPlantState(
     val showTimeDialog: Boolean = false,
     val showPlantSizeDialog: Boolean = false,
     val lensFacing: Int = CameraSelector.LENS_FACING_BACK,
+    val selectedDays: List<DayOfWeek> = listOf(DayOfWeek.today()),
     // Error states
     val imageUriError: String? = null,
     val plantNameError: String? = null,

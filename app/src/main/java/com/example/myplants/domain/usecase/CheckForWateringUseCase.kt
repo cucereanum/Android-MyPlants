@@ -1,5 +1,6 @@
 package com.example.myplants.domain.usecase
 
+import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.Plant
 import com.example.myplants.domain.repository.PlantRepository
 import com.example.myplants.infrastructure.notifications.NotificationHelper
@@ -15,13 +16,15 @@ class CheckForWateringUseCase @Inject constructor(
     suspend fun execute() {
         val allPlants = repository.getPlants().first()
         val currentTime = System.currentTimeMillis()
+        val today = DayOfWeek.today()
 
         val transitionedPlants = allPlants.filter { plant ->
-            val wasUpcoming = previousPlants.find { it.id == plant.id }?.let {
-                !it.isWatered && it.time > currentTime
+            val wasUpcoming = previousPlants.find { it.id == plant.id }?.let { previous ->
+                !previous.isWatered && previous.selectedDays.contains(today) && previous.time > currentTime
             } ?: false
 
-            val isNowForgot = !plant.isWatered && plant.time < currentTime
+            val isNowForgot =
+                !plant.isWatered && plant.selectedDays.contains(today) && plant.time < currentTime
 
             wasUpcoming && isNowForgot
         }

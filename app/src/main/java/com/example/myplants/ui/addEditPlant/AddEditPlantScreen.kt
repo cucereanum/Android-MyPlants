@@ -169,7 +169,7 @@ fun AddEditPlantScreen(
         })
     } else if (state.showDatesDialog) {
         DatesDialog(modifier = Modifier.width(400.dp),
-            selectedDays = viewModel.selectedDays,
+            selectedDays = viewModel.state.selectedDays,
             onDismissRequest = {
                 viewModel.updateState(
                     UpdateEventWithValue.UpdateState(
