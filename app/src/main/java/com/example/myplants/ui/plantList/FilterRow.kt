@@ -17,13 +17,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.myplants.ui.util.FilterType
 
 @Composable
 fun FilterRow(
     modifier: Modifier = Modifier,
-    filterList: List<PlantListFilter>,
-    selectFilter: (PlantListFilter) -> Unit,
-    selectedFilterType: PlantListFilter
+    filterList: List<FilterType>,
+    selectFilter: (FilterType) -> Unit,
+    selectedFilterType: FilterType
 ) {
     println("selectedFilterType, $selectedFilterType")
     Row(
@@ -46,7 +47,7 @@ fun FilterRow(
 @Composable
 fun FilterRowListItem(
     modifier: Modifier = Modifier,
-    name: PlantListFilter,
+    name: FilterType,
     isSelected: Boolean = false,
     onClick: () -> Unit,
 ) {
@@ -57,7 +58,7 @@ fun FilterRowListItem(
 
         ) {
         Text(
-            modifier = Modifier.padding(end = 10.dp),
+            modifier = Modifier.padding(end = 20.dp),
             text = name.displayName,
             color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,

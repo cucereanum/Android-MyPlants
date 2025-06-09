@@ -24,7 +24,8 @@ private val LightColorScheme = lightColorScheme(
     secondary = Neutral500,
     onPrimary = Neutral900,
     onBackground = Neutral100,
-    onSecondary = Neutral300
+    onSecondary = Neutral300,
+    surface = Green100,
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
     surface = Color(0xFFFFFBFE),

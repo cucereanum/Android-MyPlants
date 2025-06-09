@@ -110,7 +110,9 @@ fun PlantListScreen(
                                 .size(60.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.background)
-                                .clickable { /* Handle button click */ }) {
+                                .clickable {
+                                    navController.navigate(Route.NOTIFICATIONS)
+                                }) {
                                 Icon(
                                     imageVector = Icons.Outlined.Notifications,
                                     contentDescription = "Notifications",
@@ -130,7 +132,9 @@ fun PlantListScreen(
 
                     FilterRow(
                         filterList = viewModel.filterList,
-                        selectFilter = viewModel::selectFilter,
+                        selectFilter = { filter ->
+                            viewModel.selectFilter(filter as PlantListFilter)
+                        },
                         selectedFilterType = viewModel.selectedFilterType
                     )
                 }
