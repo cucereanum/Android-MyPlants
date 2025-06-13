@@ -1,8 +1,10 @@
 package com.example.myplants.ui.plantList
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,13 +33,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -45,9 +54,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.myplants.R
+import com.example.myplants.infrastructure.worker.WateringCheckWorker
 import com.example.myplants.navigation.Route
 import com.example.myplants.ui.notifications.RequestNotificationPermission
+import kotlinx.coroutines.launch
 
 @Composable
 fun PlantListScreen(
@@ -56,6 +69,9 @@ fun PlantListScreen(
 
     val plants by viewModel.items.collectAsState()
     val rows = plants.chunked(2)
+    var tapCount by remember { mutableIntStateOf(0) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.getPlants()
@@ -96,13 +112,29 @@ fun PlantListScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Let's Care \nMy Plants!",
+                        Text(text = "Let's Care \nMy Plants!",
                             color = MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 26.sp,
-                            lineHeight = 32.sp
-                        )
+                            lineHeight = 32.sp,
+                            modifier = Modifier.pointerInput(Unit) {
+                                detectTapGestures {
+                                    tapCount++
+                                    if (tapCount >= 5) {
+                                        tapCount = 0
+                                        scope.launch {
+                                            val request =
+                                                OneTimeWorkRequestBuilder<WateringCheckWorker>().build()
+                                            WorkManager.getInstance(context).enqueue(request)
+                                            Toast.makeText(
+                                                context,
+                                                "Debug: Worker Triggered",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                }
+                            })
                         Box(
                             contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)
                         ) {
@@ -131,11 +163,9 @@ fun PlantListScreen(
                     }
 
                     FilterRow(
-                        filterList = viewModel.filterList,
-                        selectFilter = { filter ->
+                        filterList = viewModel.filterList, selectFilter = { filter ->
                             viewModel.selectFilter(filter as PlantListFilter)
-                        },
-                        selectedFilterType = viewModel.selectedFilterType
+                        }, selectedFilterType = viewModel.selectedFilterType
                     )
                 }
 

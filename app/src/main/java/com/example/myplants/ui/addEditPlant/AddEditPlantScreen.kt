@@ -267,8 +267,11 @@ fun AddEditPlantScreen(
                     if (state.imageUri != null) {
                         AsyncImage(
                             model = state.imageUri,
-                            contentScale = ContentScale.FillWidth,
-                            contentDescription = "Background plants"
+                            contentDescription = "Background plants",
+                            contentScale = ContentScale.Crop, // or FillBounds if you want no cropping
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight()
                         )
                     } else {
                         Image(

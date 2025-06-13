@@ -72,7 +72,7 @@ class AddEditPlantViewModel @Inject constructor(
                     waterAmount = state.waterAmount,
                     size = state.plantSize.toString(),
                     imageUri = state.imageUri ?: "",
-                    time = state.time.toInstant(ZoneOffset.UTC).toEpochMilli(),
+                    time = state.time.toLocalTime().toSecondOfDay() * 1000L,
                     selectedDays = state.selectedDays,
                     isWatered = false
                 )

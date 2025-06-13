@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -64,16 +65,26 @@ class PlantListViewModel @Inject constructor(
         viewModelScope.launch {
             val allPlants = repository.getPlants().first()
             val today = DayOfWeek.today()
-            val currentMillis = System.currentTimeMillis()
+            val currentTimeOfDayMillis = LocalTime.now().toSecondOfDay() * 1000L
 
             val filteredList = when (selectedFilterType) {
-                PlantListFilter.UPCOMING -> allPlants.filter {
-                    !it.isWatered && it.selectedDays.contains(today) && it.time > currentMillis
+                PlantListFilter.FORGOT_TO_WATER -> allPlants.filter { plant ->
+                    !plant.isWatered && plant.selectedDays.any { day ->
+                        day.ordinal < today.ordinal ||
+                                (day == today && plant.time < currentTimeOfDayMillis)
+                    }
                 }
 
-                PlantListFilter.FORGOT_TO_WATER -> allPlants.filter {
-                    println("it + ${it.time} + ${it.selectedDays} + $today + ${currentMillis}")
-                    !it.isWatered && it.selectedDays.contains(today) && it.time < currentMillis
+                PlantListFilter.UPCOMING -> allPlants.filter { plant ->
+                    !plant.isWatered &&
+                            !plant.selectedDays.any { day ->
+                                day.ordinal < today.ordinal ||
+                                        (day == today && plant.time < currentTimeOfDayMillis)
+                            } &&
+                            plant.selectedDays.any { day ->
+                                day.ordinal > today.ordinal ||
+                                        (day == today && plant.time > currentTimeOfDayMillis)
+                            }
                 }
 
                 PlantListFilter.HISTORY -> allPlants.filter {

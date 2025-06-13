@@ -5,6 +5,7 @@ import com.example.myplants.data.Plant
 import com.example.myplants.domain.repository.PlantRepository
 import com.example.myplants.infrastructure.notifications.NotificationHelper
 import kotlinx.coroutines.flow.first
+import java.time.LocalTime
 import javax.inject.Inject
 
 class CheckForWateringUseCase @Inject constructor(
@@ -15,21 +16,19 @@ class CheckForWateringUseCase @Inject constructor(
 
     suspend fun execute() {
         val allPlants = repository.getPlants().first()
-        val currentTime = System.currentTimeMillis()
         val today = DayOfWeek.today()
+        val yesterday = DayOfWeek.entries.let { days ->
+            val index = days.indexOf(today)
+            days[(index - 1 + days.size) % days.size]
+        }
+        val currentTimeOfDayMillis = LocalTime.now().toSecondOfDay() * 1000L
 
-        val transitionedPlants = allPlants.filter { plant ->
-            val wasUpcoming = previousPlants.find { it.id == plant.id }?.let { previous ->
-                !previous.isWatered && previous.selectedDays.contains(today) && previous.time > currentTime
-            } ?: false
-
-            val isNowForgot =
-                !plant.isWatered && plant.selectedDays.contains(today) && plant.time < currentTime
-
-            wasUpcoming && isNowForgot
+        val forgottenPlants = allPlants.filter { plant ->
+            !plant.isWatered && ((plant.selectedDays.contains(today) && plant.time < currentTimeOfDayMillis)
+                    || (plant.selectedDays.contains(yesterday)))
         }
 
-        transitionedPlants.forEach {
+        forgottenPlants.forEach {
             notificationHelper.sendWaterReminderNotification(it)
         }
 
