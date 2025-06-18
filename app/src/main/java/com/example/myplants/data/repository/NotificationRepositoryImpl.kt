@@ -9,18 +9,12 @@ class NotificationRepositoryImpl(
     private val dao: NotificationDao
 ) : NotificationRepository {
 
-    override suspend fun insertNotification(
-        plantId: Int,
-        plantName: String,
-        message: String,
-        type: Int
-    ) {
+    override suspend fun insertNotification(plantId: Int, plantName: String, message: String) {
         val notification = NotificationEntity(
             plantId = plantId,
             plantName = plantName,
             message = message,
             timestamp = System.currentTimeMillis(),
-            type = type
         )
         dao.insert(notification)
     }
@@ -31,5 +25,9 @@ class NotificationRepositoryImpl(
 
     override suspend fun countTodayNotifications(plantId: Int, since: Long): Int {
         return dao.countNotificationsToday(plantId, since)
+    }
+
+    override suspend fun markAsReadByIds(ids: List<Int>) {
+        return dao.markAsReadByIds(ids)
     }
 }

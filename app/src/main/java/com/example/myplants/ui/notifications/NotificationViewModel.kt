@@ -1,6 +1,7 @@
 package com.example.myplants.ui.notifications
 
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,11 +10,15 @@ import androidx.lifecycle.viewModelScope
 import com.example.myplants.data.NotificationEntity
 import com.example.myplants.domain.repository.NotificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 
 @HiltViewModel
@@ -21,55 +26,53 @@ class NotificationViewModel @Inject constructor(
     private val repository: NotificationRepository
 ) : ViewModel() {
 
-    var filterList by mutableStateOf(NotificationListFilter.entries)
-        private set
-
-    var selectedFilterType by mutableStateOf(NotificationListFilter.ALL_NOTIFICATIONS)
-        private set
-
     private val _items = MutableStateFlow<List<NotificationEntity>>(emptyList())
 
     val items: StateFlow<List<NotificationEntity>> = _items.asStateFlow()
+
+    private val _groupedItems = MutableStateFlow<Map<String, List<NotificationEntity>>>(emptyMap())
+    val groupedItems: StateFlow<Map<String, List<NotificationEntity>>> = _groupedItems.asStateFlow()
 
     var isLoading by mutableStateOf(false)
         private set
 
 
-    fun selectFilter(type: NotificationListFilter) {
-        selectedFilterType = type
-        filterNotifications()
-    }
-
-
-//    suspend fun getPlants() {
-//        isLoading = true
-//        try {
-//            val itemsList = repository.getPlants().first()
-//            _items.value = itemsList
-//            filterPlants()
-//        } catch (e: Exception) {
-//            e.message?.let { Log.e("Get Plant List Error", it) }
-//        } finally {
-//            isLoading = false
-//        }
-//    }
-
-    private fun filterNotifications() {
+    fun getNotifications(showLoading: Boolean = true) {
         viewModelScope.launch {
-            val allPlants = repository.getAllNotifications().first()
-//            val currentTime = System.currentTimeMillis()
-//
-//            val filteredList = when (selectedFilterType) {
-//                NotificationListFilter.ALL_NOTIFICAITONS -> allPlants
-//
-//                NotificationListFilter.FORGOT_TO_WATER -> allPlants
-//
-//                NotificationListFilter.HISTORY -> allPlants
-//
-//            }
+            if (showLoading) {
+                isLoading = true
+            }
+            try {
+                val allNotifications = repository.getAllNotifications().first()
 
-            _items.value = allPlants
+                val today = LocalDate.now()
+                val yesterday = today.minusDays(1)
+
+                val grouped = allNotifications.groupBy { notif ->
+                    val date = Instant.ofEpochMilli(notif.timestamp)
+                        .atZone(ZoneId.systemDefault()).toLocalDate()
+
+                    when (date) {
+                        today -> "Today"
+                        yesterday -> "Yesterday"
+                        else -> date.toString()
+                    }
+                }
+                _items.value = allNotifications
+                _groupedItems.value = grouped
+            } catch (e: Exception) {
+                Log.e("Notifications", "Error: ${e.message}")
+            } finally {
+                isLoading = false
+            }
         }
     }
 
+    fun markNotificationsAsRead(ids: List<Int>) {
+        viewModelScope.launch {
+            repository.markAsReadByIds(ids)
+            delay(2000)
+            getNotifications(false)
+        }
+    }
 }

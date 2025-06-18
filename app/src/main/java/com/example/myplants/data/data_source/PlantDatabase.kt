@@ -9,7 +9,7 @@ import com.example.myplants.data.converters.Converters
 
 @Database(
     entities = [Plant::class, NotificationEntity::class],
-    version = 4
+    version = 5
 )
 @TypeConverters(Converters::class) // ✅ add this
 abstract class PlantDatabase : RoomDatabase() {

@@ -54,6 +54,7 @@ import coil.compose.AsyncImage
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.text.style.TextOverflow
@@ -80,14 +81,17 @@ fun PlantDetailsScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(screenHeight * 0.65f)
+                .height(screenHeight * 0.55f)
                 .align(Alignment.TopStart)
                 .background(MaterialTheme.colorScheme.primary)
         ) {
             AsyncImage(
                 model = plant?.imageUri,
-                contentScale = ContentScale.FillWidth,
                 contentDescription = plant?.plantName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
             )
             Row(
                 modifier = Modifier

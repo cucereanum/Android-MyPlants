@@ -2,6 +2,7 @@ package com.example.myplants.domain.usecase
 
 import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.Plant
+import com.example.myplants.domain.repository.NotificationRepository
 import com.example.myplants.domain.repository.PlantRepository
 import com.example.myplants.infrastructure.notifications.NotificationHelper
 import kotlinx.coroutines.flow.first
@@ -9,7 +10,9 @@ import java.time.LocalTime
 import javax.inject.Inject
 
 class CheckForWateringUseCase @Inject constructor(
-    private val repository: PlantRepository, private val notificationHelper: NotificationHelper
+    private val repository: PlantRepository,
+    private val notificationRepository: NotificationRepository,
+    private val notificationHelper: NotificationHelper
 ) {
 
     private var previousPlants: List<Plant> = emptyList()
@@ -29,6 +32,11 @@ class CheckForWateringUseCase @Inject constructor(
         }
 
         forgottenPlants.forEach {
+            notificationRepository.insertNotification(
+                plantId = it.id,
+                plantName = it.plantName,
+                message = "${it.plantName} needs watering"
+            )
             notificationHelper.sendWaterReminderNotification(it)
         }
 

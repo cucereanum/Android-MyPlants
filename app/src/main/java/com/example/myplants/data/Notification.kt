@@ -10,5 +10,5 @@ data class NotificationEntity(
     val plantName: String,
     val message: String,
     val timestamp: Long,
-    val type: Int,
+    val isRead: Boolean = false
 )
