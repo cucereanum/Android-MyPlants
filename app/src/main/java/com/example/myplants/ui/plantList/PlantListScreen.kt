@@ -34,7 +34,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -42,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -68,11 +68,13 @@ fun PlantListScreen(
 ) {
 
     val plants by viewModel.items.collectAsState()
+    val hasUnreadNotifications by viewModel.hasUnreadNotifications.collectAsState()
     val rows = plants.chunked(2)
     var tapCount by remember { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    println("hasUnreadNotifications $hasUnreadNotifications")
     LaunchedEffect(Unit) {
         viewModel.getPlants()
     }
@@ -140,6 +142,7 @@ fun PlantListScreen(
                         ) {
                             Box(modifier = Modifier
                                 .size(60.dp)
+                                .shadow(elevation = 4.dp, shape = CircleShape, clip = false)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.background)
                                 .clickable {
@@ -152,13 +155,15 @@ fun PlantListScreen(
                                     modifier = Modifier.align(Alignment.Center)
                                 )
                             }
-                            Box(
-                                modifier = Modifier
-                                    .size(10.dp)
-                                    .offset(x = -2.dp, y = 2.dp)
-                                    .align(Alignment.TopEnd)
-                                    .background(Color.Red, CircleShape)
-                            )
+                            if (hasUnreadNotifications) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .offset(x = -2.dp, y = 2.dp)
+                                        .align(Alignment.TopEnd)
+                                        .background(Color.Red, CircleShape)
+                                )
+                            }
                         }
                     }
 

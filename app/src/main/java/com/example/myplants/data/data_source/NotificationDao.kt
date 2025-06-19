@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.myplants.data.NotificationEntity
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 @Dao
 interface NotificationDao {
@@ -20,4 +21,8 @@ interface NotificationDao {
 
     @Query("UPDATE notifications SET isRead = 1 WHERE id IN (:ids) AND isRead = 0")
     suspend fun markAsReadByIds(ids: List<Int>)
+
+    @Query("SELECT * FROM notifications WHERE isRead = 0")
+    fun observeUnreadNotifications(): Flow<List<NotificationEntity>>
+
 }

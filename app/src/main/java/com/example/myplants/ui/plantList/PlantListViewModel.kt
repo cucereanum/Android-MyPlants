@@ -8,12 +8,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.Plant
+import com.example.myplants.domain.repository.NotificationRepository
 import com.example.myplants.domain.repository.PlantRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -21,7 +24,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlantListViewModel @Inject constructor(
-    private val repository: PlantRepository
+    private val repository: PlantRepository,
+    private val notificationRepository: NotificationRepository
 ) : ViewModel() {
 
     var filterList by mutableStateOf(PlantListFilter.entries)
@@ -37,11 +41,14 @@ class PlantListViewModel @Inject constructor(
     var isLoading by mutableStateOf(false)
         private set
 
-//    init {
-//        viewModelScope.launch {
-//            getPlants()
-//        }
-//    }
+    val hasUnreadNotifications = notificationRepository
+        .hasUnreadNotificationsFlow()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
 
     fun selectFilter(type: PlantListFilter) {
         selectedFilterType = type

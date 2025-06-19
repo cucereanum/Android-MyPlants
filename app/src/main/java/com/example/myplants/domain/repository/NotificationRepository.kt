@@ -8,4 +8,5 @@ interface NotificationRepository {
     fun getAllNotifications(): Flow<List<NotificationEntity>>
     suspend fun countTodayNotifications(plantId: Int, since: Long): Int
     suspend fun markAsReadByIds(ids: List<Int>)
+    fun hasUnreadNotificationsFlow(): Flow<Boolean>
 }
