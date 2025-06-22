@@ -74,7 +74,6 @@ fun PlantListScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    println("hasUnreadNotifications $hasUnreadNotifications")
     LaunchedEffect(Unit) {
         viewModel.getPlants()
     }

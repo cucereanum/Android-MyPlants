@@ -201,11 +201,21 @@ fun NotificationItem(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-//            Image(
-//                painter = painterResource(id = R.drawable.ic_plant), // Replace with your plant icon
-//                contentDescription = null,
-//                modifier = Modifier.size(40.dp)
-//            )
+            Box(
+                modifier = Modifier
+                    .size(48.dp) // Slightly larger than the image
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(8.dp)
+                    ), // Background color and shape
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.plant),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
 
             Column(
                 modifier = Modifier

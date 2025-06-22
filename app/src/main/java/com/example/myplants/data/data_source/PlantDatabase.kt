@@ -6,12 +6,13 @@ import androidx.room.TypeConverters
 import com.example.myplants.data.NotificationEntity
 import com.example.myplants.data.Plant
 import com.example.myplants.data.converters.Converters
+import com.example.myplants.data.converters.NotificationConverter
 
 @Database(
     entities = [Plant::class, NotificationEntity::class],
-    version = 5
+    version = 6
 )
-@TypeConverters(Converters::class) // ✅ add this
+@TypeConverters(value = [Converters::class, NotificationConverter::class])
 abstract class PlantDatabase : RoomDatabase() {
     abstract fun plantDao(): PlantDao
     abstract fun notificationDao(): NotificationDao
