@@ -10,12 +10,13 @@ import com.example.myplants.data.converters.NotificationConverter
 
 @Database(
     entities = [Plant::class, NotificationEntity::class],
-    version = 6
+    version = 7
 )
 @TypeConverters(value = [Converters::class, NotificationConverter::class])
 abstract class PlantDatabase : RoomDatabase() {
     abstract fun plantDao(): PlantDao
     abstract fun notificationDao(): NotificationDao
+    abstract fun bleDeviceDao(): BleDeviceDao
 
     companion object {
         const val DATABASE_NAME = "plant_db"
