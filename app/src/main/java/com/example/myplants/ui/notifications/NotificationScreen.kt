@@ -29,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -46,11 +45,9 @@ import androidx.navigation.NavController
 import com.example.myplants.R
 import com.example.myplants.data.NotificationEntity
 import com.example.myplants.navigation.Route
-import com.example.myplants.ui.plantList.FilterRow
+import com.example.myplants.ui.util.DebounceClick
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.take
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -118,7 +115,9 @@ fun NotificationScreen(
                                 .align(Alignment.CenterStart)
                                 .background(Color.White, CircleShape)
                                 .clickable {
-                                    navController.popBackStack()
+                                    DebounceClick.debounceClick {
+                                        navController.popBackStack()
+                                    }
                                 },
                             contentAlignment = Alignment.Center
                         ) {

@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -67,8 +66,8 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.myplants.R
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.myplants.ui.util.DebounceClick
 import java.io.File
 import java.util.concurrent.ExecutorService
 
@@ -84,18 +83,18 @@ fun AddEditPlantScreen(
 ) {
     val state = viewModel.state
     val context = LocalContext.current
-    val photoPickerLauncher =
-        rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia(),
-            onResult = { uri ->
-                if (uri !== null) {
-                    val newImagePath = saveImageToInternalStorage(context, uri)
-                    viewModel.updateState(
-                        UpdateEventWithValue.UpdateState(
-                            UpdateEvent.IMAGE_URI, newImagePath ?: ""
-                        )
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            if (uri !== null) {
+                val newImagePath = saveImageToInternalStorage(context, uri)
+                viewModel.updateState(
+                    UpdateEventWithValue.UpdateState(
+                        UpdateEvent.IMAGE_URI, newImagePath ?: ""
                     )
-                }
-            })
+                )
+            }
+        })
 
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -287,7 +286,9 @@ fun AddEditPlantScreen(
                         .align(Alignment.TopStart)
                         .background(Color.White, CircleShape)
                         .clickable {
-                            navController.popBackStack()
+                            DebounceClick.debounceClick {
+                                navController.popBackStack()
+                            }
                         }) {
                         Icon(
                             imageVector = Icons.Default.ChevronLeft,
@@ -617,9 +618,11 @@ fun AddEditPlantScreen(
                     Button(modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         onClick = {
-                            if (viewModel.validate()) {
-                                viewModel.addPlant()
-                                navController.popBackStack()
+                            DebounceClick.debounceClick {
+                                if (viewModel.validate()) {
+                                    viewModel.addPlant()
+                                    navController.popBackStack()
+                                }
                             }
                         }) {
                         Row(

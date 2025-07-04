@@ -38,7 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -58,6 +57,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.myplants.ui.util.DebounceClick
 
 //todo: create reusable components
 
@@ -67,14 +67,12 @@ fun PlantDetailsScreen(
     navController: NavController, plantId: Int, viewModel: PlantDetailsViewModel = hiltViewModel()
 ) {
     var showModal by remember { mutableStateOf(false) }
-    println("showModal $showModal")
+
     LaunchedEffect(plantId) {
         viewModel.loadPlant(plantId)
     }
-
     val plant by viewModel.plant.collectAsState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-
 
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -120,7 +118,9 @@ fun PlantDetailsScreen(
                         .size(40.dp)
                         .background(Color.White, CircleShape)
                         .clickable {
-                            navController.popBackStack()
+                            DebounceClick.debounceClick {
+                                navController.popBackStack()
+                            }
                         }) {
                         Icon(
                             imageVector = Icons.Outlined.Edit,
@@ -156,9 +156,7 @@ fun PlantDetailsScreen(
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color.Transparent,
-                                Color.White.copy(alpha = 0.45f),
-                                Color.White
+                                Color.Transparent, Color.White.copy(alpha = 0.45f), Color.White
                             )
                         )
                     )
@@ -185,7 +183,9 @@ fun PlantDetailsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Text(
                                 text = "Size",
                                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6F),
@@ -201,7 +201,9 @@ fun PlantDetailsScreen(
                                 )
                             }
                         }
-                        Column {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Text(
                                 text = "Water",
                                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6F),
@@ -217,19 +219,23 @@ fun PlantDetailsScreen(
                                 )
                             }
                         }
-                        Column {
+                        Column(
+                            modifier = Modifier.weight(2f)
+                        ) {
                             Text(
                                 text = "Frequency",
                                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6F),
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 12.sp
                             )
-                            Text(
-                                text = plant?.selectedDays.toString(),
-                                color = MaterialTheme.colorScheme.primary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            plant?.selectedDays?.joinToString(", ") { it.toString().take(3) }?.let {
+                                Text(
+                                    text = it,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
                 }
@@ -341,8 +347,7 @@ fun PlantDetailsScreen(
                         onClick = { showModal = false },
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(
-                            1.dp,
-                            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1F)
+                            1.dp, color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1F)
                         ),
                         modifier = Modifier
                             .width(140.dp)
@@ -356,9 +361,11 @@ fun PlantDetailsScreen(
                     }
                     Button(
                         onClick = {
-                            plant?.let { viewModel.deletePlant() }
-                            navController.popBackStack()
-                            showModal = false
+                            DebounceClick.debounceClick {
+                                plant?.let { viewModel.deletePlant() }
+                                navController.popBackStack()
+                                showModal = false
+                            }
                         },
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier

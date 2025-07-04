@@ -60,6 +60,7 @@ import com.example.myplants.R
 import com.example.myplants.infrastructure.worker.WateringCheckWorker
 import com.example.myplants.navigation.Route
 import com.example.myplants.ui.notifications.RequestNotificationPermission
+import com.example.myplants.ui.util.DebounceClick
 import kotlinx.coroutines.launch
 
 @Composable
@@ -145,7 +146,9 @@ fun PlantListScreen(
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.background)
                                 .clickable {
-                                    navController.navigate(Route.NOTIFICATIONS)
+                                    DebounceClick.debounceClick {
+                                        navController.navigate(Route.NOTIFICATIONS)
+                                    }
                                 }) {
                                 Icon(
                                     imageVector = Icons.Outlined.Notifications,
@@ -230,7 +233,9 @@ fun PlantListScreen(
                 )
                 FloatingActionButton(
                     onClick = {
-                        navController.navigate(Route.ADD_EDIT_PLANT)
+                        DebounceClick.debounceClick {
+                            navController.navigate(Route.ADD_EDIT_PLANT)
+                        }
                     },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
