@@ -1,9 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id("com.google.devtools.ksp")
-    id("kotlin-kapt")
+    alias(libs.plugins.ksp)
+    // id("kotlin-kapt") // Removed as Hilt and Room are now using KSP
     id("com.google.dagger.hilt.android")
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -33,11 +34,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
+    kotlin {
+        jvmToolchain(17)
     }
     buildFeatures {
         compose = true
@@ -78,7 +79,7 @@ dependencies {
     // CameraX core library using the camera2 implementation
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
-    kapt(libs.androidx.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler) // Changed from kapt
     // If you want to additionally use the CameraX Lifecycle library
     implementation(libs.androidx.camera.lifecycle)
     // If you want to additionally use the CameraX VideoCapture library
@@ -87,12 +88,12 @@ dependencies {
     implementation(libs.androidx.camera.view)
     //room
     implementation(libs.androidx.room.runtime)
-    annotationProcessor(libs.androidx.room.room.compiler)
+    // kapt(libs.androidx.room.room.compiler) // Removed redundant KAPT
     ksp(libs.androidx.room.room.compiler)
     implementation(libs.androidx.room.ktx)
     //hilt
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler) // Changed from kapt
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.ble)

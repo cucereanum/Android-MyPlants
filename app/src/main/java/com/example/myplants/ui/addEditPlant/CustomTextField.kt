@@ -43,8 +43,11 @@ fun CustomTextField(
                     RoundedCornerShape(14.dp)
                 ),
             maxLines = if (multiline) 3 else 1,
-            colors = TextFieldDefaults.textFieldColors(
-                containerColor = MaterialTheme.colorScheme.onBackground,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedContainerColor = MaterialTheme.colorScheme.onBackground,
+                disabledContainerColor = MaterialTheme.colorScheme.onBackground,
+                errorContainerColor = MaterialTheme.colorScheme.onBackground,
                 focusedTextColor = MaterialTheme.colorScheme.secondary,
                 unfocusedTextColor = MaterialTheme.colorScheme.secondary,
                 focusedIndicatorColor = Color.Transparent,
