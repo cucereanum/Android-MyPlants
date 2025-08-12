@@ -1,5 +1,6 @@
 package com.example.myplants.ui.addEditPlant
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,13 +42,16 @@ fun CustomTextField(
                 .height(if (multiline) 100.dp else 60.dp)
                 .clip(
                     RoundedCornerShape(14.dp)
+                )
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.onSecondary,
+                    shape = RoundedCornerShape(14.dp)
                 ),
             maxLines = if (multiline) 3 else 1,
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = MaterialTheme.colorScheme.onBackground,
                 unfocusedContainerColor = MaterialTheme.colorScheme.onBackground,
-                disabledContainerColor = MaterialTheme.colorScheme.onBackground,
-                errorContainerColor = MaterialTheme.colorScheme.onBackground,
                 focusedTextColor = MaterialTheme.colorScheme.secondary,
                 unfocusedTextColor = MaterialTheme.colorScheme.secondary,
                 focusedIndicatorColor = Color.Transparent,

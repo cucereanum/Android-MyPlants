@@ -1,7 +1,10 @@
 package com.example.myplants.ui.plantDetails
 
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -9,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,24 +43,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import android.graphics.RenderEffect
-import android.graphics.Shader
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.asComposeRenderEffect
-import androidx.compose.ui.text.style.TextOverflow
+import com.example.myplants.R
 import com.example.myplants.ui.util.DebounceClick
 
 //todo: create reusable components
@@ -85,7 +87,7 @@ fun PlantDetailsScreen(
         ) {
             AsyncImage(
                 model = plant?.imageUri,
-                contentDescription = plant?.plantName,
+                contentDescription = plant?.plantName, // Assuming plantName is sufficient for CD
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -106,7 +108,7 @@ fun PlantDetailsScreen(
                     }) {
                     Icon(
                         imageVector = Icons.Default.ChevronLeft,
-                        contentDescription = "Go Back",
+                        contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc),
                         modifier = Modifier
                             .size(30.dp)
                             .align(Alignment.Center),
@@ -119,12 +121,13 @@ fun PlantDetailsScreen(
                         .background(Color.White, CircleShape)
                         .clickable {
                             DebounceClick.debounceClick {
+                                // TODO: Navigate to Edit screen if it exists, for now it pops back
                                 navController.popBackStack()
                             }
                         }) {
                         Icon(
                             imageVector = Icons.Outlined.Edit,
-                            contentDescription = "Edit",
+                            contentDescription = stringResource(id = R.string.plant_details_edit_desc),
                             modifier = Modifier
                                 .size(30.dp)
                                 .align(Alignment.Center),
@@ -140,7 +143,7 @@ fun PlantDetailsScreen(
                         }) {
                         Icon(
                             imageVector = Icons.Outlined.Delete,
-                            contentDescription = "Delete",
+                            contentDescription = stringResource(id = R.string.plant_details_delete_desc),
                             modifier = Modifier
                                 .size(30.dp)
                                 .align(Alignment.Center),
@@ -187,7 +190,7 @@ fun PlantDetailsScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = "Size",
+                                text = stringResource(id = R.string.plant_details_size_label),
                                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6F),
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 12.sp
@@ -205,14 +208,14 @@ fun PlantDetailsScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = "Water",
+                                text = stringResource(id = R.string.plant_details_water_label),
                                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6F),
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 12.sp
                             )
                             plant?.waterAmount.let {
                                 Text(
-                                    text = "$it ml",
+                                    text = "$it${stringResource(id = R.string.plant_details_water_amount_suffix)}",
                                     color = MaterialTheme.colorScheme.primary,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -223,7 +226,7 @@ fun PlantDetailsScreen(
                             modifier = Modifier.weight(2f)
                         ) {
                             Text(
-                                text = "Frequency",
+                                text = stringResource(id = R.string.plant_details_frequency_label),
                                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6F),
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 12.sp
@@ -291,7 +294,7 @@ fun PlantDetailsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Mark as Watered",
+                            text = stringResource(id = R.string.plant_details_mark_as_watered_button),
                             color = Color.White,
                             fontWeight = FontWeight.Medium,
                             fontSize = 16.sp
@@ -319,21 +322,21 @@ fun PlantDetailsScreen(
         ) {
             Column(modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .clickable {
+                .clickable { // This clickable on the dialog itself might be unintentional
                     showModal = true
                 }
                 .background(Color.White, RoundedCornerShape(16.dp))
                 .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Are You Sure?",
+                    text = stringResource(id = R.string.plant_details_delete_dialog_title),
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                     color = Color.Black
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = "Are you sure you want to delete this plant? This action cannot be undone.",
+                    text = stringResource(id = R.string.plant_details_delete_dialog_message),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.secondary,
                     fontWeight = FontWeight.Medium
@@ -354,7 +357,7 @@ fun PlantDetailsScreen(
                             .height(40.dp),
                     ) {
                         Text(
-                            text = "Cancel",
+                            text = stringResource(id = R.string.dialog_cancel),
                             color = MaterialTheme.colorScheme.secondary,
                             fontSize = 16.sp
                         )
@@ -373,7 +376,7 @@ fun PlantDetailsScreen(
                             .height(40.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     ) {
-                        Text(text = "Delete", color = Color.White, fontSize = 16.sp)
+                        Text(text = stringResource(id = R.string.plant_details_delete_dialog_confirm_button), color = Color.White, fontSize = 16.sp)
                     }
 
                 }

@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -58,6 +59,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -109,7 +111,7 @@ fun AddEditPlantScreen(
             // Handle the case where permission is denied
             Toast.makeText(
                 context,
-                "Please enable the camera permissions from the settings.",
+                context.getString(R.string.camera_permission_denied_message),
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -167,7 +169,8 @@ fun AddEditPlantScreen(
             )
         })
     } else if (state.showDatesDialog) {
-        DatesDialog(modifier = Modifier.width(400.dp),
+        DatesDialog(
+            modifier = Modifier.width(400.dp),
             selectedDays = viewModel.state.selectedDays,
             onDismissRequest = {
                 viewModel.updateState(
@@ -179,7 +182,8 @@ fun AddEditPlantScreen(
             viewModel.toggleDaySelection(it)
         }
     } else if (state.showPlantSizeDialog) {
-        PlantSizeDialog(modifier = Modifier.width(400.dp),
+        PlantSizeDialog(
+            modifier = Modifier.width(400.dp),
             selectedPlant = state.plantSize,
             togglePlantSizeSelection = {
                 viewModel.updateState(UpdateEventWithValue.UpdateState(UpdateEvent.PLANT_SIZE, it))
@@ -192,46 +196,53 @@ fun AddEditPlantScreen(
                 )
             })
     } else if (state.showDialog) {
-        AlertDialog(onDismissRequest = {
-            viewModel.updateState(
-                UpdateEventWithValue.UpdateState(
-                    UpdateEvent.SHOW_DIALOG, false
-                )
-            )
-        }, title = { Text("Choose Image Source") }, text = {
-            Column {
-                TextButton(onClick = {
-                    requestCameraPermission()
-                    viewModel.updateState(
-                        UpdateEventWithValue.UpdateState(
-                            UpdateEvent.SHOW_DIALOG, false
-                        )
-                    )
-                }) {
-                    Text("Take Photo")
-                }
-                TextButton(onClick = {
-                    photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    viewModel.updateState(
-                        UpdateEventWithValue.UpdateState(
-                            UpdateEvent.SHOW_DIALOG, false
-                        )
-                    )
-                }) {
-                    Text("Choose from Gallery")
-                }
-            }
-        }, confirmButton = {
-            Button(onClick = {
+        AlertDialog(
+            onDismissRequest = {
                 viewModel.updateState(
                     UpdateEventWithValue.UpdateState(
                         UpdateEvent.SHOW_DIALOG, false
                     )
                 )
-            }) {
-                Text("Cancel", color = Color.White)
-            }
-        })
+            },
+            title = { Text(stringResource(id = R.string.add_edit_plant_select_image_dialog_title)) },
+            text = { // TODO: Check if this string is correct
+                Column {
+                    TextButton(onClick = {
+                        requestCameraPermission()
+                        viewModel.updateState(
+                            UpdateEventWithValue.UpdateState(
+                                UpdateEvent.SHOW_DIALOG, false
+                            )
+                        )
+                    }) {
+                        Text(stringResource(id = R.string.add_edit_plant_image_source_camera))
+                    }
+                    TextButton(onClick = {
+                        photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        viewModel.updateState(
+                            UpdateEventWithValue.UpdateState(
+                                UpdateEvent.SHOW_DIALOG, false
+                            )
+                        )
+                    }) {
+                        Text(stringResource(id = R.string.add_edit_plant_image_source_gallery))
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.updateState(
+                        UpdateEventWithValue.UpdateState(
+                            UpdateEvent.SHOW_DIALOG, false
+                        )
+                    )
+                }) {
+                    Text(
+                        stringResource(id = R.string.dialog_cancel),
+                        color = Color.White
+                    )
+                }
+            })
     }
     if (state.showCameraView) {
         CameraView(
@@ -266,7 +277,7 @@ fun AddEditPlantScreen(
                     if (state.imageUri != null) {
                         AsyncImage(
                             model = state.imageUri,
-                            contentDescription = "Background plants",
+                            contentDescription = stringResource(id = R.string.background_plants),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -277,22 +288,23 @@ fun AddEditPlantScreen(
                             modifier = Modifier.fillMaxWidth(),
                             painter = painterResource(id = R.drawable.bg_plants),
                             contentScale = ContentScale.FillWidth,
-                            contentDescription = "Background plants"
+                            contentDescription = stringResource(id = R.string.background_plants)
                         )
                     }
-                    Box(modifier = Modifier
-                        .size(40.dp)
-                        .offset(x = 20.dp, y = 60.dp)
-                        .align(Alignment.TopStart)
-                        .background(Color.White, CircleShape)
-                        .clickable {
-                            DebounceClick.debounceClick {
-                                navController.popBackStack()
-                            }
-                        }) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .offset(x = 20.dp, y = 60.dp)
+                            .align(Alignment.TopStart)
+                            .background(Color.White, CircleShape)
+                            .clickable {
+                                DebounceClick.debounceClick {
+                                    navController.popBackStack()
+                                }
+                            }) {
                         Icon(
                             imageVector = Icons.Default.ChevronLeft,
-                            contentDescription = "Go Back",
+                            contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc),
                             modifier = Modifier
                                 .size(30.dp)
                                 .align(Alignment.Center),
@@ -315,7 +327,7 @@ fun AddEditPlantScreen(
                                 .graphicsLayer(if (state.imageUri == null) 1.0f else 0.0f),
                             painter = painterResource(id = R.drawable.plant),
                             contentScale = ContentScale.Fit,
-                            contentDescription = "Single plant"
+                            contentDescription = stringResource(id = R.string.add_edit_plant_single_plant_image_desc)
 
                         )
 
@@ -334,13 +346,13 @@ fun AddEditPlantScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.CloudUpload,
-                                    contentDescription = "Upload Image",
+                                    contentDescription = stringResource(id = R.string.add_edit_plant_upload_image_icon_desc),
                                     modifier = Modifier.size(20.dp),
                                     tint = Color.White
                                 )
                                 Spacer(modifier = Modifier.width(12.dp)) // Space between icon and text
                                 Text(
-                                    text = "Add Image",
+                                    text = stringResource(id = R.string.add_edit_plant_add_image_button),
                                     color = Color.White,
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 16.sp
@@ -369,7 +381,7 @@ fun AddEditPlantScreen(
                                     UpdateEvent.PLANT_NAME, it
                                 )
                             )
-                        }, label = "Plant name*"
+                        }, label = stringResource(id = R.string.add_edit_plant_plant_name_label)
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -382,19 +394,25 @@ fun AddEditPlantScreen(
                                 .weight(0.45f)
                         ) {
                             Text(
-                                text = "Dates",
+                                text = stringResource(id = R.string.add_edit_plant_dates_label),
                                 color = MaterialTheme.colorScheme.secondary,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
 
                             )
-                            TextField(modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp)
-                                .height(60.dp)
-                                .clip(
-                                    RoundedCornerShape(14.dp)
-                                ),
+                            TextField(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp)
+                                    .height(60.dp)
+                                    .clip(
+                                        RoundedCornerShape(14.dp)
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.onSecondary,
+                                        shape = RoundedCornerShape(14.dp)
+                                    ),
                                 singleLine = true,
                                 maxLines = 1,
                                 readOnly = true,
@@ -415,7 +433,7 @@ fun AddEditPlantScreen(
                                     IconButton(onClick = {}) {
                                         Icon(
                                             Icons.Default.KeyboardArrowDown,
-                                            contentDescription = "Dropdown Icon"
+                                            contentDescription = stringResource(id = R.string.add_edit_plant_dropdown_icon_desc)
                                         )
                                     }
                                 },
@@ -441,18 +459,24 @@ fun AddEditPlantScreen(
                                 .weight(0.45f)
                         ) {
                             Text(
-                                text = "Time",
+                                text = stringResource(id = R.string.add_edit_plant_time_label),
                                 color = MaterialTheme.colorScheme.secondary,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
                             )
-                            TextField(modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp)
-                                .height(60.dp)
-                                .clip(
-                                    RoundedCornerShape(14.dp)
-                                ),
+                            TextField(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp)
+                                    .height(60.dp)
+                                    .clip(
+                                        RoundedCornerShape(14.dp)
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.onSecondary,
+                                        shape = RoundedCornerShape(14.dp)
+                                    ),
                                 singleLine = true,
                                 maxLines = 1,
                                 readOnly = true,
@@ -473,7 +497,7 @@ fun AddEditPlantScreen(
                                     IconButton(onClick = {}) {
                                         Icon(
                                             Icons.Default.KeyboardArrowDown,
-                                            contentDescription = "Dropdown Icon"
+                                            contentDescription = stringResource(id = R.string.add_edit_plant_dropdown_icon_desc)
                                         )
                                     }
                                 },
@@ -504,19 +528,25 @@ fun AddEditPlantScreen(
                                 .weight(0.45f)
                         ) {
                             Text(
-                                text = "The amount of water*",
+                                text = stringResource(id = R.string.add_edit_plant_water_amount_label),
                                 color = MaterialTheme.colorScheme.secondary,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
 
                             )
-                            TextField(modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp)
-                                .height(60.dp)
-                                .clip(
-                                    RoundedCornerShape(14.dp)
-                                ),
+                            TextField(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp)
+                                    .height(60.dp)
+                                    .clip(
+                                        RoundedCornerShape(14.dp)
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.onSecondary,
+                                        shape = RoundedCornerShape(14.dp)
+                                    ),
                                 singleLine = true,
                                 maxLines = 1,
                                 colors = TextFieldDefaults.colors(
@@ -547,18 +577,24 @@ fun AddEditPlantScreen(
                                 .weight(0.45f)
                         ) {
                             Text(
-                                text = "Plant Size*",
+                                text = stringResource(id = R.string.add_edit_plant_plant_size_label),
                                 color = MaterialTheme.colorScheme.secondary,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
                             )
-                            TextField(modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp)
-                                .height(60.dp)
-                                .clip(
-                                    RoundedCornerShape(14.dp)
-                                ),
+                            TextField(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp)
+                                    .height(60.dp)
+                                    .clip(
+                                        RoundedCornerShape(14.dp)
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.onSecondary,
+                                        shape = RoundedCornerShape(14.dp)
+                                    ),
                                 singleLine = true,
                                 maxLines = 1,
                                 readOnly = true,
@@ -579,7 +615,7 @@ fun AddEditPlantScreen(
                                     IconButton(onClick = {}) {
                                         Icon(
                                             Icons.Default.KeyboardArrowDown,
-                                            contentDescription = "Dropdown Icon"
+                                            contentDescription = stringResource(id = R.string.add_edit_plant_dropdown_icon_desc)
                                         )
                                     }
                                 },
@@ -591,7 +627,7 @@ fun AddEditPlantScreen(
                                     focusedTextColor = MaterialTheme.colorScheme.secondary,
                                     unfocusedTextColor = MaterialTheme.colorScheme.secondary,
                                     focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent
+                                    unfocusedIndicatorColor = Color.Transparent,
                                 ),
                                 value = state.plantSize.toString(),
                                 onValueChange = {})
@@ -601,13 +637,16 @@ fun AddEditPlantScreen(
 
                     }
                     CustomTextField(
-                        value = state.description, onValueChange = {
+                        value = state.description,
+                        onValueChange = {
                             viewModel.updateState(
                                 UpdateEventWithValue.UpdateState(
                                     UpdateEvent.DESCRIPTION, it
                                 )
                             )
-                        }, label = "Description", multiline = true
+                        },
+                        label = stringResource(id = R.string.add_edit_plant_description_label),
+                        multiline = true
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     if (errorMessages.isNotEmpty()) {
@@ -627,7 +666,8 @@ fun AddEditPlantScreen(
                     Spacer(modifier = Modifier.height(30.dp))
 
 
-                    Button(modifier = Modifier.fillMaxWidth(),
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         onClick = {
                             DebounceClick.debounceClick {
@@ -642,7 +682,7 @@ fun AddEditPlantScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Add a Plant",
+                                text = stringResource(id = R.string.dialog_save), // Changed from "Add a Plant"
                                 color = Color.White,
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 16.sp

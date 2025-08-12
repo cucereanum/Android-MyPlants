@@ -48,6 +48,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -88,7 +89,7 @@ fun PlantListScreen(
             modifier = Modifier.fillMaxWidth(),
             painter = painterResource(id = R.drawable.bg_plants),
             contentScale = ContentScale.FillWidth,
-            contentDescription = "Background plants"
+            contentDescription = stringResource(id = R.string.background_plants)
         )
 
         if (viewModel.isLoading) {
@@ -114,7 +115,7 @@ fun PlantListScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "Let's Care \nMy Plants!",
+                        Text(text = stringResource(id = R.string.home_title),
                             color = MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 26.sp,
@@ -130,7 +131,7 @@ fun PlantListScreen(
                                             WorkManager.getInstance(context).enqueue(request)
                                             Toast.makeText(
                                                 context,
-                                                "Debug: Worker Triggered",
+                                                context.getString(R.string.plant_list_debug_worker_triggered_toast),
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                         }
@@ -152,7 +153,7 @@ fun PlantListScreen(
                                 }) {
                                 Icon(
                                     imageVector = Icons.Outlined.Notifications,
-                                    contentDescription = "Notifications",
+                                    contentDescription = stringResource(id = R.string.notifications),
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.align(Alignment.Center)
                                 )
@@ -245,7 +246,7 @@ fun PlantListScreen(
                 ) {
                     Icon(
                         Icons.Filled.Add,
-                        contentDescription = "Add",
+                        contentDescription = stringResource(id = R.string.add),
                         tint = Color.White,
                         modifier = Modifier.size(32.dp)
                     )
@@ -261,24 +262,26 @@ fun PlantListScreen(
 fun EmptyState(
     navController: NavController, selectedFilterType: PlantListFilter
 ) {
-    val (title, message, buttonText) = when (selectedFilterType) {
-        PlantListFilter.UPCOMING -> Triple(
-            "No Upcoming Plants",
-            "There are no upcoming plants to water. Please add a new plant to keep track of your watering schedule.",
-            "Add a Plant"
-        )
+    val title: String
+    val message: String
+    val buttonText: String
 
-        PlantListFilter.FORGOT_TO_WATER -> Triple(
-            "No Missed Waterings",
-            "Great job! You have no plants that you forgot to water. Stay on top of your schedule to keep your plants healthy.",
-            "View Plants"
-        )
-
-        PlantListFilter.HISTORY -> Triple(
-            "No Watering History",
-            "Your watering history is empty. Once you water a plant, it will appear here.",
-            "View Plants"
-        )
+    when (selectedFilterType) {
+        PlantListFilter.UPCOMING -> {
+            title = stringResource(id = R.string.plant_list_empty_upcoming_title)
+            message = stringResource(id = R.string.plant_list_empty_upcoming_message)
+            buttonText = stringResource(id = R.string.plant_list_empty_upcoming_button)
+        }
+        PlantListFilter.FORGOT_TO_WATER -> {
+            title = stringResource(id = R.string.plant_list_empty_forgot_title)
+            message = stringResource(id = R.string.plant_list_empty_forgot_message)
+            buttonText = stringResource(id = R.string.plant_list_empty_view_plants_button)
+        }
+        PlantListFilter.HISTORY -> {
+            title = stringResource(id = R.string.plant_list_empty_history_title)
+            message = stringResource(id = R.string.plant_list_empty_history_message)
+            buttonText = stringResource(id = R.string.plant_list_empty_view_plants_button)
+        }
     }
 
     Column(
@@ -293,7 +296,7 @@ fun EmptyState(
                 .height(240.dp),
             painter = painterResource(id = R.drawable.plants_center),
             contentScale = ContentScale.Fit,
-            contentDescription = "Cactus plants"
+            contentDescription = stringResource(id = R.string.plant_list_empty_state_image_desc)
         )
         Spacer(modifier = Modifier.padding(top = 30.dp))
         Text(
