@@ -59,6 +59,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.myplants.R
+import com.example.myplants.navigation.Route
 import com.example.myplants.ui.util.DebounceClick
 
 //todo: create reusable components
@@ -100,12 +101,13 @@ fun PlantDetailsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(modifier = Modifier
-                    .size(40.dp)
-                    .background(Color.White, CircleShape)
-                    .clickable {
-                        navController.popBackStack()
-                    }) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color.White, CircleShape)
+                        .clickable {
+                            navController.popBackStack()
+                        }) {
                     Icon(
                         imageVector = Icons.Default.ChevronLeft,
                         contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc),
@@ -116,15 +118,15 @@ fun PlantDetailsScreen(
                     )
                 }
                 Row {
-                    Box(modifier = Modifier
-                        .size(40.dp)
-                        .background(Color.White, CircleShape)
-                        .clickable {
-                            DebounceClick.debounceClick {
-                                // TODO: Navigate to Edit screen if it exists, for now it pops back
-                                navController.popBackStack()
-                            }
-                        }) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color.White, CircleShape)
+                            .clickable {
+                                DebounceClick.debounceClick {
+                                    navController.navigate("${Route.ADD_EDIT_PLANT}/${plantId}")
+                                }
+                            }) {
                         Icon(
                             imageVector = Icons.Outlined.Edit,
                             contentDescription = stringResource(id = R.string.plant_details_edit_desc),
@@ -135,12 +137,13 @@ fun PlantDetailsScreen(
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
-                    Box(modifier = Modifier
-                        .size(40.dp)
-                        .background(Color.White, CircleShape)
-                        .clickable {
-                            showModal = true
-                        }) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color.White, CircleShape)
+                            .clickable {
+                                showModal = true
+                            }) {
                         Icon(
                             imageVector = Icons.Outlined.Delete,
                             contentDescription = stringResource(id = R.string.plant_details_delete_desc),
@@ -281,9 +284,10 @@ fun PlantDetailsScreen(
             }
 
             if (plant?.isWatered != true) {
-                Button(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
                     shape = RoundedCornerShape(12.dp),
                     onClick = {
                         viewModel.onMarkAsWatered()
@@ -305,28 +309,28 @@ fun PlantDetailsScreen(
         }
     }
     if (showModal) {
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White.copy(alpha = 0.5f))
-            .graphicsLayer {
-                renderEffect = RenderEffect
-                    .createBlurEffect(
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White.copy(alpha = 0.5f))
+                .graphicsLayer {
+                    renderEffect = RenderEffect.createBlurEffect(
                         100f, 100f, Shader.TileMode.CLAMP
-                    )
-                    .asComposeRenderEffect()
-            }
-            .clickable { showModal = false })
+                    ).asComposeRenderEffect()
+                }
+                .clickable { showModal = false })
 
         Box(
             modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
         ) {
-            Column(modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .clickable { // This clickable on the dialog itself might be unintentional
-                    showModal = true
-                }
-                .background(Color.White, RoundedCornerShape(16.dp))
-                .padding(20.dp),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .clickable { // This clickable on the dialog itself might be unintentional
+                        showModal = true
+                    }
+                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = stringResource(id = R.string.plant_details_delete_dialog_title),
@@ -376,7 +380,11 @@ fun PlantDetailsScreen(
                             .height(40.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     ) {
-                        Text(text = stringResource(id = R.string.plant_details_delete_dialog_confirm_button), color = Color.White, fontSize = 16.sp)
+                        Text(
+                            text = stringResource(id = R.string.plant_details_delete_dialog_confirm_button),
+                            color = Color.White,
+                            fontSize = 16.sp
+                        )
                     }
 
                 }

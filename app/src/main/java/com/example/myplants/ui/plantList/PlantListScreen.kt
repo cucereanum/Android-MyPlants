@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
@@ -115,7 +116,8 @@ fun PlantListScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = stringResource(id = R.string.home_title),
+                        Text(
+                            text = stringResource(id = R.string.home_title),
                             color = MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 26.sp,
@@ -138,35 +140,62 @@ fun PlantListScreen(
                                     }
                                 }
                             })
-                        Box(
-                            contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)
-                        ) {
-                            Box(modifier = Modifier
-                                .size(60.dp)
-                                .shadow(elevation = 4.dp, shape = CircleShape, clip = false)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.background)
-                                .clickable {
-                                    DebounceClick.debounceClick {
-                                        navController.navigate(Route.NOTIFICATIONS)
-                                    }
-                                }) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Notifications,
-                                    contentDescription = stringResource(id = R.string.notifications),
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
-                            }
-                            if (hasUnreadNotifications) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)
+                            ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(10.dp)
-                                        .offset(x = -2.dp, y = 2.dp)
-                                        .align(Alignment.TopEnd)
-                                        .background(Color.Red, CircleShape)
-                                )
+                                        .size(60.dp)
+                                        .shadow(elevation = 4.dp, shape = CircleShape, clip = false)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.background)
+                                        .clickable {
+                                            DebounceClick.debounceClick {
+                                                navController.navigate(Route.SETTINGS)
+                                            }
+                                        }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Settings,
+                                        contentDescription = stringResource(id = R.string.settings_title),
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.align(Alignment.Center)
+                                    )
+                                }
                             }
+                            Spacer(modifier = Modifier.width(20.dp))
+                            Box(
+                                contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(60.dp)
+                                        .shadow(elevation = 4.dp, shape = CircleShape, clip = false)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.background)
+                                        .clickable {
+                                            DebounceClick.debounceClick {
+                                                navController.navigate(Route.NOTIFICATIONS)
+                                            }
+                                        }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Notifications,
+                                        contentDescription = stringResource(id = R.string.notifications),
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.align(Alignment.Center)
+                                    )
+                                }
+                                if (hasUnreadNotifications) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(10.dp)
+                                            .offset(x = -2.dp, y = 2.dp)
+                                            .align(Alignment.TopEnd)
+                                            .background(Color.Red, CircleShape)
+                                    )
+                                }
+                            }
+
                         }
                     }
 
@@ -201,7 +230,8 @@ fun PlantListScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 rowItems.forEach { plant ->
-                                    PlantListItem(plant,
+                                    PlantListItem(
+                                        plant,
                                         modifier = Modifier.weight(1f),
                                         onNavigateToPlantDetails = {
                                             navController.navigate(Route.plantDetailsRoute(plant.id))
@@ -272,11 +302,13 @@ fun EmptyState(
             message = stringResource(id = R.string.plant_list_empty_upcoming_message)
             buttonText = stringResource(id = R.string.plant_list_empty_upcoming_button)
         }
+
         PlantListFilter.FORGOT_TO_WATER -> {
             title = stringResource(id = R.string.plant_list_empty_forgot_title)
             message = stringResource(id = R.string.plant_list_empty_forgot_message)
             buttonText = stringResource(id = R.string.plant_list_empty_view_plants_button)
         }
+
         PlantListFilter.HISTORY -> {
             title = stringResource(id = R.string.plant_list_empty_history_title)
             message = stringResource(id = R.string.plant_list_empty_history_message)
@@ -316,9 +348,10 @@ fun EmptyState(
         )
         Spacer(modifier = Modifier.padding(top = 20.dp))
         if (selectedFilterType === PlantListFilter.UPCOMING) {
-            Button(modifier = Modifier
-                .width(320.dp)
-                .height(54.dp),
+            Button(
+                modifier = Modifier
+                    .width(320.dp)
+                    .height(54.dp),
                 shape = RoundedCornerShape(12.dp),
                 onClick = {
                     navController.navigate(Route.ADD_EDIT_PLANT)

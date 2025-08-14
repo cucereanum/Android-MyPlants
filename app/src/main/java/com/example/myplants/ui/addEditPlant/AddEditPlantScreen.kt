@@ -79,6 +79,7 @@ import java.util.concurrent.ExecutorService
 @Composable
 fun AddEditPlantScreen(
     navController: NavController,
+    plantId: Int = -1,
     outputDirectory: File,
     cameraExecutor: ExecutorService,
     viewModel: AddEditPlantViewModel = hiltViewModel()
@@ -123,6 +124,11 @@ fun AddEditPlantScreen(
     LaunchedEffect(errorMessages) {
         if (errorMessages.isNotEmpty()) {
             scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+    LaunchedEffect(plantId) {
+        if (plantId != -1) {
+            viewModel.loadPlantForEditing(plantId)
         }
     }
 

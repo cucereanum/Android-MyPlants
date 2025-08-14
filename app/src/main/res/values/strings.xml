@@ -1,7 +1,87 @@
 <resources>
+    <!-- General App Strings -->
     <string name="app_name">MyPlants</string>
     <string name="add">Add</string>
     <string name="notifications">Notifications</string>
-    <string name="home_title">Let\'s Care\nMy Plants!</string>
     <string name="background_plants">Background plants</string>
+    <string name="camera_permission_denied_message">Please enable the camera permissions from the settings.</string>
+
+    <!-- Shared Dialog Strings -->
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_save">Save</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">Let\'s Care\nMy Plants!</string>
+
+    <!-- Add/Edit Plant Screen -->
+    <string name="add_edit_plant_title">Add/Edit Plant</string>
+    <string name="add_edit_plant_go_back_desc">Go Back</string>
+    <string name="add_edit_plant_single_plant_image_desc">Single plant</string>
+    <string name="add_edit_plant_upload_image_icon_desc">Upload Image</string>
+    <string name="add_edit_plant_add_image_button">Add Image</string>
+    <string name="add_edit_plant_plant_name_label">Plant name*</string>
+    <string name="add_edit_plant_dates_label">Dates</string>
+    <string name="add_edit_plant_dropdown_icon_desc">Dropdown Icon</string>
+    <string name="add_edit_plant_time_label">Time</string>
+    <string name="add_edit_plant_description_label">Description</string>
+    <string name="add_edit_plant_gallery_title">Plant Gallery</string>
+    <string name="add_edit_plant_select_image_dialog_title">Select an Image</string>
+    <string name="add_edit_plant_dialog_okay_button">Okay</string>
+    <string name="add_edit_plant_image_source_camera">Take Photo</string>
+    <string name="add_edit_plant_image_source_gallery">Choose from Gallery</string>
+    <string name="add_edit_plant_details_dialog_title">Plant Details</string>
+    <string name="add_edit_plant_added_successfully_message">Plant added successfully!</string>
+    <string name="add_edit_plant_updated_successfully_message">Plant updated successfully!</string>
+    <string name="add_edit_plant_water_amount_label">The amount of water*</string>
+    <string name="add_edit_plant_plant_size_label">Plant Size*</string>
+
+    <!-- PlantListScreen -->
+    <string name="plant_list_debug_worker_triggered_toast">Debug: Worker Triggered</string>
+    <string name="plant_list_empty_upcoming_title">No Upcoming Plants</string>
+    <string name="plant_list_empty_upcoming_message">There are no upcoming plants to water. Please
+        add a new plant to keep track of your watering schedule.
+    </string>
+    <string name="plant_list_empty_upcoming_button">Add a Plant</string>
+    <string name="plant_list_empty_forgot_title">No Missed Waterings</string>
+    <string name="plant_list_empty_forgot_message">Great job! You have no plants that you forgot to
+        water. Stay on top of your schedule to keep your plants healthy.
+    </string>
+    <string name="plant_list_empty_view_plants_button">View Plants</string>
+    <string name="plant_list_empty_history_title">No Watering History</string>
+    <string name="plant_list_empty_history_message">Your watering history is empty. Once you water a
+        plant, it will appear here.
+    </string>
+    <string name="plant_list_empty_state_image_desc">Cactus plants</string>
+
+    <!-- PlantDetailsScreen -->
+    <string name="plant_details_edit_desc">Edit</string>
+    <string name="plant_details_delete_desc">Delete</string>
+    <string name="plant_details_size_label">Size</string>
+    <string name="plant_details_water_label">Water</string>
+    <string name="plant_details_water_amount_suffix"> ml</string>
+    <string name="plant_details_frequency_label">Frequency</string>
+    <string name="plant_details_mark_as_watered_button">Mark as Watered</string>
+    <string name="plant_details_delete_dialog_title">Are You Sure?</string>
+    <string name="plant_details_delete_dialog_message">Are you sure you want to delete this plant? This action cannot be undone.</string>
+    <string name="plant_details_delete_dialog_confirm_button">Delete</string>
+
+    <!-- SettingsScreen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_insights">Insights &amp; Data</string>
+    <string name="settings_item_analytics">Plant Analytics</string>
+    <string name="settings_item_watering_history">Detailed Watering History</string>
+    <string name="settings_item_export_data">Export My Data</string>
+    <string name="settings_section_devices">My Devices</string>
+    <string name="settings_item_connected_devices">Connected Plant Sensors</string>
+    <string name="settings_item_sensor_sync">Sensor Data Sync Settings</string>
+    <string name="settings_section_preferences">Preferences</string>
+    <string name="settings_item_notification_prefs">Notification Preferences</string>
+    <string name="settings_item_theme">App Theme</string>
+    <string name="settings_item_reminder_defaults">Reminder Defaults</string>
+    <string name="settings_section_about">Support</string>
+    <string name="settings_item_about_app">About MyPlants</string>
+    <string name="settings_item_help_faq">Help &amp; FAQ</string>
+    <string name="settings_item_feedback">Send Feedback</string>
+
 </resources>

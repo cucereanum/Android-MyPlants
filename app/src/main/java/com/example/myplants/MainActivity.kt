@@ -23,6 +23,7 @@ import com.example.myplants.ui.addEditPlant.AddEditPlantScreen
 import com.example.myplants.ui.notifications.NotificationScreen
 import com.example.myplants.ui.plantDetails.PlantDetailsScreen
 import com.example.myplants.ui.plantList.PlantListScreen
+import com.example.myplants.ui.settings.SettingsScreen
 import com.example.myplants.ui.theme.MyPlantsTheme
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
@@ -53,7 +54,20 @@ class MainActivity : ComponentActivity() {
                             PlantListScreen(navController)
                         }
                         composable(Route.ADD_EDIT_PLANT) {
-                            AddEditPlantScreen(navController, outputDirectory, cameraExecutor)
+                            AddEditPlantScreen(
+                                navController, plantId = -1, outputDirectory, cameraExecutor
+                            )
+                        }
+                        composable(
+                            "${Route.ADD_EDIT_PLANT}/{plantId}",
+                            arguments = listOf(navArgument("plantId") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            AddEditPlantScreen(
+                                navController,
+                                plantId = backStackEntry.arguments?.getInt("plantId") ?: -1,
+                                outputDirectory,
+                                cameraExecutor
+                            )
                         }
                         composable(
                             Route.PLANT_DETAILS,
@@ -64,6 +78,9 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Route.NOTIFICATIONS) {
                             NotificationScreen(navController)
+                        }
+                        composable(Route.SETTINGS) {
+                            SettingsScreen(navController)
                         }
                     }
                 }
@@ -91,8 +108,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
-        text = "Hello $name!",
-        modifier = modifier
+        text = "Hello $name!", modifier = modifier
     )
 }
 

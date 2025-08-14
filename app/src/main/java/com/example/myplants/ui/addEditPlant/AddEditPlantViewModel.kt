@@ -168,4 +168,22 @@ class AddEditPlantViewModel @Inject constructor(
             state.descriptionError
         )
     }
+
+
+    fun loadPlantForEditing(plantId: Int) {
+        viewModelScope.launch {
+            val plant = repository.getPlantById(plantId)
+            plant?.let {
+                state = state.copy(
+                    plantName = it.plantName,
+                    description = it.description,
+                    waterAmount = it.waterAmount,
+                    imageUri = it.imageUri,
+                    time = LocalDateTime.ofEpochSecond(it.time / 1000, 0, ZoneOffset.UTC),
+                    selectedDays = it.selectedDays,
+                    plantSize = PlantSizeType.valueOf(it.size)
+                )
+            }
+        }
+    }
 }
