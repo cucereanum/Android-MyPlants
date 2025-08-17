@@ -80,30 +80,6 @@ fun SettingsScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Section: Insights & Data
-            item { SettingsSectionTitle(title = stringResource(id = R.string.settings_section_insights)) }
-            item {
-                SettingsItem(
-                    icon = Icons.Outlined.Analytics,
-                    title = stringResource(id = R.string.settings_item_analytics),
-                    onClick = { /* navController.navigate(Route.PLANT_ANALYTICS) */ }
-                )
-            }
-            item {
-                SettingsItem(
-                    icon = Icons.Outlined.History,
-                    title = stringResource(id = R.string.settings_item_watering_history),
-                    onClick = { /* navController.navigate(Route.DETAILED_HISTORY) */ }
-                )
-            }
-            item {
-                SettingsItem(
-                    icon = Icons.Outlined.DataObject,
-                    title = stringResource(id = R.string.settings_item_export_data),
-                    onClick = { /* Handle data export */ }
-                )
-            }
-
             // Section: My Devices
             item { SettingsSpacer() }
             item { SettingsSectionTitle(title = stringResource(id = R.string.settings_section_devices)) }
@@ -121,57 +97,7 @@ fun SettingsScreen(navController: NavController) {
                     onClick = { /* navController.navigate(Route.SENSOR_SYNC_SETTINGS) */ }
                 )
             }
-
-            // Section: App Preferences
-            item { SettingsSpacer() }
-            item { SettingsSectionTitle(title = stringResource(id = R.string.settings_section_preferences)) }
-            item {
-                SettingsItem(
-                    icon = Icons.Outlined.NotificationsActive,
-                    title = stringResource(id = R.string.settings_item_notification_prefs),
-                    onClick = { /* Open notification settings or in-app prefs */ }
-                )
-            }
-            item {
-                SettingsItem(
-                    icon = Icons.Outlined.Palette,
-                    title = stringResource(id = R.string.settings_item_theme),
-                    onClick = { /* Show theme selection dialog/screen */ }
-                )
-            }
-            item {
-                SettingsItem(
-                    icon = Icons.Outlined.Schedule,
-                    title = stringResource(id = R.string.settings_item_reminder_defaults),
-                    onClick = { /* navController.navigate(Route.REMINDER_DEFAULTS) */ }
-                )
-            }
-
-            // Section: Support
-            item { SettingsSpacer() }
-            item { SettingsSectionTitle(title = stringResource(id = R.string.settings_section_about)) }
-            item {
-                SettingsItem(
-                    icon = Icons.Outlined.Info,
-                    title = stringResource(id = R.string.settings_item_about_app),
-                    onClick = { /* navController.navigate(Route.ABOUT_APP) */ }
-                )
-            }
-            item {
-                SettingsItem(
-                    icon = Icons.Outlined.HelpOutline,
-                    title = stringResource(id = R.string.settings_item_help_faq),
-                    onClick = { /* navController.navigate(Route.HELP_FAQ) */ }
-                )
-            }
-            item {
-                SettingsItem(
-                    icon = Icons.Outlined.Feedback,
-                    title = stringResource(id = R.string.settings_item_feedback),
-                    onClick = { /* Handle send feedback action */ }
-                )
-            }
-            item { SettingsSpacer() } // Extra space at the bottom
+    
         }
     }
 }
@@ -200,28 +126,28 @@ fun SettingsItem(icon: ImageVector, title: String, onClick: () -> Unit) {
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = title, // Content description for accessibility
+            contentDescription = title,
             modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.secondary // Or MaterialTheme.colorScheme.primary
+            tint = MaterialTheme.colorScheme.secondary
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface, // Standard text color
-            modifier = Modifier.weight(1f)
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+            fontWeight = FontWeight.Medium
         )
         Icon(
             imageVector = Icons.Filled.ArrowForwardIos,
-            contentDescription = null, // Decorative
+            contentDescription = null,
             modifier = Modifier.size(16.dp),
-            tint = MaterialTheme.colorScheme.outline // Subtle color for the arrow
+            tint = MaterialTheme.colorScheme.outline
         )
     }
 }
 
 @Composable
 fun SettingsSpacer() {
-    Spacer(modifier = Modifier.height(8.dp)) // Reduced spacer for tighter section grouping if preferred
-    // Or use Divider() for a visual line
+    Spacer(modifier = Modifier.height(8.dp))
 }

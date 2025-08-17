@@ -5,12 +5,10 @@ import com.example.myplants.data.ble.BleDevice
 import com.example.myplants.data.data_source.BleDeviceDao
 import com.example.myplants.domain.repository.BleRepository
 import kotlinx.coroutines.flow.Flow
-import no.nordicsemi.android.ble.BleManager
 import javax.inject.Inject
 
-class BleRepositoryImpl @Inject constructor(
+class BleDatabaseRepositoryImpl @Inject constructor(
     private val dao: BleDeviceDao,
-    private val bleManager: BleManager // ⚙️ abstraction for scan/connect/etc.
 ) : BleRepository {
 
     override fun getLinkedDevices(): Flow<List<ConnectedBleDeviceEntity>> {
@@ -30,7 +28,6 @@ class BleRepositoryImpl @Inject constructor(
 
     override suspend fun forgetDevice(deviceId: String) {
         dao.deleteById(deviceId)
-        // bleManager.disconnect()
     }
 
     override suspend fun forgetDeviceByPlant(plantId: Int) {

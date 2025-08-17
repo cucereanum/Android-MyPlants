@@ -1,5 +1,7 @@
 package com.example.myplants.domain.usecase
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.NotificationType
 import com.example.myplants.data.Plant
@@ -10,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import java.time.LocalTime
 import javax.inject.Inject
 
+@RequiresApi(Build.VERSION_CODES.O)
 class CheckForWateringUseCase @Inject constructor(
     private val repository: PlantRepository,
     private val notificationRepository: NotificationRepository,
@@ -17,6 +20,7 @@ class CheckForWateringUseCase @Inject constructor(
 ) {
 
     private var previousPlants: List<Plant> = emptyList()
+
 
     suspend fun execute() {
         val allPlants = repository.getPlants().first()
@@ -27,7 +31,7 @@ class CheckForWateringUseCase @Inject constructor(
             days[(index - 1 + days.size) % days.size]
         }
         val currentTimeOfDayMillis = LocalTime.now().toSecondOfDay() * 1000L
-        val upcomingThreshold = currentTimeOfDayMillis + 12 * 60 * 60 * 1000L // 12 hours from now
+        val upcomingThreshold = currentTimeOfDayMillis + 12 * 60 * 60 * 1000L
         val twentyHoursAgo = now - 20 * 60 * 60 * 1000L
 
         val allNotifications = notificationRepository.getAllNotifications().first()
@@ -37,7 +41,7 @@ class CheckForWateringUseCase @Inject constructor(
                             plant.selectedDays.contains(yesterday)
                     )
         }
-        println("allNotifications + ${allNotifications.size}")
+
         val upcomingPlants = allPlants.filter { plant ->
             !plant.isWatered &&
                     plant.selectedDays.contains(today) &&
