@@ -1,10 +1,11 @@
 package com.example.myplants.data.ble
 
 import android.bluetooth.BluetoothDevice
+import java.util.UUID
 
 data class BleDevice(
-    val id: Int,
-    val device: BluetoothDevice,
+    val address: String,
     val name: String?,
-    val address: String
+    val rssi: Int?,
+    val serviceUuids: List<UUID> = emptyList()
 )

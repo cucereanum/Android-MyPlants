@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myplants.R
+import com.example.myplants.navigation.Route
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,7 +88,7 @@ fun SettingsScreen(navController: NavController) {
                 SettingsItem(
                     icon = Icons.Outlined.Devices,
                     title = stringResource(id = R.string.settings_item_connected_devices),
-                    onClick = { /* navController.navigate(Route.CONNECTED_DEVICES) */ }
+                    onClick = { navController.navigate(Route.BLE) }
                 )
             }
             item {
@@ -97,7 +98,7 @@ fun SettingsScreen(navController: NavController) {
                     onClick = { /* navController.navigate(Route.SENSOR_SYNC_SETTINGS) */ }
                 )
             }
-    
+
         }
     }
 }

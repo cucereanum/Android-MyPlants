@@ -6,6 +6,7 @@ object Route {
     const val PLANT_DETAILS = "plant_details/{plantId}"
     const val NOTIFICATIONS = "notifications"
     const val SETTINGS = "settings"
+    const val BLE = "ble"
 
     fun plantDetailsRoute(plantId: Int): String {
         return "plant_details/$plantId"

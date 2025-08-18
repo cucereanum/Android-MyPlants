@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.myplants.navigation.Route
 import com.example.myplants.ui.addEditPlant.AddEditPlantScreen
+import com.example.myplants.ui.ble.BleScreen
 import com.example.myplants.ui.notifications.NotificationScreen
 import com.example.myplants.ui.plantDetails.PlantDetailsScreen
 import com.example.myplants.ui.plantList.PlantListScreen
@@ -81,6 +82,11 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Route.SETTINGS) {
                             SettingsScreen(navController)
+                        }
+                        composable(Route.BLE) {
+                            BleScreen(
+                                navController
+                            )
                         }
                     }
                 }

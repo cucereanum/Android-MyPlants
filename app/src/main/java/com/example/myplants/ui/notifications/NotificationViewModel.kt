@@ -1,7 +1,9 @@
 package com.example.myplants.ui.notifications
 
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -21,6 +23,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
 
+@RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class NotificationViewModel @Inject constructor(
     private val repository: NotificationRepository

@@ -4,7 +4,7 @@ import com.example.myplants.data.ConnectedBleDeviceEntity
 import com.example.myplants.data.ble.BleDevice
 import kotlinx.coroutines.flow.Flow
 
-interface BleRepository {
+interface BleDatabaseRepository {
     fun getLinkedDevices(): Flow<List<ConnectedBleDeviceEntity>>
     suspend fun linkDeviceToPlant(plantId: Int, device: BleDevice)
     suspend fun forgetDevice(deviceId: String)

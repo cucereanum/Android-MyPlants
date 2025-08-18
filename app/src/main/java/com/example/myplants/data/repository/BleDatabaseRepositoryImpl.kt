@@ -3,13 +3,13 @@ package com.example.myplants.data.repository
 import com.example.myplants.data.ConnectedBleDeviceEntity
 import com.example.myplants.data.ble.BleDevice
 import com.example.myplants.data.data_source.BleDeviceDao
-import com.example.myplants.domain.repository.BleRepository
+import com.example.myplants.domain.repository.BleDatabaseRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class BleDatabaseRepositoryImpl @Inject constructor(
     private val dao: BleDeviceDao,
-) : BleRepository {
+) : BleDatabaseRepository {
 
     override fun getLinkedDevices(): Flow<List<ConnectedBleDeviceEntity>> {
         return dao.getAllDevices()
@@ -18,7 +18,7 @@ class BleDatabaseRepositoryImpl @Inject constructor(
     override suspend fun linkDeviceToPlant(plantId: Int, device: BleDevice) {
         dao.insert(
             ConnectedBleDeviceEntity(
-                deviceId = device.id.toString(),
+                deviceId = device.rssi.toString(),
                 plantId = plantId,
                 name = device.name,
                 lastConnected = System.currentTimeMillis()
