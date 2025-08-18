@@ -85,6 +85,34 @@ fun BleScreen(
             }
 
             when (val cs = state.connectionState) {
+                is ConnectionState.ServicesDiscovered, is ConnectionState.Connected -> {
+                    if (state.readings.isNotEmpty()) {
+                        Card(Modifier.fillMaxWidth()) {
+                            Column(
+                                Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    "Plant parameters",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                state.readings.forEach { (k, v) ->
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(k); Text(v)
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        Text("Reading parameters…")
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = { viewModel.disconnect() }) { Text("Disconnect") }
+                }
+
                 is ConnectionState.Connecting -> AssistChip(
                     onClick = {},
                     label = { Text("Connecting ${cs.deviceAddress}…") })
@@ -106,6 +134,7 @@ fun BleScreen(
                     "Scan error: ${cs.message}",
                     color = MaterialTheme.colorScheme.error
                 )
+
 
                 else -> {}
             }

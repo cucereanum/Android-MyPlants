@@ -13,3 +13,9 @@ sealed class ConnectionState {
     data class Disconnected(val deviceAddress: String?, val cause: String? = null) :
         ConnectionState()
 }
+
+data class CharacteristicValue(
+    val service: UUID,
+    val characteristic: UUID,
+    val value: ByteArray
+)

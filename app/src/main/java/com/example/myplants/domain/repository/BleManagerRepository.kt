@@ -20,4 +20,14 @@ interface BleManagerRepository {
 
     /** Stop an ongoing scan (if started via scanDevices). */
     suspend fun stopScan()
+
+    /** Read a characteristic once. Throws if not connected or missing. */
+    suspend fun readCharacteristic(service: UUID, characteristic: UUID): ByteArray
+
+    /** Enable/disable notifications and emit updates for this characteristic. */
+    fun observeCharacteristic(
+        service: UUID,
+        characteristic: UUID,
+        enable: Boolean = true
+    ): Flow<ByteArray>
 }
