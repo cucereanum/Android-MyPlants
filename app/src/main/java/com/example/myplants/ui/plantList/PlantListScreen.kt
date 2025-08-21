@@ -1,6 +1,16 @@
 package com.example.myplants.ui.plantList
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOut
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,7 +27,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -35,6 +47,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -52,6 +65,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -72,7 +86,6 @@ fun PlantListScreen(
 
     val plants by viewModel.items.collectAsState()
     val hasUnreadNotifications by viewModel.hasUnreadNotifications.collectAsState()
-    val rows = plants.chunked(2)
     var tapCount by remember { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -207,44 +220,69 @@ fun PlantListScreen(
                 }
 
 
-                Spacer(modifier = Modifier.padding(top = if (plants.isEmpty()) 40.dp else 0.dp))
-                if (plants.isEmpty()) {
-                    EmptyState(
-                        navController = navController,
-                        selectedFilterType = viewModel.selectedFilterType
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 16.dp)
+                val selectedIndex = remember(viewModel.filterList, viewModel.selectedFilterType) {
+                    viewModel.filterList.indexOf(viewModel.selectedFilterType)
+                }
 
-                    ) {
-                        items(rows.size) { rowIndex ->
-                            val rowItems = rows[rowIndex]
+                // Keep track of previous index to decide direction
+                var lastIndex by remember { mutableStateOf(selectedIndex) }
+                val dir = if (selectedIndex > lastIndex) 1 else -1
+                LaunchedEffect(selectedIndex) { lastIndex = selectedIndex }
 
-                            Row(
+
+                @OptIn(ExperimentalAnimationApi::class)
+                AnimatedContent(
+                    targetState = plants,
+                    transitionSpec = {
+                        val enter = slideIn(
+                            // fullSize: IntSize -> IntOffset
+                            initialOffset = { fullSize -> IntOffset(fullSize.width * dir, 0) },
+                            animationSpec = tween(300)
+                        ) + fadeIn()
+
+                        val exit = slideOut(
+                            // fullSize: IntSize -> IntOffset
+                            targetOffset = { fullSize -> IntOffset(-fullSize.width * dir, 0) },
+                            animationSpec = tween(300)
+                        ) + fadeOut()
+
+                        enter togetherWith exit
+                    }
+                ) { currentPlants ->
+
+                    Column {
+                        Spacer(modifier = Modifier.padding(top = if (currentPlants.isEmpty()) 40.dp else 0.dp))
+
+                        if (currentPlants.isEmpty()) {
+                            EmptyState(
+                                navController = navController,
+                                selectedFilterType = viewModel.selectedFilterType
+                            )
+                        } else {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2), // 2 per row
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = if (rowIndex == rows.size - 1) 30.dp else 0.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                    .fillMaxSize()
+                                    .padding(top = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                rowItems.forEach { plant ->
+                                items(
+                                    items = currentPlants,
+                                    key = { it.id }  // 👈 stable key
+                                ) { plant ->
                                     PlantListItem(
                                         plant,
-                                        modifier = Modifier.weight(1f),
                                         onNavigateToPlantDetails = {
                                             navController.navigate(Route.plantDetailsRoute(plant.id))
-                                        })
-                                }
-                                if (rowItems.size < 2) {
-                                    Spacer(modifier = Modifier.weight(1f))
+                                        }
+                                    )
                                 }
                             }
                         }
                     }
-
                 }
+
             }
 
             if (plants.isNotEmpty()) {

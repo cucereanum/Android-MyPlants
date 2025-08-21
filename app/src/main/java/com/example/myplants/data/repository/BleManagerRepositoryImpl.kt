@@ -56,7 +56,7 @@ class BleManagerRepositoryImpl @Inject constructor(
             awaitClose { appContext.unregisterReceiver(receiver) }
         }.distinctUntilChanged()
 
-    // --- pending read bookkeeping ---
+
     private data class ReadKey(val svc: UUID, val chr: UUID)
 
     private val pendingReads = mutableMapOf<ReadKey, CompletableDeferred<Result<ByteArray>>>()
@@ -74,7 +74,7 @@ class BleManagerRepositoryImpl @Inject constructor(
         }
     }
 
-    @SuppressLint("MissingPermission") // caller must handle runtime permissions
+    @SuppressLint("MissingPermission")
     override fun scanDevices(filterServiceUuid: UUID?): Flow<List<BleDevice>> = callbackFlow {
         discovered.clear()
 
