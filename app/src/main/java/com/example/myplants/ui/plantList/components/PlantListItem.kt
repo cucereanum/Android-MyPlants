@@ -1,4 +1,4 @@
-package com.example.myplants.ui.plantList
+package com.example.myplants.ui.plantList.components
 
 import android.util.Log
 import androidx.compose.foundation.background

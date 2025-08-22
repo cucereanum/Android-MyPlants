@@ -1,4 +1,4 @@
-package com.example.myplants.ui.addEditPlant
+package com.example.myplants.ui.addEditPlant.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import java.time.LocalDateTime
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)

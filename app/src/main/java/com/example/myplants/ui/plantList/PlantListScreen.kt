@@ -7,9 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideIn
-import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOut
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -47,7 +45,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -76,6 +73,8 @@ import com.example.myplants.R
 import com.example.myplants.infrastructure.worker.WateringCheckWorker
 import com.example.myplants.navigation.Route
 import com.example.myplants.ui.notifications.RequestNotificationPermission
+import com.example.myplants.ui.plantList.components.FilterRow
+import com.example.myplants.ui.plantList.components.PlantListItem
 import com.example.myplants.ui.util.DebounceClick
 import kotlinx.coroutines.launch
 
@@ -225,7 +224,7 @@ fun PlantListScreen(
                 }
 
                 // Keep track of previous index to decide direction
-                var lastIndex by remember { mutableStateOf(selectedIndex) }
+                var lastIndex by remember { mutableIntStateOf(selectedIndex) }
                 val dir = if (selectedIndex > lastIndex) 1 else -1
                 LaunchedEffect(selectedIndex) { lastIndex = selectedIndex }
 

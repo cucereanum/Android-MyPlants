@@ -1,4 +1,4 @@
-package com.example.myplants.ui.plantList
+package com.example.myplants.ui.plantList.components
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
@@ -21,7 +21,6 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -111,7 +110,7 @@ fun FilterRowListItem(
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             fontSize = 16.sp,
         )
-        // keep some space for the moving underline
+
         Spacer(Modifier.height(8.dp))
     }
 }

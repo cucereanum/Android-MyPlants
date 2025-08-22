@@ -1,4 +1,4 @@
-package com.example.myplants.ui.addEditPlant
+package com.example.myplants.ui.addEditPlant.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

@@ -13,10 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,24 +30,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,6 +62,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.myplants.R
 import coil.compose.AsyncImage
+import com.example.myplants.ui.addEditPlant.components.AppFormField
+import com.example.myplants.ui.addEditPlant.components.DatesDialog
+import com.example.myplants.ui.addEditPlant.components.PlantSizeDialog
+import com.example.myplants.ui.addEditPlant.components.SelectTimeDialog
 import com.example.myplants.ui.util.DebounceClick
 import java.io.File
 import java.util.concurrent.ExecutorService
@@ -380,14 +377,18 @@ fun AddEditPlantScreen(
                 Column(
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
-                    CustomTextField(
-                        value = state.plantName, onValueChange = {
+                    AppFormField(
+                        value = state.plantName,
+                        onValueChange = {
                             viewModel.updateState(
                                 UpdateEventWithValue.UpdateState(
-                                    UpdateEvent.PLANT_NAME, it
+                                    UpdateEvent.PLANT_NAME,
+                                    it
                                 )
                             )
-                        }, label = stringResource(id = R.string.add_edit_plant_plant_name_label)
+                        },
+                        label = stringResource(id = R.string.add_edit_plant_plant_name_label),
+                        singleLine = true
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -396,130 +397,44 @@ fun AddEditPlantScreen(
                     ) {
                         Column(
                             modifier = Modifier
-                                .padding(top = 15.dp)
                                 .weight(0.45f)
                         ) {
-                            Text(
-                                text = stringResource(id = R.string.add_edit_plant_dates_label),
-                                color = MaterialTheme.colorScheme.secondary,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-
-                            )
-                            TextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp)
-                                    .height(60.dp)
-                                    .clip(
-                                        RoundedCornerShape(14.dp)
-                                    )
-                                    .border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colorScheme.onSecondary,
-                                        shape = RoundedCornerShape(14.dp)
-                                    ),
-                                singleLine = true,
-                                maxLines = 1,
-                                readOnly = true,
-                                interactionSource = remember { MutableInteractionSource() }.also { interactionSource ->
-                                    LaunchedEffect(interactionSource) {
-                                        interactionSource.interactions.collect {
-                                            if (it is PressInteraction.Release) {
-                                                viewModel.updateState(
-                                                    UpdateEventWithValue.UpdateState(
-                                                        UpdateEvent.SHOW_DATES_DIALOG, true
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    }
-                                },
-                                trailingIcon = {
-                                    IconButton(onClick = {}) {
-                                        Icon(
-                                            Icons.Default.KeyboardArrowDown,
-                                            contentDescription = stringResource(id = R.string.add_edit_plant_dropdown_icon_desc)
-                                        )
-                                    }
-                                },
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    disabledContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    errorContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    focusedTextColor = MaterialTheme.colorScheme.secondary,
-                                    unfocusedTextColor = MaterialTheme.colorScheme.secondary,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent
-                                ),
+                            AppFormField(
                                 value = viewModel.getSelectedDaysString(),
-                                onValueChange = {})
+                                onValueChange = {}, // ignored for selector
+                                label = stringResource(id = R.string.add_edit_plant_dates_label),
+                                readOnly = true,
+                                onClick = {
+                                    viewModel.updateState(
+                                        UpdateEventWithValue.UpdateState(
+                                            UpdateEvent.SHOW_DATES_DIALOG,
+                                            true
+                                        )
+                                    )
+                                }
+                            )
 
 
                         }
                         Spacer(modifier = Modifier.padding(5.dp))
                         Column(
                             modifier = Modifier
-                                .padding(top = 15.dp)
                                 .weight(0.45f)
                         ) {
-                            Text(
-                                text = stringResource(id = R.string.add_edit_plant_time_label),
-                                color = MaterialTheme.colorScheme.secondary,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                            TextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp)
-                                    .height(60.dp)
-                                    .clip(
-                                        RoundedCornerShape(14.dp)
-                                    )
-                                    .border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colorScheme.onSecondary,
-                                        shape = RoundedCornerShape(14.dp)
-                                    ),
-                                singleLine = true,
-                                maxLines = 1,
-                                readOnly = true,
-                                interactionSource = remember { MutableInteractionSource() }.also { interactionSource ->
-                                    LaunchedEffect(interactionSource) {
-                                        interactionSource.interactions.collect {
-                                            if (it is PressInteraction.Release) {
-                                                viewModel.updateState(
-                                                    UpdateEventWithValue.UpdateState(
-                                                        UpdateEvent.SHOW_TIME_DIALOG, true
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    }
-                                },
-                                trailingIcon = {
-                                    IconButton(onClick = {}) {
-                                        Icon(
-                                            Icons.Default.KeyboardArrowDown,
-                                            contentDescription = stringResource(id = R.string.add_edit_plant_dropdown_icon_desc)
-                                        )
-                                    }
-                                },
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    disabledContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    errorContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    focusedTextColor = MaterialTheme.colorScheme.secondary,
-                                    unfocusedTextColor = MaterialTheme.colorScheme.secondary,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent
-                                ),
+                            AppFormField(
                                 value = viewModel.displaySelectedTime(),
-                                onValueChange = {})
-
+                                onValueChange = {},
+                                label = stringResource(id = R.string.add_edit_plant_time_label),
+                                readOnly = true,
+                                onClick = {
+                                    viewModel.updateState(
+                                        UpdateEventWithValue.UpdateState(
+                                            UpdateEvent.SHOW_TIME_DIALOG,
+                                            true
+                                        )
+                                    )
+                                }
+                            )
 
                         }
                     }
@@ -530,129 +445,59 @@ fun AddEditPlantScreen(
                     ) {
                         Column(
                             modifier = Modifier
-                                .padding(top = 15.dp)
                                 .weight(0.45f)
                         ) {
-                            Text(
-                                text = stringResource(id = R.string.add_edit_plant_water_amount_label),
-                                color = MaterialTheme.colorScheme.secondary,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-
-                            )
-                            TextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp)
-                                    .height(60.dp)
-                                    .clip(
-                                        RoundedCornerShape(14.dp)
-                                    )
-                                    .border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colorScheme.onSecondary,
-                                        shape = RoundedCornerShape(14.dp)
-                                    ),
-                                singleLine = true,
-                                maxLines = 1,
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    disabledContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    errorContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    focusedTextColor = MaterialTheme.colorScheme.secondary,
-                                    unfocusedTextColor = MaterialTheme.colorScheme.secondary,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent
-                                ),
+                            AppFormField(
                                 value = state.waterAmount,
                                 onValueChange = {
                                     viewModel.updateState(
                                         UpdateEventWithValue.UpdateState(
-                                            UpdateEvent.WATER_AMOUNT, it
+                                            UpdateEvent.WATER_AMOUNT,
+                                            it
                                         )
                                     )
-                                })
-
+                                },
+                                label = stringResource(id = R.string.add_edit_plant_water_amount_label),
+                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                            )
 
                         }
                         Spacer(modifier = Modifier.padding(5.dp))
                         Column(
                             modifier = Modifier
-                                .padding(top = 15.dp)
                                 .weight(0.45f)
                         ) {
-                            Text(
-                                text = stringResource(id = R.string.add_edit_plant_plant_size_label),
-                                color = MaterialTheme.colorScheme.secondary,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                            TextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp)
-                                    .height(60.dp)
-                                    .clip(
-                                        RoundedCornerShape(14.dp)
-                                    )
-                                    .border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colorScheme.onSecondary,
-                                        shape = RoundedCornerShape(14.dp)
-                                    ),
-                                singleLine = true,
-                                maxLines = 1,
-                                readOnly = true,
-                                interactionSource = remember { MutableInteractionSource() }.also { interactionSource ->
-                                    LaunchedEffect(interactionSource) {
-                                        interactionSource.interactions.collect {
-                                            if (it is PressInteraction.Release) {
-                                                viewModel.updateState(
-                                                    UpdateEventWithValue.UpdateState(
-                                                        UpdateEvent.SHOW_PLANT_SIZE_DIALOG, true
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    }
-                                },
-                                trailingIcon = {
-                                    IconButton(onClick = {}) {
-                                        Icon(
-                                            Icons.Default.KeyboardArrowDown,
-                                            contentDescription = stringResource(id = R.string.add_edit_plant_dropdown_icon_desc)
-                                        )
-                                    }
-                                },
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    disabledContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    errorContainerColor = MaterialTheme.colorScheme.onBackground,
-                                    focusedTextColor = MaterialTheme.colorScheme.secondary,
-                                    unfocusedTextColor = MaterialTheme.colorScheme.secondary,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent,
-                                ),
+                            AppFormField(
                                 value = state.plantSize.toString(),
-                                onValueChange = {})
-
+                                onValueChange = {},
+                                label = stringResource(id = R.string.add_edit_plant_plant_size_label),
+                                readOnly = true,
+                                onClick = {
+                                    viewModel.updateState(
+                                        UpdateEventWithValue.UpdateState(
+                                            UpdateEvent.SHOW_PLANT_SIZE_DIALOG,
+                                            true
+                                        )
+                                    )
+                                }
+                            )
 
                         }
 
                     }
-                    CustomTextField(
+                    AppFormField(
                         value = state.description,
                         onValueChange = {
                             viewModel.updateState(
                                 UpdateEventWithValue.UpdateState(
-                                    UpdateEvent.DESCRIPTION, it
+                                    UpdateEvent.DESCRIPTION,
+                                    it
                                 )
                             )
                         },
                         label = stringResource(id = R.string.add_edit_plant_description_label),
-                        multiline = true
+                        singleLine = false,
+                        maxLines = 6   // or whatever you prefer
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     if (errorMessages.isNotEmpty()) {

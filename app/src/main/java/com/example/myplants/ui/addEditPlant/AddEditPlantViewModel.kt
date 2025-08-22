@@ -30,10 +30,9 @@ import javax.inject.Inject
 class AddEditPlantViewModel @Inject constructor(
     private val repository: PlantRepository
 ) : ViewModel() {
-    //todo: 2. add loading state for most of the functionalities!
-    // todo 3. events to check if the plant was created; Toasts! Error Messages!
-    // todo 4. Blur View on bottom of the screen; Background Blur and not dark for dialogs;
-    // todo 5: refactor code!
+    //todo: 1. add loading state for most of the functionalities!
+    // todo 2. events to check if the plant was created; Toasts! Error Messages!
+    // todo 3: refactor code!
 
     var state by mutableStateOf(AddEditPlantState())
         private set
