@@ -27,18 +27,11 @@ import com.example.myplants.ui.plantList.PlantListScreen
 import com.example.myplants.ui.settings.SettingsScreen
 import com.example.myplants.ui.theme.MyPlantsTheme
 import dagger.hilt.android.AndroidEntryPoint
-import java.io.File
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-
 
 @RequiresApi(Build.VERSION_CODES.S)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private lateinit var outputDirectory: File
-    private lateinit var cameraExecutor: ExecutorService
 
-    @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -56,7 +49,7 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Route.ADD_EDIT_PLANT) {
                             AddEditPlantScreen(
-                                navController, plantId = -1, outputDirectory, cameraExecutor
+                                navController, plantId = -1,
                             )
                         }
                         composable(
@@ -66,8 +59,6 @@ class MainActivity : ComponentActivity() {
                             AddEditPlantScreen(
                                 navController,
                                 plantId = backStackEntry.arguments?.getInt("plantId") ?: -1,
-                                outputDirectory,
-                                cameraExecutor
                             )
                         }
                         composable(
@@ -92,36 +83,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        outputDirectory = getOutputDirectory()
-        cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        cameraExecutor.shutdown()
     }
 
-    private fun getOutputDirectory(): File {
-        val mediaDir = externalMediaDirs.firstOrNull()?.let {
-            File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
-        }
-
-        return if (mediaDir != null && mediaDir.exists()) mediaDir else filesDir
-    }
-}
-
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!", modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MyPlantsTheme {
-        Greeting("Android")
-    }
 }

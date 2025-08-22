@@ -68,7 +68,6 @@ import com.example.myplants.ui.addEditPlant.components.PlantSizeDialog
 import com.example.myplants.ui.addEditPlant.components.SelectTimeDialog
 import com.example.myplants.ui.util.DebounceClick
 import java.io.File
-import java.util.concurrent.ExecutorService
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -77,8 +76,6 @@ import java.util.concurrent.ExecutorService
 fun AddEditPlantScreen(
     navController: NavController,
     plantId: Int = -1,
-    outputDirectory: File,
-    cameraExecutor: ExecutorService,
     viewModel: AddEditPlantViewModel = hiltViewModel()
 ) {
     val state = viewModel.state
@@ -151,15 +148,6 @@ fun AddEditPlantScreen(
         }
     }
 
-    //todo: update UI accordingly + refactor code
-    fun handleImageCapture(uri: Uri) {
-        viewModel.updateState(UpdateEventWithValue.UpdateState(UpdateEvent.SHOW_CAMERA_VIEW, false))
-        viewModel.updateState(
-            UpdateEventWithValue.UpdateState(
-                UpdateEvent.IMAGE_URI, uri.toString()
-            )
-        )
-    }
 
     if (state.showTimeDialog) {
         SelectTimeDialog(modifier = Modifier.width(400.dp), updateTime = { hour, minute ->
@@ -249,23 +237,23 @@ fun AddEditPlantScreen(
     }
     if (state.showCameraView) {
         CameraView(
-            outputDirectory = outputDirectory,
-            executor = cameraExecutor,
-            lensFacing = state.lensFacing,
-            updateLensFacing = {
-                viewModel.updateState(UpdateEventWithValue.UpdateState(UpdateEvent.LENS_FACING, it))
-            },
-            removeCameraView = {
+            onImageCaptured = { uri ->
+                println("Image captured: $uri")
+                // Save in VM and close the camera sheet/view
                 viewModel.updateState(
-                    UpdateEventWithValue.UpdateState(
-                        UpdateEvent.SHOW_CAMERA_VIEW, false
-                    )
+                    UpdateEventWithValue.UpdateState(UpdateEvent.IMAGE_URI, uri.toString())
+                )
+                viewModel.updateState(
+                    UpdateEventWithValue.UpdateState(UpdateEvent.SHOW_CAMERA_VIEW, false)
                 )
             },
-            onImageCaptured = ::handleImageCapture
-        ) {
-
-        }
+            onClose = {
+                viewModel.updateState(
+                    UpdateEventWithValue.UpdateState(UpdateEvent.SHOW_CAMERA_VIEW, false)
+                )
+            },
+            initialLensFacing = state.lensFacing  // keep your existing front/back preference
+        )
     } else {
         Column(
             modifier = Modifier.fillMaxSize()
