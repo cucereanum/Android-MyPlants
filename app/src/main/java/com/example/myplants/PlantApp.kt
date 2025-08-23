@@ -31,7 +31,7 @@ class PlantApp : Application(), Configuration.Provider {
 
     private fun scheduleWateringCheckWorker() {
         val workRequest = PeriodicWorkRequestBuilder<WateringCheckWorker>(
-            15, TimeUnit.MINUTES
+            5, TimeUnit.MINUTES
         ).addTag("WateringCheckWorker").build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
