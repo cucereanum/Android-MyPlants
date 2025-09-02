@@ -24,10 +24,31 @@ interface BleManagerRepository {
     /** Read a characteristic once. Throws if not connected or missing. */
     suspend fun readCharacteristic(service: UUID, characteristic: UUID): ByteArray
 
+    /** Write a characteristic once. Returns true if the write was accepted by the stack. */
+    suspend fun writeCharacteristic(
+        service: UUID,
+        characteristic: UUID,
+        value: ByteArray
+    ): Boolean
+
     /** Enable/disable notifications and emit updates for this characteristic. */
     fun observeCharacteristic(
         service: UUID,
         characteristic: UUID,
         enable: Boolean = true
     ): Flow<ByteArray>
+
+    // ---------------- Flower Care (session-based) convenience ----------------
+
+    /**
+     * One-shot Flower Care read:
+     * 1) enable notify on 1A01
+     * 2) write trigger (0xA0,0x1F) to 1A00
+     * 3) await first notify payload from 1A01 (realtime data)
+     * 4) read 1A02 (battery+fw)
+     *
+     * Returns Pair(realtimePayload, batteryFirmwarePayload).
+     * Caller decides when to disconnect (typically right after this).
+     */
+    suspend fun readFlowerCareOnce(timeoutMs: Long = 3_000): Pair<ByteArray, ByteArray>
 }

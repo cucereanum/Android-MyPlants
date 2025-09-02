@@ -19,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.myplants.data.ble.ConnectionState
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,15 +31,18 @@ fun BleScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    // Xiaomi FE95 service UUID (scan filter)
+    val fe95 = remember { UUID.fromString("0000FE95-0000-1000-8000-00805F9B34FB") }
+
     // Request launcher for multiple permissions
     val requestPerms = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { grantMap ->
         val allGranted = grantMap.values.all { it }
         if (allGranted) {
-            viewModel.startScan()
+            // Scan specifically for Flower Care devices (FE95)
+            viewModel.startScan(filterServiceUuid = fe95)
         } else {
-            // surface a friendly message in your UI state if you want
             viewModel.stopScan()
         }
     }
@@ -47,9 +51,7 @@ fun BleScreen(
         topBar = {
             TopAppBar(
                 title = { Text("BLE Devices") },
-                actions = {
-                    TextButton(onClick = onClose) { Text("Close") }
-                }
+                actions = { TextButton(onClick = onClose) { Text("Close") } }
             )
         }
     ) { padding ->
@@ -76,75 +78,84 @@ fun BleScreen(
                         enabled = state.isBluetoothOn,
                         onClick = {
                             if (BlePermissions.hasAll(context)) {
-                                viewModel.startScan()
+                                viewModel.startScan(filterServiceUuid = fe95)
                             } else {
                                 requestPerms.launch(BlePermissions.required())
                             }
                         }
-                    ) { Text("Scan") }
+                    ) { Text("Scan (Flower Care)") }
                 }
+            }
+
+            // Current connection chip + actions
+            val currentAddr: String? = when (val cs = state.connectionState) {
+                is ConnectionState.Connecting -> cs.deviceAddress
+                is ConnectionState.Connected -> cs.deviceAddress
+                is ConnectionState.ServicesDiscovered -> cs.deviceAddress
+                is ConnectionState.Disconnected -> cs.deviceAddress
+                else -> null
             }
 
             when (val cs = state.connectionState) {
-                is ConnectionState.ServicesDiscovered, is ConnectionState.Connected -> {
-                    if (state.readings.isNotEmpty()) {
-                        Card(Modifier.fillMaxWidth()) {
-                            Column(
-                                Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    "Plant parameters",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                state.readings.forEach { (k, v) ->
-                                    Row(
-                                        Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(k); Text(v)
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        Text("Reading parameters…")
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Button(onClick = { viewModel.disconnect() }) { Text("Disconnect") }
+                is ConnectionState.Connecting ->
+                    AssistChip(onClick = {}, label = { Text("Connecting ${cs.deviceAddress}…") })
+
+                is ConnectionState.Connected ->
+                    AssistChip(onClick = {}, label = { Text("Connected ${cs.deviceAddress}") })
+
+                is ConnectionState.ServicesDiscovered ->
+                    AssistChip(onClick = {}, label = { Text("Services ready ${cs.deviceAddress}") })
+
+                is ConnectionState.Disconnected -> if (cs.cause != null) {
+                    Text("Disconnected: ${cs.cause}", color = MaterialTheme.colorScheme.error)
                 }
 
-                is ConnectionState.Connecting -> AssistChip(
-                    onClick = {},
-                    label = { Text("Connecting ${cs.deviceAddress}…") })
-
-                is ConnectionState.Connected -> AssistChip(
-                    onClick = {},
-                    label = { Text("Connected ${cs.deviceAddress}") })
-
-                is ConnectionState.ServicesDiscovered -> AssistChip(
-                    onClick = {},
-                    label = { Text("Services ready ${cs.deviceAddress}") })
-
-                is ConnectionState.Disconnected -> if (cs.cause != null) Text(
-                    "Disconnected: ${cs.cause}",
-                    color = MaterialTheme.colorScheme.error
-                )
-
-                is ConnectionState.ScanError -> Text(
-                    "Scan error: ${cs.message}",
-                    color = MaterialTheme.colorScheme.error
-                )
-
+                is ConnectionState.ScanError ->
+                    Text("Scan error: ${cs.message}", color = MaterialTheme.colorScheme.error)
 
                 else -> {}
             }
+
+            // Readings card + actions (Refresh/Disconnect)
+
+            if (state.readings.isNotEmpty()) {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(
+                        Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("Plant parameters", style = MaterialTheme.typography.titleMedium)
+                        state.readings.forEach { (k, v) ->
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) { Text(k); Text(v) }
+                        }
+                    }
+                }
+            } else {
+                Text("Reading parameters…")
+            }
+
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(
+                    enabled = currentAddr != null,
+                    onClick = {
+                        // Re-run a short session: reconnect → trigger → fetch → (timeout/disconnect)
+                        currentAddr?.let { viewModel.connectTo(it, autoConnect = false) }
+                    }
+                ) { Text("Refresh now") }
+
+                OutlinedButton(onClick = { viewModel.disconnect() }) { Text("Disconnect") }
+            }
+
 
             if (state.error != null) {
                 Text("Error: ${state.error}", color = MaterialTheme.colorScheme.error)
             }
 
-            HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
+            HorizontalDivider()
 
             // Device list
             if (state.devices.isEmpty() && state.scanning) {
@@ -168,8 +179,10 @@ fun BleScreen(
                 }
             }
 
-            if (state.connectionState is ConnectionState.Connected || state.connectionState is ConnectionState.ServicesDiscovered) {
-                Button(onClick = { viewModel.disconnect() }) { Text("Disconnect") }
+            if (state.connectionState is ConnectionState.Connected ||
+                state.connectionState is ConnectionState.ServicesDiscovered
+            ) {
+                OutlinedButton(onClick = { viewModel.disconnect() }) { Text("Disconnect") }
             }
         }
     }
