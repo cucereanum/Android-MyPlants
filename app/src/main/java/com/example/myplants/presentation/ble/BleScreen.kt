@@ -1,6 +1,7 @@
 package com.example.myplants.presentation.ble
 
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -34,13 +35,24 @@ fun BleScreen(
     // Xiaomi FE95 service UUID (scan filter)
     val fe95 = remember { UUID.fromString("0000FE95-0000-1000-8000-00805F9B34FB") }
 
-    // Request launcher for multiple permissions
+    // Make sure we disconnect if user leaves the screen (back/close)
+    val latestOnClose by rememberUpdatedState(onClose)
+    BackHandler {
+        viewModel.disconnect()
+        latestOnClose()
+    }
+
+    // Also disconnect on disposal (e.g., navigate away)
+    DisposableEffect(Unit) {
+        onDispose { viewModel.disconnect() }
+    }
+
+    // Permission launcher
     val requestPerms = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { grantMap ->
         val allGranted = grantMap.values.all { it }
         if (allGranted) {
-            // Scan specifically for Flower Care devices (FE95)
             viewModel.startScan(filterServiceUuid = fe95)
         } else {
             viewModel.stopScan()
@@ -51,7 +63,12 @@ fun BleScreen(
         topBar = {
             TopAppBar(
                 title = { Text("BLE Devices") },
-                actions = { TextButton(onClick = onClose) { Text("Close") } }
+                actions = {
+                    TextButton(onClick = {
+                        viewModel.disconnect()
+                        onClose()
+                    }) { Text("Close") }
+                }
             )
         }
     ) { padding ->
@@ -62,14 +79,17 @@ fun BleScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Bluetooth status + actions
+
+            // Bluetooth status + scan action
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                val btStatus = if (state.isBluetoothOn) "Bluetooth: ON" else "Bluetooth: OFF"
-                Text(btStatus, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    if (state.isBluetoothOn) "Bluetooth: ON" else "Bluetooth: OFF",
+                    style = MaterialTheme.typography.bodyLarge
+                )
 
                 if (state.scanning) {
                     OutlinedButton(onClick = { viewModel.stopScan() }) { Text("Stop scan") }
@@ -87,15 +107,7 @@ fun BleScreen(
                 }
             }
 
-            // Current connection chip + actions
-            val currentAddr: String? = when (val cs = state.connectionState) {
-                is ConnectionState.Connecting -> cs.deviceAddress
-                is ConnectionState.Connected -> cs.deviceAddress
-                is ConnectionState.ServicesDiscovered -> cs.deviceAddress
-                is ConnectionState.Disconnected -> cs.deviceAddress
-                else -> null
-            }
-
+            // Connection state chip / errors
             when (val cs = state.connectionState) {
                 is ConnectionState.Connecting ->
                     AssistChip(onClick = {}, label = { Text("Connecting ${cs.deviceAddress}…") })
@@ -106,9 +118,10 @@ fun BleScreen(
                 is ConnectionState.ServicesDiscovered ->
                     AssistChip(onClick = {}, label = { Text("Services ready ${cs.deviceAddress}") })
 
-                is ConnectionState.Disconnected -> if (cs.cause != null) {
-                    Text("Disconnected: ${cs.cause}", color = MaterialTheme.colorScheme.error)
-                }
+                is ConnectionState.Disconnected ->
+                    if (cs.cause != null) {
+                        Text("Disconnected: ${cs.cause}", color = MaterialTheme.colorScheme.error)
+                    }
 
                 is ConnectionState.ScanError ->
                     Text("Scan error: ${cs.message}", color = MaterialTheme.colorScheme.error)
@@ -116,15 +129,17 @@ fun BleScreen(
                 else -> {}
             }
 
-            // Readings card + actions (Refresh/Disconnect)
-
+            // Live readings card
             if (state.readings.isNotEmpty()) {
                 Card(Modifier.fillMaxWidth()) {
                     Column(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Plant parameters", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Plant parameters (live)",
+                            style = MaterialTheme.typography.titleMedium
+                        )
                         state.readings.forEach { (k, v) ->
                             Row(
                                 Modifier.fillMaxWidth(),
@@ -134,15 +149,33 @@ fun BleScreen(
                     }
                 }
             } else {
-                Text("Reading parameters…")
+                Text(
+                    when (state.connectionState) {
+                        is ConnectionState.ServicesDiscovered,
+                        is ConnectionState.Connected -> "Reading live data…"
+
+                        is ConnectionState.Connecting -> "Connecting…"
+                        else -> "No data yet"
+                    }
+                )
             }
 
             Spacer(Modifier.height(8.dp))
+
+            // Controls: refresh (reconnect) & disconnect
+            val currentAddr: String? = when (val cs = state.connectionState) {
+                is ConnectionState.Connecting -> cs.deviceAddress
+                is ConnectionState.Connected -> cs.deviceAddress
+                is ConnectionState.ServicesDiscovered -> cs.deviceAddress
+                is ConnectionState.Disconnected -> cs.deviceAddress
+                else -> null
+            }
+
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
                     enabled = currentAddr != null,
                     onClick = {
-                        // Re-run a short session: reconnect → trigger → fetch → (timeout/disconnect)
+                        // Re-run connection flow; ViewModel will auto-start live after ServicesDiscovered
                         currentAddr?.let { viewModel.connectTo(it, autoConnect = false) }
                     }
                 ) { Text("Refresh now") }
@@ -150,14 +183,13 @@ fun BleScreen(
                 OutlinedButton(onClick = { viewModel.disconnect() }) { Text("Disconnect") }
             }
 
-
             if (state.error != null) {
                 Text("Error: ${state.error}", color = MaterialTheme.colorScheme.error)
             }
 
             HorizontalDivider()
 
-            // Device list
+            // Device list (tap to connect; live will start automatically after services)
             if (state.devices.isEmpty() && state.scanning) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                     CircularProgressIndicator()

@@ -2,6 +2,7 @@ package com.example.myplants.domain.repository
 
 import com.example.myplants.data.ble.BleDevice
 import com.example.myplants.data.ble.ConnectionState
+import com.example.myplants.data.repository.RealtimeParsed
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
@@ -28,7 +29,8 @@ interface BleManagerRepository {
     suspend fun writeCharacteristic(
         service: UUID,
         characteristic: UUID,
-        value: ByteArray
+        value: ByteArray,
+        writeType: Int
     ): Boolean
 
     /** Enable/disable notifications and emit updates for this characteristic. */
@@ -51,4 +53,10 @@ interface BleManagerRepository {
      * Caller decides when to disconnect (typically right after this).
      */
     suspend fun readFlowerCareOnce(timeoutMs: Long = 3_000): Pair<ByteArray, ByteArray>
+
+    /** Stream real-time parsed data while screen is active. */
+    fun startFlowerCareLive(): Flow<RealtimeParsed>
+
+    /** Stop live polling without disconnecting. */
+    fun stopFlowerCareLive()
 }
