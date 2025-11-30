@@ -11,6 +11,10 @@ object BleUuids {
     val SERVICE_FLOWER_CARE: UUID =
         UUID.fromString("00001204-0000-1000-8000-00805F9B34FB")
 
+    // Flower Care history service (contains history characteristics)
+    val SERVICE_FLOWER_CARE_HISTORY: UUID =
+        UUID.fromString("00001206-0000-1000-8000-00805F9B34FB")
+
     // Control / Trigger measurement (Write)
     val CHAR_CONTROL: UUID =
         UUID.fromString("00001A00-0000-1000-8000-00805F9B34FB")
@@ -23,7 +27,7 @@ object BleUuids {
     val CHAR_VERSION_BATTERY: UUID =
         UUID.fromString("00001A02-0000-1000-8000-00805F9B34FB")
 
-    // History control (Notify / Read / Write)
+    // History control (Notify / Read / Write) - IN SERVICE 0x1206!
     val CHAR_HISTORY_CONTROL: UUID =
         UUID.fromString("00001A10-0000-1000-8000-00805F9B34FB")
 
