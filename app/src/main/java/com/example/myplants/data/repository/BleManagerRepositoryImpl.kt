@@ -22,6 +22,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.delay
@@ -55,8 +56,7 @@ class BleManagerRepositoryImpl @Inject constructor(
 
     private var gatt: BluetoothGatt? = null
     private val discovered = ConcurrentHashMap<String, BleDevice>()
-    private val notifyFlows =
-        mutableMapOf<Pair<UUID, UUID>, MutableSharedFlow<ByteArray>>() // no replay
+    private var notificationChannel: kotlinx.coroutines.channels.Channel<ByteArray>? = null
 
     @Volatile
     private var liveMode = false
@@ -79,21 +79,16 @@ class BleManagerRepositoryImpl @Inject constructor(
             awaitClose { appContext.unregisterReceiver(receiver) }
         }.distinctUntilChanged()
 
-    private data class ReadKey(val svc: UUID, val chr: UUID)
+    private data class GattOpKey(val svc: UUID, val chr: UUID)
+    private data class DescOpKey(val svc: UUID, val chr: UUID, val desc: UUID)
 
-    private val pendingReads = mutableMapOf<ReadKey, CompletableDeferred<Result<ByteArray>>>()
-    private val pendingWrites =
-        mutableMapOf<ReadKey, CompletableDeferred<Result<Boolean>>>()
-
-    private data class DescKey(val svc: UUID, val chr: UUID, val desc: UUID)
-
-    private val pendingDescWrites =
-        mutableMapOf<DescKey, CompletableDeferred<Result<Boolean>>>()
-
+    private val pendingReads = mutableMapOf<GattOpKey, CompletableDeferred<Result<ByteArray>>>()
+    private val pendingWrites = mutableMapOf<GattOpKey, CompletableDeferred<Result<Boolean>>>()
+    private val pendingDescWrites = mutableMapOf<DescOpKey, CompletableDeferred<Result<Boolean>>>()
     private val gattOpMutex = kotlinx.coroutines.sync.Mutex()
 
     private fun completePendingRead(chr: BluetoothGattCharacteristic, status: Int) {
-        val key = ReadKey(chr.service.uuid, chr.uuid)
+        val key = GattOpKey(chr.service.uuid, chr.uuid)
         val result = if (status == BluetoothGatt.GATT_SUCCESS) {
             Result.success(chr.value ?: ByteArray(0))
         } else {
@@ -104,7 +99,6 @@ class BleManagerRepositoryImpl @Inject constructor(
         }
     }
 
-    // ---------- SCAN (filters for Xiaomi FE95 + "Flower care" name) ----------
     @SuppressLint("MissingPermission")
     override fun scanDevices(filterServiceUuid: UUID?): Flow<List<BleDevice>> = callbackFlow {
         discovered.clear()
@@ -114,8 +108,6 @@ class BleManagerRepositoryImpl @Inject constructor(
                 val device = result.device
                 val uuids = result.scanRecord?.serviceUuids?.mapNotNull { it.uuid } ?: emptyList()
                 val name = result.scanRecord?.deviceName ?: device.name
-
-                // Prefer matching actual device name
                 if (name?.contains("Flower care", ignoreCase = true) != true) return
 
                 val entry = BleDevice(
@@ -139,12 +131,9 @@ class BleManagerRepositoryImpl @Inject constructor(
             .build()
 
         val filters = mutableListOf<ScanFilter>()
-
-        // Strong filter for Xiaomi FE95 (adds performance/accuracy)
         val fe95 = UUID.fromString("0000FE95-0000-1000-8000-00805F9B34FB")
         filters += ScanFilter.Builder().setServiceUuid(ParcelUuid(fe95)).build()
 
-        // Optional extra service filter from caller
         if (filterServiceUuid != null) {
             filters += ScanFilter.Builder().setServiceUuid(ParcelUuid(filterServiceUuid)).build()
         }
@@ -155,7 +144,6 @@ class BleManagerRepositoryImpl @Inject constructor(
         awaitClose { scanner?.stopScan(cb) }
     }.onStart { emit(emptyList()) }
 
-    // ---------- CONNECT (short-session friendly) ----------
     @SuppressLint("MissingPermission")
     override fun connect(address: String, autoConnect: Boolean): Flow<ConnectionState> =
         callbackFlow {
@@ -173,20 +161,31 @@ class BleManagerRepositoryImpl @Inject constructor(
                     newState: Int
                 ) {
                     Log.w(
-                        "BLE!!!!----!!!!",
-                        "STATE=$newState status=$status device=${gatt.device.address}"
+                        "BLE",
+                        "Connection state changed: STATE=$newState status=$status device=${gatt.device.address}"
                     )
 
                     when (newState) {
                         BluetoothProfile.STATE_CONNECTED -> {
+                            Log.d("BLE", "Connected to ${gatt.device.address}")
                             trySend(ConnectionState.Connected(address))
-                            gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH)
-                            gatt.requestMtu(128)
+                            scope.launch {
+                                delay(200)
+                                gatt.requestMtu(64)
+                            }
                         }
 
                         BluetoothProfile.STATE_DISCONNECTED -> {
-                            stopFlowerCareLive() // <- make sure the poller stops
-                            val cause = if (status == 19) null else "status=$status"
+                            Log.w("BLE", "Disconnected from ${gatt.device.address}, status=$status")
+                            stopFlowerCareLive()
+                            val cause = when (status) {
+                                0 -> null
+                                8 -> "Connection timeout"
+                                19 -> "Connection terminated by peer"
+                                22 -> "Connection LMP timeout"
+                                133 -> "GATT error (device unreachable)"
+                                else -> "Connection error (status=$status)"
+                            }
                             trySend(ConnectionState.Disconnected(address, cause))
                             close()
                         }
@@ -194,14 +193,27 @@ class BleManagerRepositoryImpl @Inject constructor(
                 }
 
                 override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
-                    // Continue with service discovery regardless of MTU result
-                    gatt.discoverServices()
+                    if (status == BluetoothGatt.GATT_SUCCESS) {
+                        Log.d("BLE", "MTU changed successfully to $mtu")
+                    } else {
+                        Log.w("BLE", "MTU change failed with status $status, using default")
+                    }
+                    scope.launch {
+                        delay(100)
+                        gatt.discoverServices()
+                    }
                 }
 
                 override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
-                        trySend(ConnectionState.ServicesDiscovered(address))
+                        Log.d("BLE", "Services discovered successfully")
+                        gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH)
+                        scope.launch {
+                            delay(300)
+                            trySend(ConnectionState.ServicesDiscovered(address))
+                        }
                     } else {
+                        Log.e("BLE", "Service discovery failed with status $status")
                         trySend(
                             ConnectionState.Disconnected(
                                 address,
@@ -216,8 +228,8 @@ class BleManagerRepositoryImpl @Inject constructor(
                     gatt: BluetoothGatt,
                     characteristic: BluetoothGattCharacteristic
                 ) {
-                    notifyFlows[characteristic.service.uuid to characteristic.uuid]
-                        ?.tryEmit(characteristic.value ?: ByteArray(0))
+                    val bytes = characteristic.value ?: ByteArray(0)
+                    notificationChannel?.trySend(bytes)
                 }
 
                 @Suppress("DEPRECATION")
@@ -234,7 +246,7 @@ class BleManagerRepositoryImpl @Inject constructor(
                     characteristic: BluetoothGattCharacteristic,
                     status: Int
                 ) {
-                    val key = ReadKey(characteristic.service.uuid, characteristic.uuid)
+                    val key = GattOpKey(characteristic.service.uuid, characteristic.uuid)
                     val result = if (status == BluetoothGatt.GATT_SUCCESS) {
                         Result.success(true)
                     } else {
@@ -251,7 +263,7 @@ class BleManagerRepositoryImpl @Inject constructor(
                     status: Int
                 ) {
                     val parentChar = descriptor.characteristic
-                    val key = DescKey(parentChar.service.uuid, parentChar.uuid, descriptor.uuid)
+                    val key = DescOpKey(parentChar.service.uuid, parentChar.uuid, descriptor.uuid)
                     val result = if (status == BluetoothGatt.GATT_SUCCESS) {
                         Result.success(true)
                     } else {
@@ -284,18 +296,11 @@ class BleManagerRepositoryImpl @Inject constructor(
             }
         }
 
-    // ---------- GENERIC READ / NOTIFY ----------
     @SuppressLint("MissingPermission")
     override suspend fun readCharacteristic(service: UUID, characteristic: UUID): ByteArray =
         gattOpMutex.withLock {
             val g = gatt ?: throw IllegalStateException("Not connected")
-
-            // sanity: still connected?
-            val stillConnected =
-                btManager.getConnectionState(
-                    g.device,
-                    BluetoothProfile.GATT
-                ) == BluetoothProfile.STATE_CONNECTED
+            val stillConnected = btManager.getConnectionState(g.device, BluetoothProfile.GATT) == BluetoothProfile.STATE_CONNECTED
             if (!stillConnected) throw IllegalStateException("Peripheral not connected")
 
             val svc = g.getService(service)
@@ -303,7 +308,7 @@ class BleManagerRepositoryImpl @Inject constructor(
             val chr = svc.getCharacteristic(characteristic)
                 ?: throw IllegalArgumentException("Char $characteristic not found")
 
-            val key = ReadKey(service, characteristic)
+            val key = GattOpKey(service, characteristic)
             val waiter = CompletableDeferred<Result<ByteArray>>()
             synchronized(pendingReads) { pendingReads[key] = waiter }
 
@@ -337,7 +342,7 @@ class BleManagerRepositoryImpl @Inject constructor(
         chr.writeType = writeType
         chr.value = value
 
-        val key = ReadKey(service, characteristic)
+        val key = GattOpKey(service, characteristic)
         val waiter = CompletableDeferred<Result<Boolean>>()
         synchronized(pendingWrites) { pendingWrites[key] = waiter }
 
@@ -351,88 +356,6 @@ class BleManagerRepositoryImpl @Inject constructor(
 
 
     @SuppressLint("MissingPermission")
-    override fun observeCharacteristic(
-        service: UUID,
-        characteristic: UUID,
-        enable: Boolean
-    ): Flow<ByteArray> = channelFlow {
-        val g = gatt ?: run {
-            close(IllegalStateException("Not connected")); return@channelFlow
-        }
-        val svc = g.getService(service) ?: run {
-            close(IllegalArgumentException("Missing service $service")); return@channelFlow
-        }
-        val chr = svc.getCharacteristic(characteristic) ?: run {
-            close(IllegalArgumentException("Missing characteristic $characteristic")); return@channelFlow
-        }
-
-        val cccdUuid = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB")
-        val cccd = chr.getDescriptor(cccdUuid)
-        val flowKey = service to characteristic
-        val shared = notifyFlows.getOrPut(flowKey) { MutableSharedFlow(extraBufferCapacity = 16) }
-
-// Route notifications locally (this is local-only; fine outside the lock)
-        val okNotif = g.setCharacteristicNotification(chr, enable)
-        if (!okNotif) {
-            close(IllegalStateException("setCharacteristicNotification failed"))
-            return@channelFlow
-        }
-
-// If CCCD exists, write it and AWAIT the callback (serialize via mutex)
-        if (cccd != null) {
-            cccd.value = if (enable) BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-            else BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
-
-            val dKey = DescKey(service, characteristic, cccdUuid)
-            val waiter = CompletableDeferred<Result<Boolean>>()
-            synchronized(pendingDescWrites) { pendingDescWrites[dKey] = waiter }
-
-            val okStart = gattOpMutex.withLock {
-                // sanity: still connected?
-                val stillConnected =
-                    btManager.getConnectionState(
-                        g.device,
-                        BluetoothProfile.GATT
-                    ) == BluetoothProfile.STATE_CONNECTED
-                if (!stillConnected) false else g.writeDescriptor(cccd)
-            }
-            if (!okStart) {
-                synchronized(pendingDescWrites) { pendingDescWrites.remove(dKey) }
-                close(IllegalStateException("writeDescriptor(CCCD) returned false"))
-                return@channelFlow
-            }
-
-            // await onDescriptorWrite before proceeding
-            waiter.await().getOrElse { err ->
-                close(err); return@channelFlow
-            }
-        }
-
-// Now notifications are actually enabled; start relaying
-        val job = launch { shared.collect { send(it) } }
-        awaitClose {
-            job.cancel()
-            try {
-                g.setCharacteristicNotification(chr, false)
-                if (cccd != null) {
-                    cccd.value = BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
-                    // best-effort write, no suspending here
-                    if (gattOpMutex.tryLock()) {
-                        try {
-                            g.writeDescriptor(cccd)
-                        } finally {
-                            gattOpMutex.unlock()
-                        }
-                    } else {
-                        // If busy, just skip; it's teardown anyway
-                    }
-                }
-            } catch (_: Throwable) {
-            }
-        }
-    }
-
-    @SuppressLint("MissingPermission")
     override suspend fun disconnect() {
         gatt?.disconnect()
         gatt?.close()
@@ -440,10 +363,14 @@ class BleManagerRepositoryImpl @Inject constructor(
     }
 
     @SuppressLint("MissingPermission")
-    override suspend fun stopScan() { /* scan stopped in awaitClose() */
+    override suspend fun stopScan() {
     }
 
-
+    /**
+     * Start MI Flora sensor monitoring.
+     * Protocol: ARM sensor (0xA01F), enable notifications, receive sensor data, send keep-alive writes (0xA00000) every 250ms.
+     */
+    @SuppressLint("MissingPermission")
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     override fun startFlowerCareLive(): Flow<RealtimeParsed> = channelFlow {
         val svc = BleUuids.SERVICE_FLOWER_CARE
@@ -459,99 +386,134 @@ class BleManagerRepositoryImpl @Inject constructor(
         }
 
         liveMode = true
-        liveJob = launch {
-            // Keep tight connection parameters
-            gattOpMutex.withLock { gatt?.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH) }
+        val dataChannel = kotlinx.coroutines.channels.Channel<ByteArray>(capacity = 16)
+        notificationChannel = dataChannel
 
+        liveJob = launch {
             if (!isConnected()) {
                 close(); return@launch
             }
 
-            // 1) Enable CCCD on 1A01 and AWAIT onDescriptorWrite (observeCharacteristic does that)
-            val notifyFlow = try {
-                observeCharacteristic(svc, chrRealtime, enable = true)
-            } catch (t: Throwable) {
-                close(t); return@launch
+            delay(500)
+
+            try {
+                Log.d("BLE", "Reading firmware/battery for initialization")
+                val initData = readCharacteristic(svc, BleUuids.CHAR_VERSION_BATTERY)
+                val battery = initData.firstOrNull()?.toInt()?.and(0xFF) ?: 0
+                val fwVersion = if (initData.size >= 7) {
+                    String(initData.copyOfRange(1, 7), Charsets.US_ASCII)
+                } else {
+                    "unknown"
+                }
+                Log.d("BLE", "Init OK - FW: $fwVersion, Batt: $battery%")
+            } catch (e: Throwable) {
+                Log.e("BLE", "Init read failed: ${e.message}")
+                close(IllegalStateException("Device initialization failed")); return@launch
             }
 
-            // 2) Arm real-time mode ONCE (prefer with response)
-            val armed = try {
+            delay(300)
+
+            try {
+                val g = gatt ?: throw IllegalStateException("GATT null")
+                val service = g.getService(svc) ?: throw IllegalStateException("Service not found")
+                val realtimeChar = service.getCharacteristic(chrRealtime)
+                    ?: throw IllegalStateException("Characteristic not found")
+
+                val cccdUuid = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB")
+                val cccd = realtimeChar.getDescriptor(cccdUuid)
+                    ?: throw IllegalStateException("CCCD descriptor not found")
+
+                if (!g.setCharacteristicNotification(realtimeChar, true)) {
+                    throw IllegalStateException("setCharacteristicNotification failed")
+                }
+
+                cccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                val dKey = DescOpKey(svc, chrRealtime, cccdUuid)
+                val waiter = CompletableDeferred<Result<Boolean>>()
+                synchronized(pendingDescWrites) { pendingDescWrites[dKey] = waiter }
+
+                if (!g.writeDescriptor(cccd)) {
+                    synchronized(pendingDescWrites) { pendingDescWrites.remove(dKey) }
+                    throw IllegalStateException("writeDescriptor failed")
+                }
+
+                waiter.await().getOrElse { throw it }
+                delay(300)
+
                 writeCharacteristic(
                     svc, chrControl,
                     byteArrayOf(0xA0.toByte(), 0x1F.toByte()),
                     BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
                 )
-            } catch (_: Throwable) {
-                writeCharacteristic(
-                    svc, chrControl,
-                    byteArrayOf(0xA0.toByte(), 0x1F.toByte()),
-                    BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-                )
-            }
-            if (!armed) {
-                close(IllegalStateException("Failed to arm live mode")); return@launch
-            }
 
-            // 3) Small settle
-            delay(400)
+                val notificationJob = launch {
+                    for (data in dataChannel) {
+                        if (data.isNotEmpty()) {
+                            parseRealtime(data)?.let {
+                                Log.d(
+                                    "BLE",
+                                    "Sensor: temp=${it.temperatureC}°C, moist=${it.moisturePct}%, light=${it.lightLux}lx, ec=${it.conductivity}µS/cm"
+                                )
+                                trySend(it)
+                            }
+                        }
+                    }
+                }
 
-            // 4) Collect ONLY notifications (no polling)
-            notifyFlow.collect { bytes ->
-                parseRealtime(bytes)?.let { trySend(it) }
+                val keepAliveJob = launch {
+                    delay(500)
+                    val historySvc = BleUuids.SERVICE_FLOWER_CARE_HISTORY
+                    val historyControl = BleUuids.CHAR_HISTORY_CONTROL
+                    val keepAliveCommand = byteArrayOf(0xA0.toByte(), 0x00.toByte(), 0x00.toByte())
+
+                    while (isActive && liveMode) {
+                        try {
+                            writeCharacteristic(
+                                historySvc,
+                                historyControl,
+                                keepAliveCommand,
+                                BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                            )
+                            delay(250)
+                        } catch (e: Exception) {
+                            delay(250)
+                        }
+                    }
+                }
+
+                // Wait for both jobs
+                try {
+                    notificationJob.join()
+                    keepAliveJob.join()
+                } finally {
+                    notificationJob.cancel()
+                    keepAliveJob.cancel()
+                }
+
+            } catch (e: Exception) {
+                Log.e("BLE", "Live mode error: ${e.message}")
+                throw e
             }
         }
 
         awaitClose {
+            Log.d("BLE", "Closing live mode")
             liveMode = false
             liveJob?.cancel(); liveJob = null
-            // observeCharacteristic's awaitClose already disables CCCD best-effort
+            notificationChannel?.close()
+            notificationChannel = null
         }
     }
 
-    /** Stop only the live poller (call disconnect() separately if you want to fully drop the link). */
     override fun stopFlowerCareLive() {
         liveMode = false
         liveJob?.cancel()
         liveJob = null
+        notificationChannel?.close()
+        notificationChannel = null
     }
 
 
-    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    override suspend fun readFlowerCareOnce(timeoutMs: Long): Pair<ByteArray, ByteArray> {
-        val svc = BleUuids.SERVICE_FLOWER_CARE
-        val chrNotify = BleUuids.CHAR_REALTIME_DATA
-        val chrControl = BleUuids.CHAR_CONTROL
-        val chrBattVer = BleUuids.CHAR_VERSION_BATTERY
-
-        // 1) subscribe
-        val notify = observeCharacteristic(svc, chrNotify, enable = true)
-
-        // 2) write trigger (0xA0 0x1F)
-        val g = gatt ?: throw IllegalStateException("Not connected")
-        val s = g.getService(svc) ?: error("Service $svc not found")
-        val control = s.getCharacteristic(chrControl) ?: error("Char $chrControl not found")
-        control.value = byteArrayOf(0xA0.toByte(), 0x1F.toByte())
-        if (!g.writeCharacteristic(control)) error("Failed to write trigger")
-
-        // 3) wait for realtime sample
-        val sample = withTimeout(timeoutMs) { notify.first() }
-
-        // 4) battery/version
-        val batt = readCharacteristic(svc, chrBattVer)
-
-        // 5) done (caller decides when to disconnect)
-        return sample to batt
-    }
-
-
-    /** Flora live frame (16B on your unit):
-     * [0..1]=temp*10 LE (signed)
-     * [2]=unused/type
-     * [3..6]=light u32 LE
-     * [7]=moisture %
-     * [8..9]=conductivity u16 LE
-     * [10..15]=suffix/unused (can be ignored)
-     */
     private fun parseRealtime(bytes: ByteArray): RealtimeParsed? {
         if (bytes.size < 10) return null
         val tRaw = ((bytes[1].toInt() and 0xFF) shl 8) or (bytes[0].toInt() and 0xFF)

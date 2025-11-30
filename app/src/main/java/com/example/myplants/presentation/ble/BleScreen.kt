@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -118,10 +119,9 @@ fun BleScreen(
                 is ConnectionState.ServicesDiscovered ->
                     AssistChip(onClick = {}, label = { Text("Services ready ${cs.deviceAddress}") })
 
-                is ConnectionState.Disconnected ->
-                    if (cs.cause != null) {
-                        Text("Disconnected: ${cs.cause}", color = MaterialTheme.colorScheme.error)
-                    }
+                is ConnectionState.Disconnected -> {
+                    // Don't show error message on disconnection (auto-reconnect handles it)
+                }
 
                 is ConnectionState.ScanError ->
                     Text("Scan error: ${cs.message}", color = MaterialTheme.colorScheme.error)
@@ -136,10 +136,19 @@ fun BleScreen(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            "Plant parameters (live)",
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Plant parameters (live)",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            if (state.isReconnecting) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                            }
+                        }
                         state.readings.forEach { (k, v) ->
                             Row(
                                 Modifier.fillMaxWidth(),
@@ -150,11 +159,12 @@ fun BleScreen(
                 }
             } else {
                 Text(
-                    when (state.connectionState) {
-                        is ConnectionState.ServicesDiscovered,
-                        is ConnectionState.Connected -> "Reading live data…"
+                    when {
+                        state.isReconnecting -> "Reconnecting…"
+                        state.connectionState is ConnectionState.ServicesDiscovered ||
+                                state.connectionState is ConnectionState.Connected -> "Reading live data…"
 
-                        is ConnectionState.Connecting -> "Connecting…"
+                        state.connectionState is ConnectionState.Connecting -> "Connecting…"
                         else -> "No data yet"
                     }
                 )
@@ -163,28 +173,27 @@ fun BleScreen(
             Spacer(Modifier.height(8.dp))
 
             // Controls: refresh (reconnect) & disconnect
-            val currentAddr: String? = when (val cs = state.connectionState) {
-                is ConnectionState.Connecting -> cs.deviceAddress
-                is ConnectionState.Connected -> cs.deviceAddress
-                is ConnectionState.ServicesDiscovered -> cs.deviceAddress
-                is ConnectionState.Disconnected -> cs.deviceAddress
-                else -> null
-            }
+            val currentAddr: String? =
+                state.lastConnectedAddress ?: when (val cs = state.connectionState) {
+                    is ConnectionState.Connecting -> cs.deviceAddress
+                    is ConnectionState.Connected -> cs.deviceAddress
+                    is ConnectionState.ServicesDiscovered -> cs.deviceAddress
+                    is ConnectionState.Disconnected -> cs.deviceAddress
+                    else -> null
+                }
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
-                    enabled = currentAddr != null,
+                    enabled = currentAddr != null && !state.isReconnecting,
                     onClick = {
-                        // Re-run connection flow; ViewModel will auto-start live after ServicesDiscovered
                         currentAddr?.let { viewModel.connectTo(it, autoConnect = false) }
                     }
-                ) { Text("Refresh now") }
+                ) { Text(if (state.isReconnecting) "Reconnecting..." else "Refresh now") }
 
-                OutlinedButton(onClick = { viewModel.disconnect() }) { Text("Disconnect") }
-            }
-
-            if (state.error != null) {
-                Text("Error: ${state.error}", color = MaterialTheme.colorScheme.error)
+                OutlinedButton(
+                    enabled = currentAddr != null,
+                    onClick = { viewModel.disconnect() }
+                ) { Text("Disconnect") }
             }
 
             HorizontalDivider()
@@ -209,12 +218,6 @@ fun BleScreen(
                         )
                     }
                 }
-            }
-
-            if (state.connectionState is ConnectionState.Connected ||
-                state.connectionState is ConnectionState.ServicesDiscovered
-            ) {
-                OutlinedButton(onClick = { viewModel.disconnect() }) { Text("Disconnect") }
             }
         }
     }

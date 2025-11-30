@@ -33,28 +33,9 @@ interface BleManagerRepository {
         writeType: Int
     ): Boolean
 
-    /** Enable/disable notifications and emit updates for this characteristic. */
-    fun observeCharacteristic(
-        service: UUID,
-        characteristic: UUID,
-        enable: Boolean = true
-    ): Flow<ByteArray>
+    // ---------------- Flower Care real-time monitoring ----------------
 
-    // ---------------- Flower Care (session-based) convenience ----------------
-
-    /**
-     * One-shot Flower Care read:
-     * 1) enable notify on 1A01
-     * 2) write trigger (0xA0,0x1F) to 1A00
-     * 3) await first notify payload from 1A01 (realtime data)
-     * 4) read 1A02 (battery+fw)
-     *
-     * Returns Pair(realtimePayload, batteryFirmwarePayload).
-     * Caller decides when to disconnect (typically right after this).
-     */
-    suspend fun readFlowerCareOnce(timeoutMs: Long = 3_000): Pair<ByteArray, ByteArray>
-
-    /** Stream real-time parsed data while screen is active. */
+    /** Stream real-time parsed data for MI Flower Care sensor (6-second sessions). */
     fun startFlowerCareLive(): Flow<RealtimeParsed>
 
     /** Stop live polling without disconnecting. */
