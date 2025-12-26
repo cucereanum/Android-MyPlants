@@ -8,8 +8,10 @@ import com.example.myplants.data.ble.ConnectionState
 import com.example.myplants.domain.repository.BleManagerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 import java.util.UUID
 import javax.inject.Inject
@@ -21,7 +23,9 @@ data class BleUiState(
     val connectionState: ConnectionState = ConnectionState.Idle,
     val error: String? = null,
     val selectedDeviceName: String? = null,
-    val readings: Map<String, String> = emptyMap() // key -> pretty text
+    val readings: Map<String, String> = emptyMap(), // key -> pretty text
+    val lastConnectedAddress: String? = null, // Track last connected device
+    val isReconnecting: Boolean = false // True when reconnecting to same device
 )
 
 @HiltViewModel
@@ -34,9 +38,11 @@ class BleViewModel @Inject constructor(
 
     private var scanJob: Job? = null
     private var connectJob: Job? = null
+    private var liveJob: Job? = null
+    private var battJob: Job? = null
 
     init {
-        // Observe adapter state
+        // Observe Bluetooth adapter state changes
         viewModelScope.launch {
             repo.isBluetoothOn.collect { on ->
                 _state.update { it.copy(isBluetoothOn = on) }
@@ -44,6 +50,14 @@ class BleViewModel @Inject constructor(
         }
     }
 
+    // Helper to check if we're reconnecting to the same device
+    fun isReconnectingToSameDevice(address: String): Boolean {
+        return _state.value.lastConnectedAddress == address
+    }
+
+    // ---------- BLE Scanning ----------
+
+    /** Start scanning for BLE devices (filtered by service UUID if provided) */
     fun startScan(filterServiceUuid: UUID? = null) {
         if (_state.value.scanning) return
         _state.update {
@@ -71,61 +85,135 @@ class BleViewModel @Inject constructor(
         }
     }
 
+    /** Stop the ongoing BLE scan */
     fun stopScan() {
-        scanJob?.cancel()
-        scanJob = null
-        _state.update { it.copy(scanning = false, connectionState = ConnectionState.Idle) }
+        scanJob?.cancel(); scanJob = null
+        _state.update { it.copy(scanning = false) }
         viewModelScope.launch { repo.stopScan() }
     }
 
+    // ---------- Device Connection & Real-Time Monitoring ----------
+
+    /**
+     * Connect to a MI Flower Care device and start real-time monitoring.
+     *
+     * Note: Due to MI Flower Care firmware limitations, the device will disconnect
+     * after ~6 seconds to save battery. This is expected behavior.
+     *
+     * @param address The device MAC address
+     * @param autoConnect Whether to automatically reconnect if connection drops
+     */
     fun connectTo(address: String, autoConnect: Boolean = false) {
-        // cancel any previous connection stream
-        connectJob?.cancel()
+        // Stop scanning when user chooses a device
+        stopScan()
+
+        // Check if this is a reconnection to the same device (to avoid showing loading state)
+        val currentState = _state.value
+        val isReconnecting = currentState.lastConnectedAddress == address
+
+        // Cancel previous connection & monitoring jobs
+        connectJob?.cancel(); connectJob = null
+        liveJob?.cancel(); liveJob = null
+        battJob?.cancel(); battJob = null
+
+        _state.update {
+            it.copy(
+                error = null,
+                isReconnecting = isReconnecting,
+                lastConnectedAddress = address
+            )
+        }
 
         connectJob = repo.connect(address, autoConnect)
             .onEach { st ->
-                _state.update { it.copy(connectionState = st, error = null) }
-                if (st is ConnectionState.ServicesDiscovered) {
-                    // kick off one-time reads (this function should launch its own coroutine)
-                    readPlantParamsOnce()
+                // Only update connection state if not reconnecting, to avoid loading flickering
+                if (!isReconnecting || st is ConnectionState.ServicesDiscovered || st is ConnectionState.Disconnected) {
+                    _state.update { it.copy(connectionState = st, error = null) }
+                }
+
+                when (st) {
+                    is ConnectionState.ServicesDiscovered -> {
+                        // Mark reconnection complete
+                        _state.update { it.copy(isReconnecting = false) }
+
+                        // Start continuous live monitoring
+                        startLiveScreen()
+                    }
+
+                    is ConnectionState.Disconnected -> {
+                        val shouldAutoReconnect = st.cause != null &&
+                                _state.value.lastConnectedAddress == address &&
+                                liveJob != null
+
+                        if (shouldAutoReconnect) {
+                            _state.update { it.copy(isReconnecting = true) }
+                            viewModelScope.launch {
+                                delay(500)
+                                connectTo(address, autoConnect = false)
+                            }
+                        } else {
+                            stopLiveScreen(disconnect = false)
+                            _state.update { it.copy(isReconnecting = false) }
+                        }
+                    }
+
+                    else -> Unit
                 }
             }
             .catch { e ->
                 _state.update {
                     it.copy(
                         error = e.message,
-                        connectionState = ConnectionState.Disconnected(address, e.message)
+                        connectionState = ConnectionState.Disconnected(address, e.message),
+                        isReconnecting = false
                     )
                 }
             }
-            .launchIn(viewModelScope) // <-- non-suspending; safe to call from onClick
+            .launchIn(viewModelScope)
     }
 
+    /** Disconnect from the current device and stop monitoring */
     fun disconnect() {
-        connectJob?.cancel()
-        connectJob = null
-        viewModelScope.launch { repo.disconnect() }
-        _state.update { it.copy(connectionState = ConnectionState.Idle) }
+        connectJob?.cancel(); connectJob = null
+        stopLiveScreen(disconnect = true)
+        _state.update {
+            it.copy(
+                connectionState = ConnectionState.Idle,
+                lastConnectedAddress = null
+            )
+        }
     }
 
-    private fun readPlantParamsOnce() {
-        viewModelScope.launch {
-            try {
-                // Read temperature (Int16 little-endian, tenths of °C)
-                val raw = repo.readCharacteristic(BleUuids.SERVICE_PLANT, BleUuids.CHAR_PLANT_TEMP)
+    // ---------- Private: Monitoring Lifecycle ----------
 
-                // little-endian Int16
-                val lo = raw.getOrNull(0)?.toInt() ?: 0
-                val hi = raw.getOrNull(1)?.toInt() ?: 0
-                val value = (hi shl 8) or (lo and 0xFF)
-                // interpret as signed 16-bit
-                val signed = if (value and 0x8000 != 0) value or -0x10000 else value
-                val celsius = signed / 10.0
+    /** Start the live sensor data monitoring flow */
+    private fun startLiveScreen() {
+        liveJob?.cancel()
+        liveJob = viewModelScope.launch {
+            repo.startFlowerCareLive()
+                .catch { e ->
+                    // Parser/transport error; surface but keep the last good readings
+                    _state.update { it.copy(error = e.message) }
+                }
+                .collect { parsed ->
+                    val readings = buildMap<String, String> {
+                        parsed.temperatureC?.let { put("Temperature", "%.1f °C".format(it)) }
+                        parsed.moisturePct?.let { put("Moisture", "$it %") }
+                        parsed.lightLux?.let { put("Light", "$it lx") }
+                        parsed.conductivity?.let { put("Conductivity", "$it µS/cm") }
+                    }
+                    _state.update { it.copy(readings = readings, error = null) }
+                }
+        }
+    }
 
-                _state.update { it.copy(readings = mapOf("Temperature" to "%.1f °C".format(celsius))) }
-            } catch (e: Throwable) {
-                _state.update { it.copy(error = e.message) }
-            }
+    /** Stop the live monitoring and optionally disconnect from the device */
+    private fun stopLiveScreen(disconnect: Boolean) {
+        liveJob?.cancel(); liveJob = null
+        battJob?.cancel(); battJob = null
+        repo.stopFlowerCareLive()
+        if (disconnect) {
+            viewModelScope.launch { repo.disconnect() }
         }
     }
 }

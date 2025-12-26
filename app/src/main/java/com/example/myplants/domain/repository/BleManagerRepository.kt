@@ -2,6 +2,7 @@ package com.example.myplants.domain.repository
 
 import com.example.myplants.data.ble.BleDevice
 import com.example.myplants.data.ble.ConnectionState
+import com.example.myplants.data.repository.RealtimeParsed
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
@@ -24,10 +25,19 @@ interface BleManagerRepository {
     /** Read a characteristic once. Throws if not connected or missing. */
     suspend fun readCharacteristic(service: UUID, characteristic: UUID): ByteArray
 
-    /** Enable/disable notifications and emit updates for this characteristic. */
-    fun observeCharacteristic(
+    /** Write a characteristic once. Returns true if the write was accepted by the stack. */
+    suspend fun writeCharacteristic(
         service: UUID,
         characteristic: UUID,
-        enable: Boolean = true
-    ): Flow<ByteArray>
+        value: ByteArray,
+        writeType: Int
+    ): Boolean
+
+    // ---------------- Flower Care real-time monitoring ----------------
+
+    /** Stream real-time parsed data for MI Flower Care sensor (6-second sessions). */
+    fun startFlowerCareLive(): Flow<RealtimeParsed>
+
+    /** Stop live polling without disconnecting. */
+    fun stopFlowerCareLive()
 }
