@@ -23,7 +23,7 @@ class WateringCheckWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         Log.d("Worker", "Started WateringCheckWorker")
         return try {
-            //checkForWateringUseCase.execute()
+            checkForWateringUseCase.execute()
             Result.success()
         } catch (e: Exception) {
             Log.e("WateringCheckWorker", "Worker failed: ${e.message}", e)

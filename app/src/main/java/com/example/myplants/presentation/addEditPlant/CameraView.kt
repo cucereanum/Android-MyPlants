@@ -56,7 +56,6 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 
-@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun CameraView(
     onImageCaptured: (Uri) -> Unit,

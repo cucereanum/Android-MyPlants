@@ -9,6 +9,7 @@ import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.myplants.infrastructure.worker.WateringCheckWorker
 // import com.example.myplants.infrastructure.worker.WateringCheckWorker
 import dagger.hilt.android.HiltAndroidApp
 import java.util.concurrent.TimeUnit
@@ -30,13 +31,13 @@ class PlantApp : Application(), Configuration.Provider {
     }
 
     private fun scheduleWateringCheckWorker() {
-//        val workRequest = PeriodicWorkRequestBuilder<WateringCheckWorker>(
-//            5, TimeUnit.MINUTES
-//        ).addTag("WateringCheckWorker").build()
-//
-//        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-//            "WateringCheckWorker", ExistingPeriodicWorkPolicy.KEEP, workRequest
-//        )
+        val workRequest = PeriodicWorkRequestBuilder<WateringCheckWorker>(
+            5, TimeUnit.MINUTES
+        ).addTag("WateringCheckWorker").build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "WateringCheckWorker", ExistingPeriodicWorkPolicy.KEEP, workRequest
+        )
     }
 
     @SuppressLint("WrongConstant")
