@@ -20,8 +20,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.example.myplants.data.ble.BleUuids
 import com.example.myplants.data.ble.ConnectionState
-import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +34,7 @@ fun BleScreen(
     val context = LocalContext.current
 
     // Xiaomi FE95 service UUID (scan filter)
-    val fe95 = remember { UUID.fromString("0000FE95-0000-1000-8000-00805F9B34FB") }
+    val fe95 = remember { BleUuids.SERVICE_XIAOMI_FE95 }
 
     // Make sure we disconnect if user leaves the screen (back/close)
     val latestOnClose by rememberUpdatedState(onClose)
