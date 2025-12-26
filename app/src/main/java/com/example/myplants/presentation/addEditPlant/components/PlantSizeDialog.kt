@@ -37,7 +37,7 @@ import com.example.myplants.data.PlantSizeType
 fun PlantSizeDialog(
     modifier: Modifier = Modifier,
     onDismissRequest: () -> Unit,
-    togglePlantSizeSelection: (String) -> Unit,
+    togglePlantSizeSelection: (PlantSizeType) -> Unit,
     selectedPlant: PlantSizeType,
 ) {
     val plantSizes = PlantSizeType.entries.toTypedArray()
@@ -85,7 +85,7 @@ fun PlantSizeDialog(
                                     )
                                     .background(if (plant == selectedPlant) MaterialTheme.colorScheme.primary else Color.White)
                                     .clickable {
-                                        togglePlantSizeSelection(plant.toString())
+                                        togglePlantSizeSelection(plant)
                                     },
                                 contentAlignment = Alignment.Center
                             ) {

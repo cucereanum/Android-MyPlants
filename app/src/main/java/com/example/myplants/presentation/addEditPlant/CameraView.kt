@@ -48,66 +48,21 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-
-@Composable
-fun CameraView(
-    onImageCaptured: (Uri) -> Unit,
-    onClose: () -> Unit,
-    initialLensFacing: Int = CameraSelector.LENS_FACING_BACK,
-) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    var lensFacing by remember { mutableIntStateOf(initialLensFacing) }
-
-    val controller = remember {
-        LifecycleCameraController(context).apply {
-            setEnabledUseCases(
-                LifecycleCameraController.IMAGE_CAPTURE or LifecycleCameraController.VIDEO_CAPTURE or LifecycleCameraController.IMAGE_ANALYSIS // enable if needed
-            )
-            cameraSelector = CameraSelector.Builder().requireLensFacing(initialLensFacing).build()
-        }
-    }
-
-    val onCaptured by rememberUpdatedState(onImageCaptured)
-    val onClosed by rememberUpdatedState(onClose)
-
-    DisposableEffect(lifecycleOwner) {
-        controller.bindToLifecycle(lifecycleOwner)
-        onDispose { controller.unbind() }
-    }
-
-    val previewView = remember {
-        PreviewView(context).apply {
-            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-            scaleType = PreviewView.ScaleType.FILL_CENTER
-        }
-    }
-    LaunchedEffect(controller) {
-        withFrameNanos {
-            previewView.controller = controller
-        }
-    }
-
-    LaunchedEffect(lensFacing) {
-        controller.cameraSelector = CameraSelector.Builder()
-            .requireLensFacing(lensFacing)
-            .build()
-    }
-
-    suspend fun takePhotoToMediaStore(
-        context: Context,
-        controller: LifecycleCameraController,
-        folderName: String = "MyPlants"
-    ): Result<Uri> = suspendCancellableCoroutine { cont ->
-
+private suspend fun capturePhotoToMediaStore(
+    context: Context,
+    controller: LifecycleCameraController,
+    folderName: String,
+): Result<Uri> = withContext(Dispatchers.Main.immediate) {
+    suspendCancellableCoroutine { cont ->
         val name = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val values = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, "$name.jpg")
@@ -149,6 +104,56 @@ fun CameraView(
                 }
             }
         )
+    }
+}
+
+@Composable
+fun CameraView(
+    onImageCaptured: (Uri) -> Unit,
+    onError: (Throwable) -> Unit,
+    onClose: () -> Unit,
+    initialLensFacing: Int = CameraSelector.LENS_FACING_BACK,
+    mediaStoreFolderName: String = "MyPlants",
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    var lensFacing by remember { mutableIntStateOf(initialLensFacing) }
+
+    val controller = remember {
+        LifecycleCameraController(context).apply {
+            setEnabledUseCases(
+                LifecycleCameraController.IMAGE_CAPTURE
+            )
+            cameraSelector = CameraSelector.Builder().requireLensFacing(initialLensFacing).build()
+        }
+    }
+
+    val onCaptured by rememberUpdatedState(onImageCaptured)
+    val onCaptureError by rememberUpdatedState(onError)
+    val onClosed by rememberUpdatedState(onClose)
+
+    DisposableEffect(lifecycleOwner) {
+        controller.bindToLifecycle(lifecycleOwner)
+        onDispose { controller.unbind() }
+    }
+
+    val previewView = remember {
+        PreviewView(context).apply {
+            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+            scaleType = PreviewView.ScaleType.FILL_CENTER
+        }
+    }
+    LaunchedEffect(controller) {
+        withFrameNanos {
+            previewView.controller = controller
+        }
+    }
+
+    LaunchedEffect(lensFacing) {
+        controller.cameraSelector = CameraSelector.Builder()
+            .requireLensFacing(lensFacing)
+            .build()
     }
 
     val scope = rememberCoroutineScope()
@@ -192,16 +197,15 @@ fun CameraView(
                     .border(1.dp, Color.White, CircleShape)
                     .clickable {
                         scope.launch {
-                            val res = takePhotoToMediaStore(context, controller)
+                            val result = capturePhotoToMediaStore(
+                                context = context,
+                                controller = controller,
+                                folderName = mediaStoreFolderName,
+                            )
 
-                            if (res.isSuccess) {
-                                onCaptured(res.getOrThrow())
-                            } else {
-                                val err = res.exceptionOrNull()
-
-                                println("err: $err")
-                                // TODO show snackbar/toast with err?.message
-                            }
+                            result
+                                .onSuccess { uri -> onCaptured(uri) }
+                                .onFailure { throwable -> onCaptureError(throwable) }
                         }
                     })
 

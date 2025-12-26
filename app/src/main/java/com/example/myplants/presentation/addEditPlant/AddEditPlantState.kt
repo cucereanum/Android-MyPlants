@@ -9,6 +9,8 @@ import java.time.LocalDateTime
 
 @RequiresApi(Build.VERSION_CODES.O)
 data class AddEditPlantState(
+    val plantId: Int? = null,
+    val isWatered: Boolean = false,
     val imageUri: String? = null,
     val showDialog: Boolean = false,
     val showCameraView: Boolean = false,
@@ -22,6 +24,10 @@ data class AddEditPlantState(
     val showPlantSizeDialog: Boolean = false,
     val lensFacing: Int = CameraSelector.LENS_FACING_BACK,
     val selectedDays: List<DayOfWeek> = listOf(DayOfWeek.today()),
+    val isLoading: Boolean = false,
+    val isSaving: Boolean = false,
+    val isPersistingImage: Boolean = false,
+    val errorMessage: String? = null,
     // Error states
     val imageUriError: String? = null,
     val plantNameError: String? = null,

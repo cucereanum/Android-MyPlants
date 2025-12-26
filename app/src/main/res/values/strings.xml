@@ -5,6 +5,7 @@
     <string name="notifications">Notifications</string>
     <string name="background_plants">Background plants</string>
     <string name="camera_permission_denied_message">Please enable the camera permissions from the settings.</string>
+    <string name="generic_error_message">Something went wrong.</string>
 
     <!-- Shared Dialog Strings -->
     <string name="dialog_ok">OK</string>

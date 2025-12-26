@@ -1,185 +1,315 @@
 package com.example.myplants.presentation.addEditPlant
 
-
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.Plant
-import com.example.myplants.data.PlantSizeType
+import com.example.myplants.domain.repository.ImageStorageRepository
 import com.example.myplants.domain.repository.PlantRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.util.Calendar
-import java.util.Locale
+import java.time.LocalTime
 import javax.inject.Inject
 
 @HiltViewModel
 @RequiresApi(Build.VERSION_CODES.O)
 class AddEditPlantViewModel @Inject constructor(
-    private val repository: PlantRepository
+    private val plantRepository: PlantRepository,
+    private val imageStorageRepository: ImageStorageRepository,
 ) : ViewModel() {
-    //todo: 1. add loading state for most of the functionalities!
-    // todo 2. events to check if the plant was created; Toasts! Error Messages!
-    // todo 3: refactor code!
 
-    var state by mutableStateOf(AddEditPlantState())
-        private set
+    private val _state = MutableStateFlow(AddEditPlantState())
+    val state: StateFlow<AddEditPlantState> = _state.asStateFlow()
 
+    private val _effect = MutableSharedFlow<AddEditPlantEffect>()
+    val effect: SharedFlow<AddEditPlantEffect> = _effect.asSharedFlow()
 
-    fun toggleDaySelection(day: DayOfWeek?) {
-        val allDays = DayOfWeek.entries.toList()
-        val current = state.selectedDays.toMutableList()
-
-        if (day == null) {
-            val updated = if (current.containsAll(allDays)) {
-                emptyList()
-            } else {
-                allDays
-            }
-            state = state.copy(selectedDays = updated)
-            return
-        }
-
-        if (current.contains(day)) {
-            current.remove(day)
-        } else {
-            current.add(day)
-        }
-
-        state = state.copy(selectedDays = current)
-    }
-
-    fun addPlant() {
-        viewModelScope.launch {
-            println("state + ${state.selectedDays}")
-            repository.insertPlant(
-                Plant(
-                    plantName = state.plantName,
-                    description = state.description,
-                    waterAmount = state.waterAmount,
-                    size = state.plantSize.toString(),
-                    imageUri = state.imageUri ?: "",
-                    time = state.time.toLocalTime().toSecondOfDay() * 1000L,
-                    selectedDays = state.selectedDays,
-                    isWatered = false
-                )
-            )
-        }
-    }
-
-    fun getSelectedDaysString(): String {
-        return state.selectedDays.joinToString(", ") { it.dayName }
-    }
-
-    fun updateState(event: UpdateEventWithValue) {
-        when (event) {
-            is UpdateEventWithValue.UpdateTime -> {
-                val now = LocalDateTime.now()
-                state = state.copy(
-                    time = now.withHour(event.hour).withMinute(event.minute), showTimeDialog = false
-                )
-            }
-
-            is UpdateEventWithValue.UpdateState -> {
-                state = when (event.type) {
-                    UpdateEvent.IMAGE_URI -> state.copy(imageUri = event.value as String?)
-                    UpdateEvent.SHOW_DIALOG -> state.copy(showDialog = event.value as Boolean)
-                    UpdateEvent.SHOW_CAMERA_VIEW -> state.copy(showCameraView = event.value as Boolean)
-                    UpdateEvent.PLANT_NAME -> state.copy(plantName = event.value as String)
-                    UpdateEvent.WATER_AMOUNT -> state.copy(waterAmount = event.value as String)
-                    UpdateEvent.DESCRIPTION -> state.copy(description = event.value as String)
-                    UpdateEvent.SHOW_DATES_DIALOG -> state.copy(showDatesDialog = event.value as Boolean)
-                    UpdateEvent.SHOW_TIME_DIALOG -> state.copy(showTimeDialog = event.value as Boolean)
-                    UpdateEvent.SHOW_PLANT_SIZE_DIALOG -> state.copy(showPlantSizeDialog = event.value as Boolean)
-                    UpdateEvent.LENS_FACING -> state.copy(lensFacing = event.value as Int)
-                    UpdateEvent.TIME -> TODO() // Do nothing here, handled above
-                    UpdateEvent.PLANT_SIZE -> state.copy(plantSize = PlantSizeType.valueOf(event.value.toString()))
+    fun onAction(action: AddEditPlantAction) {
+        when (action) {
+            is AddEditPlantAction.OnPlantNameChanged -> {
+                _state.update {
+                    it.copy(
+                        plantName = action.value,
+                        plantNameError = null,
+                        errorMessage = null,
+                    )
                 }
             }
+
+            is AddEditPlantAction.OnWaterAmountChanged -> {
+                _state.update {
+                    it.copy(
+                        waterAmount = action.value,
+                        waterAmountError = null,
+                        errorMessage = null,
+                    )
+                }
+            }
+
+            is AddEditPlantAction.OnDescriptionChanged -> {
+                _state.update {
+                    it.copy(
+                        description = action.value,
+                        descriptionError = null,
+                        errorMessage = null,
+                    )
+                }
+            }
+
+            is AddEditPlantAction.OnPlantSizeSelected -> {
+                _state.update {
+                    it.copy(
+                        plantSize = action.value,
+                        showPlantSizeDialog = false,
+                        errorMessage = null,
+                    )
+                }
+            }
+
+            is AddEditPlantAction.OnDayToggled -> {
+                toggleDaySelection(action.day)
+            }
+
+            is AddEditPlantAction.OnTimeSelected -> {
+                val now = LocalDateTime.now()
+                _state.update {
+                    it.copy(
+                        time = now.withHour(action.hour).withMinute(action.minute),
+                        showTimeDialog = false,
+                        errorMessage = null,
+                    )
+                }
+            }
+
+            is AddEditPlantAction.OnLensFacingChanged -> {
+                _state.update { it.copy(lensFacing = action.lensFacing) }
+            }
+
+            is AddEditPlantAction.OnImagePicked -> {
+                persistImage(uriDescriptionForLogs = "picked", uri = action.uri)
+            }
+
+            is AddEditPlantAction.OnImageCaptured -> {
+                persistImage(uriDescriptionForLogs = "captured", uri = action.uri)
+                _state.update { it.copy(showCameraView = false) }
+            }
+
+            is AddEditPlantAction.SetShowImageSourceDialog -> {
+                _state.update { it.copy(showDialog = action.show) }
+            }
+
+            is AddEditPlantAction.SetShowCameraView -> {
+                _state.update { it.copy(showCameraView = action.show) }
+            }
+
+            is AddEditPlantAction.SetShowDatesDialog -> {
+                _state.update { it.copy(showDatesDialog = action.show) }
+            }
+
+            is AddEditPlantAction.SetShowTimeDialog -> {
+                _state.update { it.copy(showTimeDialog = action.show) }
+            }
+
+            is AddEditPlantAction.SetShowPlantSizeDialog -> {
+                _state.update { it.copy(showPlantSizeDialog = action.show) }
+            }
+
+            AddEditPlantAction.OnSaveClicked -> {
+                savePlant()
+            }
         }
     }
 
+    fun loadPlantForEditing(plantId: Int) {
+        if (plantId <= 0) return
 
-    fun displaySelectedTime(): String {
-        val formatter = DateTimeFormatter.ofPattern("HH:mm")
-        return state.time.format(formatter)
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            try {
+                val plant = plantRepository.getPlantById(plantId)
+                if (plant == null) {
+                    _state.update { it.copy(isLoading = false) }
+                    _effect.emit(AddEditPlantEffect.ShowMessage("Plant not found"))
+                    return@launch
+                }
+
+                _state.update {
+                    it.copy(
+                        plantId = plant.id,
+                        isWatered = plant.isWatered,
+                        plantName = plant.plantName,
+                        description = plant.description,
+                        waterAmount = plant.waterAmount,
+                        imageUri = plant.imageUri,
+                        selectedDays = plant.selectedDays,
+                        time = localDateTimeFromMillisOfDay(plant.time),
+                        plantSize = runCatching {
+                            com.example.myplants.data.PlantSizeType.valueOf(plant.size)
+                        }.getOrElse { com.example.myplants.data.PlantSizeType.Medium },
+                        isLoading = false,
+                    )
+                }
+            } catch (t: Throwable) {
+                _state.update { it.copy(isLoading = false, errorMessage = t.message) }
+                _effect.emit(AddEditPlantEffect.ShowMessage(t.message ?: "Failed to load plant"))
+            }
+        }
     }
 
-    fun validate(): Boolean {
-        var isValid = true
+    private fun toggleDaySelection(day: DayOfWeek?) {
+        val allDays = DayOfWeek.entries.toList()
+        val currentDays = _state.value.selectedDays.toMutableList()
 
-        if (state.imageUri.isNullOrEmpty()) {
-            state = state.copy(imageUriError = "Image is required.")
-            isValid = false
-        } else {
-            state = state.copy(imageUriError = null)
+        val updatedDays = when {
+            day == null && currentDays.containsAll(allDays) -> emptyList()
+            day == null -> allDays
+            currentDays.contains(day) -> currentDays - day
+            else -> currentDays + day
         }
 
-        if (state.plantName.isBlank()) {
-            state = state.copy(plantNameError = "Plant name cannot be empty.")
-            isValid = false
+        _state.update { it.copy(selectedDays = updatedDays, errorMessage = null) }
+    }
+
+    private fun persistImage(
+        uriDescriptionForLogs: String,
+        uri: android.net.Uri,
+    ) {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isPersistingImage = true,
+                    imageUriError = null,
+                    errorMessage = null,
+                )
+            }
+
+            val result = imageStorageRepository.persistImage(uri)
+            result
+                .onSuccess { savedPath ->
+                    _state.update {
+                        it.copy(
+                            imageUri = savedPath,
+                            isPersistingImage = false,
+                        )
+                    }
+                }
+                .onFailure { throwable ->
+                    _state.update {
+                        it.copy(
+                            isPersistingImage = false,
+                            errorMessage = throwable.message,
+                        )
+                    }
+                    _effect.emit(
+                        AddEditPlantEffect.ShowMessage(
+                            throwable.message
+                                ?: "Failed to persist $uriDescriptionForLogs image"
+                        )
+                    )
+                }
+        }
+    }
+
+    private fun savePlant() {
+        if (_state.value.isSaving) return
+        if (!validateAndUpdateErrors()) return
+
+        viewModelScope.launch {
+            _state.update { it.copy(isSaving = true, errorMessage = null) }
+            try {
+                val currentState = _state.value
+                val timeMillisOfDay = currentState.time.toLocalTime().toSecondOfDay() * 1000L
+
+                val plant = Plant(
+                    id = currentState.plantId ?: 0,
+                    plantName = currentState.plantName.trim(),
+                    description = currentState.description.trim(),
+                    waterAmount = currentState.waterAmount.trim(),
+                    size = currentState.plantSize.name,
+                    imageUri = currentState.imageUri.orEmpty(),
+                    time = timeMillisOfDay,
+                    selectedDays = currentState.selectedDays,
+                    isWatered = currentState.isWatered,
+                )
+
+                if (currentState.plantId == null) {
+                    plantRepository.insertPlant(plant)
+                } else {
+                    plantRepository.updatePlant(plant)
+                }
+
+                _effect.emit(AddEditPlantEffect.NavigateBack)
+            } catch (t: Throwable) {
+                _state.update { it.copy(isSaving = false, errorMessage = t.message) }
+                _effect.emit(AddEditPlantEffect.ShowMessage(t.message ?: "Failed to save plant"))
+                return@launch
+            }
+
+            _state.update { it.copy(isSaving = false) }
+        }
+    }
+
+    private fun validateAndUpdateErrors(): Boolean {
+        val currentState = _state.value
+
+        val imageUriError = if (currentState.imageUri.isNullOrBlank()) {
+            "Image is required."
         } else {
-            state = state.copy(plantNameError = null)
+            null
         }
 
-        if (state.waterAmount.isBlank()) {
-            state = state.copy(waterAmountError = "Water amount cannot be empty.")
-            isValid = false
+        val plantNameError = if (currentState.plantName.isBlank()) {
+            "Plant name cannot be empty."
         } else {
-            state = state.copy(waterAmountError = null)
+            null
         }
 
-        if (state.description.isBlank()) {
-            state = state.copy(descriptionError = "Description cannot be empty.")
-            isValid = false
-        } else if (state.description.length > 150) {
-            state = state.copy(descriptionError = "Description cannot exceed 150 characters.")
-            isValid = false
+        val waterAmountError = if (currentState.waterAmount.isBlank()) {
+            "Water amount cannot be empty."
         } else {
-            state = state.copy(descriptionError = null)
+            null
+        }
+
+        val descriptionError = when {
+            currentState.description.isBlank() -> "Description cannot be empty."
+            currentState.description.length > 150 -> "Description cannot exceed 150 characters."
+            else -> null
+        }
+
+        val isValid =
+            imageUriError == null && plantNameError == null && waterAmountError == null && descriptionError == null
+
+        _state.update {
+            it.copy(
+                imageUriError = imageUriError,
+                plantNameError = plantNameError,
+                waterAmountError = waterAmountError,
+                descriptionError = descriptionError,
+            )
         }
 
         return isValid
     }
 
-    private fun getCurrentDayOfWeek(): String {
-        val sdf = SimpleDateFormat("EEEE", Locale.getDefault()) // "EEEE" for full day name
-        return sdf.format(Calendar.getInstance().time)
+    private fun localDateTimeFromMillisOfDay(millisOfDay: Long): LocalDateTime {
+        val secondsOfDay = (millisOfDay / 1000L).coerceIn(0L, 24L * 60L * 60L - 1L)
+        val time = LocalTime.ofSecondOfDay(secondsOfDay)
+        return LocalDateTime.of(LocalDate.now(), time)
     }
+}
 
-    fun getErrorMessages(): List<String> {
-        return listOfNotNull(
-            state.imageUriError,
-            state.plantNameError,
-            state.waterAmountError,
-            state.descriptionError
-        )
-    }
-
-
-    fun loadPlantForEditing(plantId: Int) {
-        viewModelScope.launch {
-            val plant = repository.getPlantById(plantId)
-            plant?.let {
-                state = state.copy(
-                    plantName = it.plantName,
-                    description = it.description,
-                    waterAmount = it.waterAmount,
-                    imageUri = it.imageUri,
-                    time = LocalDateTime.ofEpochSecond(it.time / 1000, 0, ZoneOffset.UTC),
-                    selectedDays = it.selectedDays,
-                    plantSize = PlantSizeType.valueOf(it.size)
-                )
-            }
-        }
-    }
+sealed interface AddEditPlantEffect {
+    data object NavigateBack : AddEditPlantEffect
+    data class ShowMessage(val message: String) : AddEditPlantEffect
 }

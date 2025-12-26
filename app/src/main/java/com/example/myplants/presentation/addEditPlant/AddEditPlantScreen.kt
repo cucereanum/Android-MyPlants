@@ -2,7 +2,6 @@ package com.example.myplants.presentation.addEditPlant
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -47,6 +46,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +65,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.myplants.R
 import coil.compose.AsyncImage
@@ -72,8 +74,6 @@ import com.example.myplants.presentation.addEditPlant.components.DatesDialog
 import com.example.myplants.presentation.addEditPlant.components.PlantSizeDialog
 import com.example.myplants.presentation.addEditPlant.components.SelectTimeDialog
 import com.example.myplants.presentation.util.DebounceClick
-import java.io.File
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,19 +83,25 @@ fun AddEditPlantScreen(
     plantId: Int = -1,
     viewModel: AddEditPlantViewModel = hiltViewModel()
 ) {
-    val state = viewModel.state
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                AddEditPlantEffect.NavigateBack -> navController.popBackStack()
+                is AddEditPlantEffect.ShowMessage -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { uri ->
-            if (uri !== null) {
-                val newImagePath = saveImageToInternalStorage(context, uri)
-                viewModel.updateState(
-                    UpdateEventWithValue.UpdateState(
-                        UpdateEvent.IMAGE_URI, newImagePath ?: ""
-                    )
-                )
+        contract = ActivityResultContracts.PickVisualMedia(), onResult = { uri ->
+            if (uri != null) {
+                viewModel.onAction(AddEditPlantAction.OnImagePicked(uri))
             }
         })
 
@@ -103,11 +109,7 @@ fun AddEditPlantScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            viewModel.updateState(
-                UpdateEventWithValue.UpdateState(
-                    UpdateEvent.SHOW_CAMERA_VIEW, true
-                )
-            )
+            viewModel.onAction(AddEditPlantAction.SetShowCameraView(true))
         } else {
             // Handle the case where permission is denied
             Toast.makeText(
@@ -118,14 +120,14 @@ fun AddEditPlantScreen(
         }
     }
 
-    val errorMessages = viewModel.getErrorMessages()
+    val errorMessages = listOfNotNull(
+        state.imageUriError,
+        state.plantNameError,
+        state.waterAmountError,
+        state.descriptionError,
+    )
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(errorMessages) {
-        if (errorMessages.isNotEmpty()) {
-            scrollState.animateScrollTo(scrollState.maxValue)
-        }
-    }
     LaunchedEffect(plantId) {
         if (plantId != -1) {
             viewModel.loadPlantForEditing(plantId)
@@ -148,79 +150,53 @@ fun AddEditPlantScreen(
             }
 
             else -> {
-                // Request permission
                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
         }
     }
 
-
     if (state.showTimeDialog) {
         SelectTimeDialog(modifier = Modifier.width(400.dp), updateTime = { hour, minute ->
-            viewModel.updateState(UpdateEventWithValue.UpdateTime(hour, minute))
+            viewModel.onAction(AddEditPlantAction.OnTimeSelected(hour, minute))
         }, onDismissRequest = {
-            viewModel.updateState(
-                UpdateEventWithValue.UpdateState(
-                    UpdateEvent.SHOW_TIME_DIALOG, false
-                )
-            )
+            viewModel.onAction(AddEditPlantAction.SetShowTimeDialog(false))
         })
     } else if (state.showDatesDialog) {
         DatesDialog(
             modifier = Modifier.width(400.dp),
-            selectedDays = viewModel.state.selectedDays,
+            selectedDays = state.selectedDays,
             onDismissRequest = {
-                viewModel.updateState(
-                    UpdateEventWithValue.UpdateState(
-                        UpdateEvent.SHOW_DATES_DIALOG, false
-                    )
-                )
+                viewModel.onAction(AddEditPlantAction.SetShowDatesDialog(false))
             }) {
-            viewModel.toggleDaySelection(it)
+            viewModel.onAction(AddEditPlantAction.OnDayToggled(it))
         }
     } else if (state.showPlantSizeDialog) {
         PlantSizeDialog(
             modifier = Modifier.width(400.dp),
             selectedPlant = state.plantSize,
             togglePlantSizeSelection = {
-                viewModel.updateState(UpdateEventWithValue.UpdateState(UpdateEvent.PLANT_SIZE, it))
+                viewModel.onAction(AddEditPlantAction.OnPlantSizeSelected(it))
             },
             onDismissRequest = {
-                viewModel.updateState(
-                    UpdateEventWithValue.UpdateState(
-                        UpdateEvent.SHOW_PLANT_SIZE_DIALOG, false
-                    )
-                )
+                viewModel.onAction(AddEditPlantAction.SetShowPlantSizeDialog(false))
             })
     } else if (state.showDialog) {
         AlertDialog(
             onDismissRequest = {
-                viewModel.updateState(
-                    UpdateEventWithValue.UpdateState(
-                        UpdateEvent.SHOW_DIALOG, false
-                    )
-                )
+                viewModel.onAction(AddEditPlantAction.SetShowImageSourceDialog(false))
             },
             title = { Text(stringResource(id = R.string.add_edit_plant_select_image_dialog_title)) },
             text = { // TODO: Check if this string is correct
                 Column {
                     TextButton(onClick = {
                         requestCameraPermission()
-                        viewModel.updateState(
-                            UpdateEventWithValue.UpdateState(
-                                UpdateEvent.SHOW_DIALOG, false
-                            )
-                        )
+                        viewModel.onAction(AddEditPlantAction.SetShowImageSourceDialog(false))
                     }) {
                         Text(stringResource(id = R.string.add_edit_plant_image_source_camera))
                     }
                     TextButton(onClick = {
                         photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        viewModel.updateState(
-                            UpdateEventWithValue.UpdateState(
-                                UpdateEvent.SHOW_DIALOG, false
-                            )
-                        )
+                        viewModel.onAction(AddEditPlantAction.SetShowImageSourceDialog(false))
                     }) {
                         Text(stringResource(id = R.string.add_edit_plant_image_source_gallery))
                     }
@@ -228,15 +204,10 @@ fun AddEditPlantScreen(
             },
             confirmButton = {
                 Button(onClick = {
-                    viewModel.updateState(
-                        UpdateEventWithValue.UpdateState(
-                            UpdateEvent.SHOW_DIALOG, false
-                        )
-                    )
+                    viewModel.onAction(AddEditPlantAction.SetShowImageSourceDialog(false))
                 }) {
                     Text(
-                        stringResource(id = R.string.dialog_cancel),
-                        color = Color.White
+                        stringResource(id = R.string.dialog_cancel), color = Color.White
                     )
                 }
             })
@@ -244,21 +215,18 @@ fun AddEditPlantScreen(
     if (state.showCameraView) {
         CameraView(
             onImageCaptured = { uri ->
-                println("Image captured: $uri")
-                // Save in VM and close the camera sheet/view
-                viewModel.updateState(
-                    UpdateEventWithValue.UpdateState(UpdateEvent.IMAGE_URI, uri.toString())
-                )
-                viewModel.updateState(
-                    UpdateEventWithValue.UpdateState(UpdateEvent.SHOW_CAMERA_VIEW, false)
-                )
+                viewModel.onAction(AddEditPlantAction.OnImageCaptured(uri))
+            },
+            onError = { throwable ->
+                Toast.makeText(
+                    context,
+                    throwable.message ?: context.getString(R.string.generic_error_message),
+                    Toast.LENGTH_SHORT
+                ).show()
             },
             onClose = {
-                viewModel.updateState(
-                    UpdateEventWithValue.UpdateState(UpdateEvent.SHOW_CAMERA_VIEW, false)
-                )
-            },
-            initialLensFacing = state.lensFacing  // keep your existing front/back preference
+                viewModel.onAction(AddEditPlantAction.SetShowCameraView(false))
+            }, initialLensFacing = state.lensFacing  // keep your existing front/back preference
         )
     } else {
         Column(
@@ -272,8 +240,7 @@ fun AddEditPlantScreen(
                             focusManager.clearFocus()
                         }
                     }
-                }
-        ) {
+                }) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -341,11 +308,7 @@ fun AddEditPlantScreen(
 
                         Spacer(modifier = Modifier.height(30.dp))
                         Button(shape = RoundedCornerShape(12.dp), onClick = {
-                            viewModel.updateState(
-                                UpdateEventWithValue.UpdateState(
-                                    UpdateEvent.SHOW_DIALOG, true
-                                )
-                            )
+                            viewModel.onAction(AddEditPlantAction.SetShowImageSourceDialog(true))
                         }) {
                             Row(
                                 horizontalArrangement = Arrangement.Center,
@@ -384,12 +347,7 @@ fun AddEditPlantScreen(
                     AppFormField(
                         value = state.plantName,
                         onValueChange = {
-                            viewModel.updateState(
-                                UpdateEventWithValue.UpdateState(
-                                    UpdateEvent.PLANT_NAME,
-                                    it
-                                )
-                            )
+                            viewModel.onAction(AddEditPlantAction.OnPlantNameChanged(it))
                         },
                         label = stringResource(id = R.string.add_edit_plant_plant_name_label),
                         singleLine = true
@@ -400,45 +358,31 @@ fun AddEditPlantScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(
-                            modifier = Modifier
-                                .weight(0.45f)
+                            modifier = Modifier.weight(0.45f)
                         ) {
                             AppFormField(
-                                value = viewModel.getSelectedDaysString(),
+                                value = state.selectedDays.joinToString(", ") { it.dayName },
                                 onValueChange = {}, // ignored for selector
                                 label = stringResource(id = R.string.add_edit_plant_dates_label),
                                 readOnly = true,
                                 onClick = {
-                                    viewModel.updateState(
-                                        UpdateEventWithValue.UpdateState(
-                                            UpdateEvent.SHOW_DATES_DIALOG,
-                                            true
-                                        )
-                                    )
-                                }
-                            )
+                                    viewModel.onAction(AddEditPlantAction.SetShowDatesDialog(true))
+                                })
 
 
                         }
                         Spacer(modifier = Modifier.padding(5.dp))
                         Column(
-                            modifier = Modifier
-                                .weight(0.45f)
+                            modifier = Modifier.weight(0.45f)
                         ) {
                             AppFormField(
-                                value = viewModel.displaySelectedTime(),
+                                value = state.time.toLocalTime().toString().take(5),
                                 onValueChange = {},
                                 label = stringResource(id = R.string.add_edit_plant_time_label),
                                 readOnly = true,
                                 onClick = {
-                                    viewModel.updateState(
-                                        UpdateEventWithValue.UpdateState(
-                                            UpdateEvent.SHOW_TIME_DIALOG,
-                                            true
-                                        )
-                                    )
-                                }
-                            )
+                                    viewModel.onAction(AddEditPlantAction.SetShowTimeDialog(true))
+                                })
 
                         }
                     }
@@ -448,18 +392,12 @@ fun AddEditPlantScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(
-                            modifier = Modifier
-                                .weight(0.45f)
+                            modifier = Modifier.weight(0.45f)
                         ) {
                             AppFormField(
                                 value = state.waterAmount,
                                 onValueChange = {
-                                    viewModel.updateState(
-                                        UpdateEventWithValue.UpdateState(
-                                            UpdateEvent.WATER_AMOUNT,
-                                            it
-                                        )
-                                    )
+                                    viewModel.onAction(AddEditPlantAction.OnWaterAmountChanged(it))
                                 },
                                 label = stringResource(id = R.string.add_edit_plant_water_amount_label),
                                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
@@ -468,23 +406,20 @@ fun AddEditPlantScreen(
                         }
                         Spacer(modifier = Modifier.padding(5.dp))
                         Column(
-                            modifier = Modifier
-                                .weight(0.45f)
+                            modifier = Modifier.weight(0.45f)
                         ) {
                             AppFormField(
-                                value = state.plantSize.toString(),
+                                value = state.plantSize.plantSize,
                                 onValueChange = {},
                                 label = stringResource(id = R.string.add_edit_plant_plant_size_label),
                                 readOnly = true,
                                 onClick = {
-                                    viewModel.updateState(
-                                        UpdateEventWithValue.UpdateState(
-                                            UpdateEvent.SHOW_PLANT_SIZE_DIALOG,
+                                    viewModel.onAction(
+                                        AddEditPlantAction.SetShowPlantSizeDialog(
                                             true
                                         )
                                     )
-                                }
-                            )
+                                })
 
                         }
 
@@ -492,12 +427,7 @@ fun AddEditPlantScreen(
                     AppFormField(
                         value = state.description,
                         onValueChange = {
-                            viewModel.updateState(
-                                UpdateEventWithValue.UpdateState(
-                                    UpdateEvent.DESCRIPTION,
-                                    it
-                                )
-                            )
+                            viewModel.onAction(AddEditPlantAction.OnDescriptionChanged(it))
                         },
                         label = stringResource(id = R.string.add_edit_plant_description_label),
                         singleLine = false,
@@ -522,14 +452,13 @@ fun AddEditPlantScreen(
 
 
                     Button(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 20.dp),
                         shape = RoundedCornerShape(12.dp),
                         onClick = {
                             DebounceClick.debounceClick {
-                                if (viewModel.validate()) {
-                                    viewModel.addPlant()
-                                    navController.popBackStack()
-                                }
+                                viewModel.onAction(AddEditPlantAction.OnSaveClicked)
                             }
                         }) {
                         Row(
@@ -544,22 +473,10 @@ fun AddEditPlantScreen(
                             )
                         }
 
-
                     }
                 }
 
             }
         }
     }
-}
-
-private fun saveImageToInternalStorage(context: Context, uri: Uri?): String? {
-    val contentResolver = context.contentResolver
-    val inputStream = contentResolver.openInputStream(uri!!) ?: return null
-    val file = File(context.filesDir, "saved_plant_image_${System.currentTimeMillis()}.jpg")
-
-    file.outputStream().use { outputStream ->
-        inputStream.copyTo(outputStream)
-    }
-    return file.absolutePath // Return the path of the saved file
 }
