@@ -9,7 +9,9 @@ import com.example.myplants.domain.repository.NotificationRepository
 import com.example.myplants.domain.repository.PlantRepository
 import com.example.myplants.infrastructure.notifications.NotificationHelper
 import kotlinx.coroutines.flow.first
+import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
 import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -24,17 +26,34 @@ class CheckForWateringUseCase @Inject constructor(
 
     suspend fun execute() {
         val allPlants = repository.getPlants().first()
-        val now = System.currentTimeMillis()
+        val startOfTodayMillis = LocalDate
+            .now()
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
         val today = DayOfWeek.today()
         val yesterday = DayOfWeek.entries.let { days ->
             val index = days.indexOf(today)
             days[(index - 1 + days.size) % days.size]
         }
         val currentTimeOfDayMillis = LocalTime.now().toSecondOfDay() * 1000L
-        val upcomingThreshold = currentTimeOfDayMillis + 12 * 60 * 60 * 1000L
-        val twentyHoursAgo = now - 20 * 60 * 60 * 1000L
+        val oneHourFromNowMillisOfDay = currentTimeOfDayMillis + 60 * 60 * 1000L
 
         val allNotifications = notificationRepository.getAllNotifications().first()
+        val notificationsFromToday = allNotifications.filter { it.timestamp >= startOfTodayMillis }
+
+        fun hasNotificationToday(plantId: Int, type: NotificationType): Boolean {
+            return notificationsFromToday.any { it.plantId == plantId && it.type == type }
+        }
+
+        fun hasUpcomingNotificationToday(plantId: Int): Boolean {
+            return hasNotificationToday(plantId = plantId, type = NotificationType.UPCOMING)
+        }
+
+        fun hasForgotNotificationToday(plantId: Int): Boolean {
+            return hasNotificationToday(plantId = plantId, type = NotificationType.FORGOT)
+        }
+
         val forgottenPlants = allPlants.filter { plant ->
             !plant.isWatered && (
                     (plant.selectedDays.contains(today) && plant.time < currentTimeOfDayMillis) ||
@@ -42,24 +61,42 @@ class CheckForWateringUseCase @Inject constructor(
                     )
         }
 
-        val upcomingPlants = allPlants.filter { plant ->
+        val upcomingPlantsWithinOneHour = allPlants.filter { plant ->
             !plant.isWatered &&
                     plant.selectedDays.contains(today) &&
-                    plant.time in currentTimeOfDayMillis..upcomingThreshold
+                    plant.time in currentTimeOfDayMillis..oneHourFromNowMillisOfDay
         }
 
-        val notifications = buildMap {
-            forgottenPlants.forEach { put(it.id, it to NotificationType.FORGOT) }
-            upcomingPlants.forEach { putIfAbsent(it.id, it to NotificationType.UPCOMING) }
-        }.values.toList()
-        println("allNotifications: plants: upcoming - ${upcomingPlants.size}, forgottenPlants - ${forgottenPlants.size}, total - ${notifications.size}")
-        val plantToNotify = notifications
-            .sortedBy { it.second == NotificationType.UPCOMING } // FORGOT will come first
-            .firstOrNull { (plant, type) ->
-                allNotifications.none {
-                    it.plantId == plant.id && it.type == type && it.timestamp > twentyHoursAgo
-                }
+        val hasSentUpcomingNotificationToday = notificationsFromToday
+            .any { it.type == NotificationType.UPCOMING }
+        val hasSentForgotNotificationToday = notificationsFromToday
+            .any { it.type == NotificationType.FORGOT }
+
+        val upcomingPlantToNotify = upcomingPlantsWithinOneHour
+            .filter { plant ->
+                !hasUpcomingNotificationToday(plantId = plant.id) &&
+                        !hasForgotNotificationToday(plantId = plant.id)
             }
+            .minByOrNull { plant -> plant.time }
+
+        val plantToNotify = when {
+            !hasSentUpcomingNotificationToday && upcomingPlantToNotify != null -> {
+                upcomingPlantToNotify to NotificationType.UPCOMING
+            }
+
+            !hasSentForgotNotificationToday -> {
+                forgottenPlants
+                    .filter { plant ->
+                        !hasUpcomingNotificationToday(plantId = plant.id) &&
+                                !hasForgotNotificationToday(plantId = plant.id)
+                    }
+                    .minByOrNull { plant -> plant.time }
+                    ?.let { plant -> plant to NotificationType.FORGOT }
+            }
+
+            else -> null
+        }
+
         plantToNotify?.let { (plant, type) ->
             val message = when (type) {
                 NotificationType.UPCOMING -> "${plant.plantName} needs watering soon!"
