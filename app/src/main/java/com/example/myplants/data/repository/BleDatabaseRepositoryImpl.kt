@@ -18,7 +18,7 @@ class BleDatabaseRepositoryImpl @Inject constructor(
     override suspend fun linkDeviceToPlant(plantId: Int, device: BleDevice) {
         dao.insert(
             ConnectedBleDeviceEntity(
-                deviceId = device.rssi.toString(),
+                deviceId = device.address,
                 plantId = plantId,
                 name = device.name,
                 lastConnected = System.currentTimeMillis()

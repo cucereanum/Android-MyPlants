@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.example.myplants.data.ble.BleDevice
 import com.example.myplants.data.ble.BleUuids
 import com.example.myplants.data.ble.ConnectionState
 
@@ -28,7 +29,8 @@ import com.example.myplants.data.ble.ConnectionState
 fun BleScreen(
     navController: NavController,
     viewModel: BleViewModel = hiltViewModel(),
-    onClose: () -> Unit = {}
+    onClose: () -> Unit = {},
+    onDeviceSelected: ((BleDevice) -> Unit)? = null
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -214,7 +216,13 @@ fun BleScreen(
                             name = d.name ?: "Unnamed",
                             address = d.address,
                             rssi = d.rssi,
-                            onClick = { viewModel.connectTo(d.address, autoConnect = false) }
+                            onClick = {
+                                if (onDeviceSelected != null) {
+                                    onDeviceSelected(d)
+                                } else {
+                                    viewModel.connectTo(d.address, autoConnect = false)
+                                }
+                            }
                         )
                     }
                 }

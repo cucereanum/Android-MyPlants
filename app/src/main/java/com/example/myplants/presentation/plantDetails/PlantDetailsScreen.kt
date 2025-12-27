@@ -16,9 +16,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,11 +30,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +48,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,8 +69,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.myplants.R
+import com.example.myplants.data.ble.ConnectionState
 import com.example.myplants.navigation.Route
 import com.example.myplants.presentation.util.DebounceClick
+import kotlinx.coroutines.launch
 
 //todo: create reusable components
 
@@ -70,13 +82,31 @@ fun PlantDetailsScreen(
     navController: NavController, plantId: Int, viewModel: PlantDetailsViewModel = hiltViewModel()
 ) {
     var showModal by remember { mutableStateOf(false) }
+    val linkedSensor by viewModel.linkedSensor.collectAsState()
+    val connectionState by viewModel.bleConnectionState.collectAsState()
+    val sensorReadings by viewModel.sensorReadings.collectAsState()
 
     LaunchedEffect(plantId) {
         viewModel.loadPlant(plantId)
     }
+
+    LaunchedEffect(Unit) {
+        navController.currentBackStackEntryFlow.collect {
+            viewModel.refreshLinkedSensor(plantId)
+        }
+    }
+
+    LaunchedEffect(linkedSensor?.deviceId) {
+        if (linkedSensor != null) {
+            viewModel.connectToLinkedSensor()
+        }
+    }
+
     val plant by viewModel.plant.collectAsState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-
+    val scope = rememberCoroutineScope()
+    val tabs = remember { listOf("Details", "Sensor") }
+    val pagerState = rememberPagerState(pageCount = { tabs.size })
 
     Box(modifier = Modifier.fillMaxSize()) {
         Box(
@@ -175,6 +205,7 @@ fun PlantDetailsScreen(
             ) {
                 Column(
                     modifier = Modifier
+                        .offset(y = (-10).dp)
                         .height(70.dp)
                         .padding(horizontal = 30.dp)
                         .clip(RoundedCornerShape(10.dp))
@@ -252,34 +283,203 @@ fun PlantDetailsScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(screenHeight * 0.5f)
+                .height(screenHeight * 0.55f)
                 .align(Alignment.BottomCenter)
                 .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
                 .background(MaterialTheme.colorScheme.onBackground)
-                .padding(all = 20.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
 
-            plant?.plantName?.let {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            TabRow(
+                selectedTabIndex = pagerState.currentPage,
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = pagerState.currentPage == index,
+                        onClick = {
+                            scope.launch { pagerState.animateScrollToPage(index) }
+                        },
+                        text = { Text(title) }
+                    )
+                }
             }
 
-            plant?.description?.let {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Text(
-                        text = it,
-                        color = MaterialTheme.colorScheme.secondary,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f)
+            ) { pageIndex ->
+                when (pageIndex) {
+                    0 -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            plant?.plantName?.let {
+                                Text(
+                                    text = it,
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+
+                            plant?.description?.let {
+                                Text(
+                                    text = it,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            }
+                        }
+                    }
+
+                    1 -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    val sensorName = linkedSensor?.name
+                                    val sensorAddress = linkedSensor?.deviceId
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Plant sensor",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+
+                                        val connectionLabel = when (val cs = connectionState) {
+                                            is ConnectionState.Connecting -> "Connecting"
+                                            is ConnectionState.Connected -> "Connected"
+                                            is ConnectionState.ServicesDiscovered -> "Reading"
+                                            is ConnectionState.Disconnected -> "Idle"
+                                            else -> "Idle"
+                                        }
+
+                                        AssistChip(
+                                            onClick = {},
+                                            enabled = false,
+                                            label = { Text(connectionLabel) },
+                                            colors = AssistChipDefaults.assistChipColors(
+                                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        )
+                                    }
+
+                                    if (!sensorName.isNullOrBlank()) {
+                                        Text(
+                                            text = sensorName,
+                                            color = MaterialTheme.colorScheme.secondary,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+
+                                    if (linkedSensor == null) {
+                                        Text(
+                                            text = "No sensor linked",
+                                            color = MaterialTheme.colorScheme.secondary
+                                        )
+                                        Button(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp),
+                                            onClick = {
+                                                DebounceClick.debounceClick {
+                                                    navController.navigate(
+                                                        Route.bleLinkRoute(
+                                                            plantId
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                        ) {
+                                            Text(text = "Link sensor", color = Color.White)
+                                        }
+                                    } else {
+                                        if (!sensorAddress.isNullOrBlank()) {
+                                            Text(
+                                                text = sensorAddress,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+
+                                        if (sensorReadings.isNotEmpty()) {
+                                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                sensorReadings.forEach { (label, value) ->
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Text(
+                                                            text = label,
+                                                            color = MaterialTheme.colorScheme.secondary
+                                                        )
+                                                        Text(
+                                                            text = value,
+                                                            color = MaterialTheme.colorScheme.onSurface,
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            Text(
+                                                text = "No sensor data yet",
+                                                color = MaterialTheme.colorScheme.secondary
+                                            )
+                                        }
+
+                                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                            OutlinedButton(
+                                                modifier = Modifier.weight(1f),
+                                                onClick = { viewModel.connectToLinkedSensor() }
+                                            ) {
+                                                Text("Refresh")
+                                            }
+                                            OutlinedButton(
+                                                modifier = Modifier.weight(1f),
+                                                onClick = {
+                                                    DebounceClick.debounceClick {
+                                                        viewModel.unlinkSensor(plantId)
+                                                    }
+                                                }
+                                            ) {
+                                                Text("Unlink")
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

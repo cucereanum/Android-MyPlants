@@ -28,6 +28,8 @@ import com.example.myplants.presentation.plantList.PlantListScreen
 import com.example.myplants.presentation.settings.SettingsScreen
 import com.example.myplants.presentation.theme.MyPlantsTheme
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.myplants.presentation.bleLink.BleLinkViewModel
 
 @RequiresApi(Build.VERSION_CODES.S)
 @AndroidEntryPoint
@@ -98,6 +100,21 @@ class MainActivity : ComponentActivity() {
                         composable(Route.BLE) {
                             BleScreen(
                                 navController
+                            )
+                        }
+                        composable(
+                            Route.BLE_LINK,
+                            arguments = listOf(navArgument("plantId") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            val plantId = backStackEntry.arguments?.getInt("plantId") ?: 0
+                            val viewModel: BleLinkViewModel = hiltViewModel()
+                            BleScreen(
+                                navController = navController,
+                                onClose = { navController.popBackStack() },
+                                onDeviceSelected = { device ->
+                                    viewModel.linkDeviceToPlant(plantId = plantId, device = device)
+                                    navController.popBackStack()
+                                }
                             )
                         }
                     }
