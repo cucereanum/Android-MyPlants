@@ -105,7 +105,10 @@ fun PlantDetailsScreen(
     val plant by viewModel.plant.collectAsState()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val scope = rememberCoroutineScope()
-    val tabs = remember { listOf("Details", "Sensor") }
+    val tabs = listOf(
+        stringResource(id = R.string.plant_details_tab_details),
+        stringResource(id = R.string.plant_details_tab_sensor),
+    )
     val pagerState = rememberPagerState(pageCount = { tabs.size })
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -366,23 +369,22 @@ fun PlantDetailsScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "Plant sensor",
+                                            text = stringResource(id = R.string.plant_details_sensor_title),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold
                                         )
 
-                                        val connectionLabel = when (val cs = connectionState) {
-                                            is ConnectionState.Connecting -> "Connecting"
-                                            is ConnectionState.Connected -> "Connected"
-                                            is ConnectionState.ServicesDiscovered -> "Reading"
-                                            is ConnectionState.Disconnected -> "Idle"
-                                            else -> "Idle"
+                                        val connectionLabelResId = when (connectionState) {
+                                            is ConnectionState.Connecting -> R.string.plant_details_sensor_status_connecting
+                                            is ConnectionState.Connected -> R.string.plant_details_sensor_status_connected
+                                            is ConnectionState.ServicesDiscovered -> R.string.plant_details_sensor_status_reading
+                                            else -> R.string.plant_details_sensor_status_idle
                                         }
 
                                         AssistChip(
                                             onClick = {},
                                             enabled = false,
-                                            label = { Text(connectionLabel) },
+                                            label = { Text(stringResource(id = connectionLabelResId)) },
                                             colors = AssistChipDefaults.assistChipColors(
                                                 disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                                                 disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -401,7 +403,7 @@ fun PlantDetailsScreen(
 
                                     if (linkedSensor == null) {
                                         Text(
-                                            text = "No sensor linked",
+                                            text = stringResource(id = R.string.plant_details_sensor_no_linked),
                                             color = MaterialTheme.colorScheme.secondary
                                         )
                                         Button(
@@ -417,7 +419,10 @@ fun PlantDetailsScreen(
                                                 }
                                             }
                                         ) {
-                                            Text(text = "Link sensor", color = Color.White)
+                                            Text(
+                                                text = stringResource(id = R.string.plant_details_sensor_link_button),
+                                                color = Color.White
+                                            )
                                         }
                                     } else {
                                         if (!sensorAddress.isNullOrBlank()) {
@@ -430,29 +435,49 @@ fun PlantDetailsScreen(
                                             )
                                         }
 
-                                        if (sensorReadings.isNotEmpty()) {
+                                        val parsed = sensorReadings
+                                        if (parsed != null) {
                                             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                sensorReadings.forEach { (label, value) ->
-                                                    Row(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Text(
-                                                            text = label,
-                                                            color = MaterialTheme.colorScheme.secondary
+                                                parsed.temperatureC?.let { temperatureC ->
+                                                    SensorReadingRow(
+                                                        label = stringResource(id = R.string.plant_details_sensor_label_temperature),
+                                                        value = stringResource(
+                                                            id = R.string.plant_details_sensor_value_temperature,
+                                                            temperatureC
                                                         )
-                                                        Text(
-                                                            text = value,
-                                                            color = MaterialTheme.colorScheme.onSurface,
-                                                            fontWeight = FontWeight.SemiBold
+                                                    )
+                                                }
+                                                parsed.moisturePct?.let { moisturePct ->
+                                                    SensorReadingRow(
+                                                        label = stringResource(id = R.string.plant_details_sensor_label_moisture),
+                                                        value = stringResource(
+                                                            id = R.string.plant_details_sensor_value_percent,
+                                                            moisturePct
                                                         )
-                                                    }
+                                                    )
+                                                }
+                                                parsed.lightLux?.let { lightLux ->
+                                                    SensorReadingRow(
+                                                        label = stringResource(id = R.string.plant_details_sensor_label_light),
+                                                        value = stringResource(
+                                                            id = R.string.plant_details_sensor_value_lux,
+                                                            lightLux
+                                                        )
+                                                    )
+                                                }
+                                                parsed.conductivity?.let { conductivity ->
+                                                    SensorReadingRow(
+                                                        label = stringResource(id = R.string.plant_details_sensor_label_conductivity),
+                                                        value = stringResource(
+                                                            id = R.string.plant_details_sensor_value_conductivity,
+                                                            conductivity
+                                                        )
+                                                    )
                                                 }
                                             }
                                         } else {
                                             Text(
-                                                text = "No sensor data yet",
+                                                text = stringResource(id = R.string.plant_details_sensor_no_data),
                                                 color = MaterialTheme.colorScheme.secondary
                                             )
                                         }
@@ -462,7 +487,7 @@ fun PlantDetailsScreen(
                                                 modifier = Modifier.weight(1f),
                                                 onClick = { viewModel.connectToLinkedSensor() }
                                             ) {
-                                                Text("Refresh")
+                                                Text(stringResource(id = R.string.plant_details_sensor_refresh_button))
                                             }
                                             OutlinedButton(
                                                 modifier = Modifier.weight(1f),
@@ -472,7 +497,7 @@ fun PlantDetailsScreen(
                                                     }
                                                 }
                                             ) {
-                                                Text("Unlink")
+                                                Text(stringResource(id = R.string.plant_details_sensor_unlink_button))
                                             }
                                         }
                                     }
@@ -590,5 +615,21 @@ fun PlantDetailsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SensorReadingRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = label, color = MaterialTheme.colorScheme.secondary)
+        Text(
+            text = value,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }

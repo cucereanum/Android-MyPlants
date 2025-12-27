@@ -36,8 +36,8 @@ class PlantDetailsViewModel @Inject constructor(
     private val _bleConnectionState = MutableStateFlow<ConnectionState>(ConnectionState.Idle)
     val bleConnectionState: StateFlow<ConnectionState> = _bleConnectionState
 
-    private val _sensorReadings = MutableStateFlow<Map<String, String>>(emptyMap())
-    val sensorReadings: StateFlow<Map<String, String>> = _sensorReadings.asStateFlow()
+    private val _sensorReadings = MutableStateFlow<RealtimeParsed?>(null)
+    val sensorReadings: StateFlow<RealtimeParsed?> = _sensorReadings.asStateFlow()
 
     private var connectJob: Job? = null
     private var liveJob: Job? = null
@@ -75,7 +75,7 @@ class PlantDetailsViewModel @Inject constructor(
         liveJob = bleManagerRepository
             .startFlowerCareLive()
             .onEach { parsed ->
-                _sensorReadings.value = parsed.toPrettyReadings()
+                _sensorReadings.value = parsed
             }
             .catch {
                 // Keep last readings; connection state will surface errors.
@@ -96,22 +96,13 @@ class PlantDetailsViewModel @Inject constructor(
             disconnectSensor()
             bleDatabaseRepository.forgetDeviceByPlant(plantId)
             _linkedSensor.value = null
-            _sensorReadings.value = emptyMap()
+            _sensorReadings.value = null
         }
     }
 
     fun refreshLinkedSensor(plantId: Int) {
         viewModelScope.launch {
             _linkedSensor.value = bleDatabaseRepository.getDeviceByPlantId(plantId)
-        }
-    }
-
-    private fun RealtimeParsed.toPrettyReadings(): Map<String, String> {
-        return buildMap {
-            temperatureC?.let { put("Temperature", "%.1f °C".format(it)) }
-            moisturePct?.let { put("Moisture", "$it %") }
-            lightLux?.let { put("Light", "$it lx") }
-            conductivity?.let { put("Conductivity", "$it µS/cm") }
         }
     }
 

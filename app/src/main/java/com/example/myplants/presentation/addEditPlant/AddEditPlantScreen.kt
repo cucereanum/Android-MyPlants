@@ -93,7 +93,11 @@ fun AddEditPlantScreen(
             when (effect) {
                 AddEditPlantEffect.NavigateBack -> navController.popBackStack()
                 is AddEditPlantEffect.ShowMessage -> {
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        context.getString(effect.messageResId),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -443,7 +447,7 @@ fun AddEditPlantScreen(
                         ) {
                             errorMessages.forEach { errorMessage ->
                                 Text(
-                                    text = errorMessage,
+                                    text = stringResource(id = errorMessage),
                                     color = MaterialTheme.colorScheme.error,
                                     style = MaterialTheme.typography.bodyMedium
                                 )

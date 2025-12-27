@@ -2,6 +2,7 @@ package com.example.myplants.presentation.addEditPlant
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.annotation.StringRes
 import androidx.camera.core.CameraSelector
 import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.PlantSizeType
@@ -29,8 +30,8 @@ data class AddEditPlantState(
     val isPersistingImage: Boolean = false,
     val errorMessage: String? = null,
     // Error states
-    val imageUriError: String? = null,
-    val plantNameError: String? = null,
-    val waterAmountError: String? = null,
-    val descriptionError: String? = null
+    @StringRes val imageUriError: Int? = null,
+    @StringRes val plantNameError: Int? = null,
+    @StringRes val waterAmountError: Int? = null,
+    @StringRes val descriptionError: Int? = null
 )

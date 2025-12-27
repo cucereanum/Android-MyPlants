@@ -2,8 +2,10 @@ package com.example.myplants.presentation.addEditPlant
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myplants.R
 import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.Plant
 import com.example.myplants.domain.repository.ImageStorageRepository
@@ -140,7 +142,11 @@ class AddEditPlantViewModel @Inject constructor(
                 val plant = plantRepository.getPlantById(plantId)
                 if (plant == null) {
                     _state.update { it.copy(isLoading = false) }
-                    _effect.emit(AddEditPlantEffect.ShowMessage("Plant not found"))
+                    _effect.emit(
+                        AddEditPlantEffect.ShowMessage(
+                            R.string.add_edit_plant_error_plant_not_found
+                        )
+                    )
                     return@launch
                 }
 
@@ -162,7 +168,11 @@ class AddEditPlantViewModel @Inject constructor(
                 }
             } catch (t: Throwable) {
                 _state.update { it.copy(isLoading = false, errorMessage = t.message) }
-                _effect.emit(AddEditPlantEffect.ShowMessage(t.message ?: "Failed to load plant"))
+                _effect.emit(
+                    AddEditPlantEffect.ShowMessage(
+                        R.string.add_edit_plant_error_failed_to_load_plant
+                    )
+                )
             }
         }
     }
@@ -213,8 +223,7 @@ class AddEditPlantViewModel @Inject constructor(
                     }
                     _effect.emit(
                         AddEditPlantEffect.ShowMessage(
-                            throwable.message
-                                ?: "Failed to persist $uriDescriptionForLogs image"
+                            R.string.add_edit_plant_error_failed_to_persist_image
                         )
                     )
                 }
@@ -252,7 +261,11 @@ class AddEditPlantViewModel @Inject constructor(
                 _effect.emit(AddEditPlantEffect.NavigateBack)
             } catch (t: Throwable) {
                 _state.update { it.copy(isSaving = false, errorMessage = t.message) }
-                _effect.emit(AddEditPlantEffect.ShowMessage(t.message ?: "Failed to save plant"))
+                _effect.emit(
+                    AddEditPlantEffect.ShowMessage(
+                        R.string.add_edit_plant_error_failed_to_save_plant
+                    )
+                )
                 return@launch
             }
 
@@ -263,27 +276,18 @@ class AddEditPlantViewModel @Inject constructor(
     private fun validateAndUpdateErrors(): Boolean {
         val currentState = _state.value
 
-        val imageUriError = if (currentState.imageUri.isNullOrBlank()) {
-            "Image is required."
-        } else {
-            null
-        }
+        val imageUriError =
+            if (currentState.imageUri.isNullOrBlank()) R.string.add_edit_plant_validation_image_required else null
 
-        val plantNameError = if (currentState.plantName.isBlank()) {
-            "Plant name cannot be empty."
-        } else {
-            null
-        }
+        val plantNameError =
+            if (currentState.plantName.isBlank()) R.string.add_edit_plant_validation_plant_name_required else null
 
-        val waterAmountError = if (currentState.waterAmount.isBlank()) {
-            "Water amount cannot be empty."
-        } else {
-            null
-        }
+        val waterAmountError =
+            if (currentState.waterAmount.isBlank()) R.string.add_edit_plant_validation_water_amount_required else null
 
         val descriptionError = when {
-            currentState.description.isBlank() -> "Description cannot be empty."
-            currentState.description.length > 150 -> "Description cannot exceed 150 characters."
+            currentState.description.isBlank() -> R.string.add_edit_plant_validation_description_required
+            currentState.description.length > 150 -> R.string.add_edit_plant_validation_description_too_long
             else -> null
         }
 
@@ -311,5 +315,5 @@ class AddEditPlantViewModel @Inject constructor(
 
 sealed interface AddEditPlantEffect {
     data object NavigateBack : AddEditPlantEffect
-    data class ShowMessage(val message: String) : AddEditPlantEffect
+    data class ShowMessage(@StringRes val messageResId: Int) : AddEditPlantEffect
 }

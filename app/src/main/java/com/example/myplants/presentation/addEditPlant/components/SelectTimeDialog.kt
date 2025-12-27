@@ -18,9 +18,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.myplants.R
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,12 +65,18 @@ fun SelectTimeDialog(
                         state = timePickerState,
                     )
                     Button(onClick = onDismissRequest) {
-                        Text("Dismiss picker", color = Color.White)
+                        Text(
+                            stringResource(id = R.string.select_time_dialog_dismiss),
+                            color = Color.White
+                        )
                     }
                     Button(onClick = {
                         updateTime(timePickerState.hour, timePickerState.minute)
                     }) {
-                        Text("Confirm selection", color = Color.White)
+                        Text(
+                            stringResource(id = R.string.select_time_dialog_confirm),
+                            color = Color.White
+                        )
                     }
                 }
             }
