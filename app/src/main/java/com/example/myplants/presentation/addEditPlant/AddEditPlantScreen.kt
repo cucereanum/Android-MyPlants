@@ -191,7 +191,7 @@ fun AddEditPlantScreen(
                 viewModel.onAction(AddEditPlantAction.SetShowImageSourceDialog(false))
             },
             title = { Text(stringResource(id = R.string.add_edit_plant_select_image_dialog_title)) },
-            text = { // TODO: Check if this string is correct
+            text = {
                 Column {
                     TextButton(onClick = {
                         requestCameraPermission()
