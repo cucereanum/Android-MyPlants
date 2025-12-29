@@ -1,0 +1,136 @@
+<resources>
+    <!-- General App Strings -->
+    <string name="app_name">MyPlants</string>
+    <string name="add">Adaugă</string>
+    <string name="notifications">Notificări</string>
+    <string name="background_plants">Plante de fundal</string>
+    <string name="camera_permission_denied_message">Te rugăm să activezi permisiunile camerei din setări.</string>
+    <string name="generic_error_message">Ceva nu a mers bine.</string>
+
+    <!-- Shared Dialog Strings -->
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Anulează</string>
+    <string name="dialog_save">Salvează</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">Să îngrijim\nplantele mele!</string>
+
+    <!-- Add/Edit Plant Screen -->
+    <string name="add_edit_plant_title">Adaugă/Editează planta</string>
+    <string name="add_edit_plant_go_back_desc">Înapoi</string>
+    <string name="add_edit_plant_single_plant_image_desc">Plantă individuală</string>
+    <string name="add_edit_plant_upload_image_icon_desc">Încarcă imagine</string>
+    <string name="add_edit_plant_add_image_button">Adaugă imagine</string>
+    <string name="add_edit_plant_plant_name_label">Numele plantei*</string>
+    <string name="add_edit_plant_dates_label">Date</string>
+    <string name="add_edit_plant_dropdown_icon_desc">Pictogramă listă derulantă</string>
+    <string name="add_edit_plant_time_label">Ora</string>
+    <string name="add_edit_plant_description_label">Descriere</string>
+    <string name="add_edit_plant_gallery_title">Galeria plantelor</string>
+    <string name="add_edit_plant_select_image_dialog_title">Selectează o imagine</string>
+    <string name="add_edit_plant_dialog_okay_button">OK</string>
+    <string name="add_edit_plant_image_source_camera">Fă o fotografie</string>
+    <string name="add_edit_plant_image_source_gallery">Alege din galerie</string>
+    <string name="add_edit_plant_details_dialog_title">Detalii despre plantă</string>
+    <string name="add_edit_plant_added_successfully_message">Planta a fost adăugată cu succes!</string>
+    <string name="add_edit_plant_updated_successfully_message">Planta a fost actualizată cu succes!</string>
+    <string name="add_edit_plant_water_amount_label">Cantitatea de apă*</string>
+    <string name="add_edit_plant_plant_size_label">Dimensiunea plantei*</string>
+
+    <!-- Add/Edit Plant - Validation & Errors -->
+    <string name="add_edit_plant_error_plant_not_found">Planta nu a fost găsită</string>
+    <string name="add_edit_plant_error_failed_to_load_plant">Nu s-a putut încărca planta</string>
+    <string name="add_edit_plant_error_failed_to_save_plant">Nu s-a putut salva planta</string>
+    <string name="add_edit_plant_error_failed_to_persist_image">Nu s-a putut salva imaginea</string>
+    <string name="add_edit_plant_validation_image_required">Imaginea este obligatorie.</string>
+    <string name="add_edit_plant_validation_plant_name_required">Numele plantei nu poate fi gol.</string>
+    <string name="add_edit_plant_validation_water_amount_required">Cantitatea de apă nu poate fi goală.</string>
+    <string name="add_edit_plant_validation_description_required">Descrierea nu poate fi goală.</string>
+    <string name="add_edit_plant_validation_description_too_long">Descrierea nu poate depăși 150 de caractere.</string>
+
+    <!-- Select Time Dialog -->
+    <string name="select_time_dialog_dismiss">Închide selectorul</string>
+    <string name="select_time_dialog_confirm">Confirmă selecția</string>
+
+    <!-- PlantListScreen -->
+    <string name="plant_list_debug_worker_triggered_toast">Debug: Worker declanșat</string>
+    <string name="plant_list_empty_upcoming_title">Nu există plante programate</string>
+    <string name="plant_list_empty_upcoming_message">Nu există plante programate pentru udat. Te rugăm
+        să adaugi o plantă nouă pentru a-ți urmări programul de udare.
+    </string>
+    <string name="plant_list_empty_upcoming_button">Adaugă o plantă</string>
+    <string name="plant_list_empty_forgot_title">Nu există udări ratate</string>
+    <string name="plant_list_empty_forgot_message">Foarte bine! Nu ai plante pe care ai uitat să le
+        uzi. Ține-te de program ca să-ți menții plantele sănătoase.
+    </string>
+    <string name="plant_list_empty_view_plants_button">Vezi plantele</string>
+    <string name="plant_list_empty_history_title">Fără istoric de udare</string>
+    <string name="plant_list_empty_history_message">Istoricul tău de udare este gol. După ce uzi o
+        plantă, aceasta va apărea aici.
+    </string>
+    <string name="plant_list_empty_state_image_desc">Plante cactus</string>
+
+    <!-- PlantDetailsScreen -->
+    <string name="plant_details_edit_desc">Editează</string>
+    <string name="plant_details_delete_desc">Șterge</string>
+    <string name="plant_details_size_label">Dimensiune</string>
+    <string name="plant_details_water_label">Apă</string>
+    <string name="plant_details_water_amount_suffix"> ml</string>
+    <string name="plant_details_frequency_label">Frecvență</string>
+    <string name="plant_details_mark_as_watered_button">Marchează ca udat</string>
+    <string name="plant_details_delete_dialog_title">Ești sigur(ă)?</string>
+    <string name="plant_details_delete_dialog_message">Sigur vrei să ștergi această plantă? Această acțiune nu poate fi anulată.</string>
+    <string name="plant_details_delete_dialog_confirm_button">Șterge</string>
+
+    <!-- PlantDetailsScreen - Tabs -->
+    <string name="plant_details_tab_details">Detalii</string>
+    <string name="plant_details_tab_sensor">Senzor</string>
+
+    <!-- PlantDetailsScreen - Sensor -->
+    <string name="plant_details_sensor_title">Senzorul plantei</string>
+    <string name="plant_details_sensor_status_connecting">Se conectează</string>
+    <string name="plant_details_sensor_status_connected">Conectat</string>
+    <string name="plant_details_sensor_status_reading">Citire</string>
+    <string name="plant_details_sensor_status_idle">Inactiv</string>
+    <string name="plant_details_sensor_no_linked">Niciun senzor asociat</string>
+    <string name="plant_details_sensor_link_button">Asociază senzor</string>
+    <string name="plant_details_sensor_no_data">Încă nu există date de la senzor</string>
+    <string name="plant_details_sensor_refresh_button">Reîmprospătează</string>
+    <string name="plant_details_sensor_unlink_button">Dezasociază</string>
+    <string name="plant_details_sensor_label_temperature">Temperatură</string>
+    <string name="plant_details_sensor_label_moisture">Umiditate</string>
+    <string name="plant_details_sensor_label_light">Lumină</string>
+    <string name="plant_details_sensor_label_conductivity">Conductivitate</string>
+    <string name="plant_details_sensor_value_temperature">%.1f °C</string>
+    <string name="plant_details_sensor_value_percent">%d %%</string>
+    <string name="plant_details_sensor_value_lux">%d lx</string>
+    <string name="plant_details_sensor_value_conductivity">%d µS/cm</string>
+
+    <!-- SettingsScreen -->
+    <string name="settings_title">Setări</string>
+    <string name="settings_section_insights">Informații &amp; date</string>
+    <string name="settings_item_analytics">Analiza plantelor</string>
+    <string name="settings_item_watering_history">Istoric detaliat de udare</string>
+    <string name="settings_item_export_data">Exportă datele mele</string>
+    <string name="settings_section_devices">Dispozitivele mele</string>
+    <string name="settings_item_connected_devices">Senzori de plante conectați</string>
+    <string name="settings_item_sensor_sync">Setări de sincronizare a datelor senzorului</string>
+    <string name="settings_section_preferences">Preferințe</string>
+    <string name="settings_item_notification_prefs">Preferințe notificări</string>
+    <string name="settings_item_theme">Tema aplicației</string>
+    <string name="settings_item_reminder_defaults">Valori implicite pentru mementouri</string>
+    <string name="settings_item_language">Limba aplicației</string>
+    <string name="settings_language_dialog_title">Alege limba</string>
+    <string name="settings_language_option_system">Implicit (sistem)</string>
+    <string name="settings_language_option_english">Engleză</string>
+    <string name="settings_language_option_german">Germană</string>
+    <string name="settings_language_option_romanian">Română</string>
+    <string name="settings_language_restart_dialog_title">Este necesară repornirea</string>
+    <string name="settings_language_restart_dialog_message">Pentru a aplica schimbarea limbii, aplicația trebuie repornită.</string>
+    <string name="settings_language_restart_dialog_confirm">Repornește</string>
+    <string name="settings_section_about">Asistență</string>
+    <string name="settings_item_about_app">Despre MyPlants</string>
+    <string name="settings_item_help_faq">Ajutor &amp; Întrebări frecvente</string>
+    <string name="settings_item_feedback">Trimite feedback</string>
+
+</resources>

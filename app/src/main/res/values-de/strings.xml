@@ -1,0 +1,136 @@
+<resources>
+    <!-- General App Strings -->
+    <string name="app_name">MyPlants</string>
+    <string name="add">Hinzufügen</string>
+    <string name="notifications">Benachrichtigungen</string>
+    <string name="background_plants">Hintergrundpflanzen</string>
+    <string name="camera_permission_denied_message">Bitte aktiviere die Kameraberechtigungen in den Einstellungen.</string>
+    <string name="generic_error_message">Etwas ist schiefgelaufen.</string>
+
+    <!-- Shared Dialog Strings -->
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Abbrechen</string>
+    <string name="dialog_save">Speichern</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">Kümmern wir uns\num meine Pflanzen!</string>
+
+    <!-- Add/Edit Plant Screen -->
+    <string name="add_edit_plant_title">Pflanze hinzufügen/bearbeiten</string>
+    <string name="add_edit_plant_go_back_desc">Zurück</string>
+    <string name="add_edit_plant_single_plant_image_desc">Einzelne Pflanze</string>
+    <string name="add_edit_plant_upload_image_icon_desc">Bild hochladen</string>
+    <string name="add_edit_plant_add_image_button">Bild hinzufügen</string>
+    <string name="add_edit_plant_plant_name_label">Pflanzenname*</string>
+    <string name="add_edit_plant_dates_label">Daten</string>
+    <string name="add_edit_plant_dropdown_icon_desc">Dropdown-Symbol</string>
+    <string name="add_edit_plant_time_label">Uhrzeit</string>
+    <string name="add_edit_plant_description_label">Beschreibung</string>
+    <string name="add_edit_plant_gallery_title">Pflanzengalerie</string>
+    <string name="add_edit_plant_select_image_dialog_title">Bild auswählen</string>
+    <string name="add_edit_plant_dialog_okay_button">OK</string>
+    <string name="add_edit_plant_image_source_camera">Foto aufnehmen</string>
+    <string name="add_edit_plant_image_source_gallery">Aus Galerie auswählen</string>
+    <string name="add_edit_plant_details_dialog_title">Pflanzendetails</string>
+    <string name="add_edit_plant_added_successfully_message">Pflanze erfolgreich hinzugefügt!</string>
+    <string name="add_edit_plant_updated_successfully_message">Pflanze erfolgreich aktualisiert!</string>
+    <string name="add_edit_plant_water_amount_label">Wassermenge*</string>
+    <string name="add_edit_plant_plant_size_label">Pflanzengröße*</string>
+
+    <!-- Add/Edit Plant - Validation & Errors -->
+    <string name="add_edit_plant_error_plant_not_found">Pflanze nicht gefunden</string>
+    <string name="add_edit_plant_error_failed_to_load_plant">Pflanze konnte nicht geladen werden</string>
+    <string name="add_edit_plant_error_failed_to_save_plant">Pflanze konnte nicht gespeichert werden</string>
+    <string name="add_edit_plant_error_failed_to_persist_image">Bild konnte nicht gespeichert werden</string>
+    <string name="add_edit_plant_validation_image_required">Ein Bild ist erforderlich.</string>
+    <string name="add_edit_plant_validation_plant_name_required">Pflanzenname darf nicht leer sein.</string>
+    <string name="add_edit_plant_validation_water_amount_required">Wassermenge darf nicht leer sein.</string>
+    <string name="add_edit_plant_validation_description_required">Beschreibung darf nicht leer sein.</string>
+    <string name="add_edit_plant_validation_description_too_long">Beschreibung darf 150 Zeichen nicht überschreiten.</string>
+
+    <!-- Select Time Dialog -->
+    <string name="select_time_dialog_dismiss">Auswahl schließen</string>
+    <string name="select_time_dialog_confirm">Auswahl bestätigen</string>
+
+    <!-- PlantListScreen -->
+    <string name="plant_list_debug_worker_triggered_toast">Debug: Worker ausgelöst</string>
+    <string name="plant_list_empty_upcoming_title">Keine anstehenden Pflanzen</string>
+    <string name="plant_list_empty_upcoming_message">Es gibt keine anstehenden Pflanzen zum Gießen. Bitte
+        füge eine neue Pflanze hinzu, um deinen Gießplan im Blick zu behalten.
+    </string>
+    <string name="plant_list_empty_upcoming_button">Pflanze hinzufügen</string>
+    <string name="plant_list_empty_forgot_title">Keine verpassten Bewässerungen</string>
+    <string name="plant_list_empty_forgot_message">Gut gemacht! Du hast keine Pflanzen, die du vergessen hast
+        zu gießen. Bleib dran, um deine Pflanzen gesund zu halten.
+    </string>
+    <string name="plant_list_empty_view_plants_button">Pflanzen ansehen</string>
+    <string name="plant_list_empty_history_title">Kein Gießverlauf</string>
+    <string name="plant_list_empty_history_message">Dein Gießverlauf ist leer. Sobald du eine Pflanze gießt,
+        wird sie hier angezeigt.
+    </string>
+    <string name="plant_list_empty_state_image_desc">Kaktuspflanzen</string>
+
+    <!-- PlantDetailsScreen -->
+    <string name="plant_details_edit_desc">Bearbeiten</string>
+    <string name="plant_details_delete_desc">Löschen</string>
+    <string name="plant_details_size_label">Größe</string>
+    <string name="plant_details_water_label">Wasser</string>
+    <string name="plant_details_water_amount_suffix"> ml</string>
+    <string name="plant_details_frequency_label">Häufigkeit</string>
+    <string name="plant_details_mark_as_watered_button">Als gegossen markieren</string>
+    <string name="plant_details_delete_dialog_title">Bist du sicher?</string>
+    <string name="plant_details_delete_dialog_message">Möchtest du diese Pflanze wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="plant_details_delete_dialog_confirm_button">Löschen</string>
+
+    <!-- PlantDetailsScreen - Tabs -->
+    <string name="plant_details_tab_details">Details</string>
+    <string name="plant_details_tab_sensor">Sensor</string>
+
+    <!-- PlantDetailsScreen - Sensor -->
+    <string name="plant_details_sensor_title">Pflanzensensor</string>
+    <string name="plant_details_sensor_status_connecting">Verbinden</string>
+    <string name="plant_details_sensor_status_connected">Verbunden</string>
+    <string name="plant_details_sensor_status_reading">Liest</string>
+    <string name="plant_details_sensor_status_idle">Inaktiv</string>
+    <string name="plant_details_sensor_no_linked">Kein Sensor verbunden</string>
+    <string name="plant_details_sensor_link_button">Sensor verbinden</string>
+    <string name="plant_details_sensor_no_data">Noch keine Sensordaten</string>
+    <string name="plant_details_sensor_refresh_button">Aktualisieren</string>
+    <string name="plant_details_sensor_unlink_button">Trennen</string>
+    <string name="plant_details_sensor_label_temperature">Temperatur</string>
+    <string name="plant_details_sensor_label_moisture">Feuchtigkeit</string>
+    <string name="plant_details_sensor_label_light">Licht</string>
+    <string name="plant_details_sensor_label_conductivity">Leitfähigkeit</string>
+    <string name="plant_details_sensor_value_temperature">%.1f °C</string>
+    <string name="plant_details_sensor_value_percent">%d %%</string>
+    <string name="plant_details_sensor_value_lux">%d lx</string>
+    <string name="plant_details_sensor_value_conductivity">%d µS/cm</string>
+
+    <!-- SettingsScreen -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_section_insights">Einblicke &amp; Daten</string>
+    <string name="settings_item_analytics">Pflanzenanalyse</string>
+    <string name="settings_item_watering_history">Detaillierter Gießverlauf</string>
+    <string name="settings_item_export_data">Meine Daten exportieren</string>
+    <string name="settings_section_devices">Meine Geräte</string>
+    <string name="settings_item_connected_devices">Verbundene Pflanzensensoren</string>
+    <string name="settings_item_sensor_sync">Einstellungen zur Sensordaten-Synchronisierung</string>
+    <string name="settings_section_preferences">Einstellungen</string>
+    <string name="settings_item_notification_prefs">Benachrichtigungseinstellungen</string>
+    <string name="settings_item_theme">App-Design</string>
+    <string name="settings_item_reminder_defaults">Standard-Erinnerungen</string>
+    <string name="settings_item_language">App-Sprache</string>
+    <string name="settings_language_dialog_title">Sprache auswählen</string>
+    <string name="settings_language_option_system">Systemstandard</string>
+    <string name="settings_language_option_english">Englisch</string>
+    <string name="settings_language_option_german">Deutsch</string>
+    <string name="settings_language_option_romanian">Rumänisch</string>
+    <string name="settings_language_restart_dialog_title">Neustart erforderlich</string>
+    <string name="settings_language_restart_dialog_message">Um die Sprachänderung anzuwenden, muss die App neu gestartet werden.</string>
+    <string name="settings_language_restart_dialog_confirm">Neu starten</string>
+    <string name="settings_section_about">Support</string>
+    <string name="settings_item_about_app">Über MyPlants</string>
+    <string name="settings_item_help_faq">Hilfe &amp; FAQ</string>
+    <string name="settings_item_feedback">Feedback senden</string>
+
+</resources>

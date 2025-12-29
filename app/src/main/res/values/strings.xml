@@ -119,6 +119,15 @@
     <string name="settings_item_notification_prefs">Notification Preferences</string>
     <string name="settings_item_theme">App Theme</string>
     <string name="settings_item_reminder_defaults">Reminder Defaults</string>
+    <string name="settings_item_language">App Language</string>
+    <string name="settings_language_dialog_title">Choose language</string>
+    <string name="settings_language_option_system">System default</string>
+    <string name="settings_language_option_english">English</string>
+    <string name="settings_language_option_german">German (Deutsch)</string>
+    <string name="settings_language_option_romanian">Romanian (Română)</string>
+    <string name="settings_language_restart_dialog_title">Restart required</string>
+    <string name="settings_language_restart_dialog_message">To apply the language change, the app needs to restart.</string>
+    <string name="settings_language_restart_dialog_confirm">Restart</string>
     <string name="settings_section_about">Support</string>
     <string name="settings_item_about_app">About MyPlants</string>
     <string name="settings_item_help_faq">Help &amp; FAQ</string>

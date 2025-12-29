@@ -3,15 +3,17 @@ package com.example.myplants
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.os.LocaleListCompat
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.myplants.infrastructure.worker.WateringCheckWorker
-// import com.example.myplants.infrastructure.worker.WateringCheckWorker
 import dagger.hilt.android.HiltAndroidApp
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -26,8 +28,27 @@ class PlantApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        applyDefaultAppLanguageIfNotChosen()
         createNotificationChannel(this)
         scheduleWateringCheckWorker()
+    }
+
+    private fun applyDefaultAppLanguageIfNotChosen() {
+        val currentAppLocales = AppCompatDelegate.getApplicationLocales()
+        if (!currentAppLocales.isEmpty) return
+
+        val primaryDeviceLanguage = resources.configuration.locales[0].language
+            .lowercase(Locale.ROOT)
+
+        val languageToApply = when (primaryDeviceLanguage) {
+            "de" -> "de"
+            "ro" -> "ro"
+            else -> "en"
+        }
+
+        AppCompatDelegate.setApplicationLocales(
+            LocaleListCompat.forLanguageTags(languageToApply)
+        )
     }
 
     private fun scheduleWateringCheckWorker() {
