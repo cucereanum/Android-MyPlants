@@ -137,7 +137,10 @@ fun PlantDetailsScreen(
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .background(Color.White, CircleShape)
+                        .background(
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                            CircleShape
+                        )
                         .clickable {
                             navController.popBackStack()
                         }) {
@@ -147,14 +150,17 @@ fun PlantDetailsScreen(
                         modifier = Modifier
                             .size(30.dp)
                             .align(Alignment.Center),
-                        tint = Color.Black
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Row {
                     Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .background(Color.White, CircleShape)
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                                CircleShape
+                            )
                             .clickable {
                                 DebounceClick.debounceClick {
                                     navController.navigate("${Route.ADD_EDIT_PLANT}/${plantId}")
@@ -166,14 +172,17 @@ fun PlantDetailsScreen(
                             modifier = Modifier
                                 .size(30.dp)
                                 .align(Alignment.Center),
-                            tint = Color.Black
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .background(Color.White, CircleShape)
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                                CircleShape
+                            )
                             .clickable {
                                 showModal = true
                             }) {
@@ -183,7 +192,7 @@ fun PlantDetailsScreen(
                             modifier = Modifier
                                 .size(30.dp)
                                 .align(Alignment.Center),
-                            tint = Color.Black
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -195,7 +204,9 @@ fun PlantDetailsScreen(
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color.Transparent, Color.White.copy(alpha = 0.45f), Color.White
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.55f),
+                                MaterialTheme.colorScheme.surface
                             )
                         )
                     )
@@ -213,7 +224,7 @@ fun PlantDetailsScreen(
                         .padding(horizontal = 30.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .fillMaxWidth()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
 
                 ) {
                     Row(
@@ -228,7 +239,7 @@ fun PlantDetailsScreen(
                         ) {
                             Text(
                                 text = stringResource(id = R.string.plant_details_size_label),
-                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6F),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 12.sp
                             )
@@ -246,7 +257,7 @@ fun PlantDetailsScreen(
                         ) {
                             Text(
                                 text = stringResource(id = R.string.plant_details_water_label),
-                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6F),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 12.sp
                             )
@@ -264,7 +275,7 @@ fun PlantDetailsScreen(
                         ) {
                             Text(
                                 text = stringResource(id = R.string.plant_details_frequency_label),
-                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6F),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 12.sp
                             )
@@ -289,7 +300,7 @@ fun PlantDetailsScreen(
                 .height(screenHeight * 0.55f)
                 .align(Alignment.BottomCenter)
                 .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
-                .background(MaterialTheme.colorScheme.onBackground)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
 
@@ -328,7 +339,7 @@ fun PlantDetailsScreen(
                             plant?.plantName?.let {
                                 Text(
                                     text = it,
-                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     fontSize = 24.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -337,7 +348,7 @@ fun PlantDetailsScreen(
                             plant?.description?.let {
                                 Text(
                                     text = it,
-                                    color = MaterialTheme.colorScheme.secondary,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Medium,
                                 )
@@ -537,7 +548,7 @@ fun PlantDetailsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White.copy(alpha = 0.5f))
+                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.6f))
                 .graphicsLayer {
                     renderEffect = RenderEffect.createBlurEffect(
                         100f, 100f, Shader.TileMode.CLAMP
@@ -554,20 +565,20 @@ fun PlantDetailsScreen(
                     .clickable { // This clickable on the dialog itself might be unintentional
                         showModal = true
                     }
-                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
                     .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = stringResource(id = R.string.plant_details_delete_dialog_title),
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = stringResource(id = R.string.plant_details_delete_dialog_message),
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.secondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(20.dp))

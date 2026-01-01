@@ -1,6 +1,7 @@
 package com.example.myplants.data.di
 
 import android.app.Application
+import android.content.Context
 import androidx.room.Room
 import com.example.myplants.data.data_source.BleDeviceDao
 import com.example.myplants.data.data_source.NotificationDao
@@ -9,13 +10,16 @@ import com.example.myplants.data.repository.BleDatabaseRepositoryImpl
 import com.example.myplants.data.repository.ImageStorageRepositoryImpl
 import com.example.myplants.data.repository.NotificationRepositoryImpl
 import com.example.myplants.data.repository.PlantRepositoryImpl
+import com.example.myplants.data.repository.UserPreferencesRepositoryImpl
 import com.example.myplants.domain.repository.BleDatabaseRepository
 import com.example.myplants.domain.repository.ImageStorageRepository
 import com.example.myplants.domain.repository.NotificationRepository
 import com.example.myplants.domain.repository.PlantRepository
+import com.example.myplants.domain.repository.UserPreferencesRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -68,5 +72,13 @@ object AppModule {
     @Singleton
     fun provideBleDatabaseRepository(impl: BleDatabaseRepositoryImpl): BleDatabaseRepository {
         return impl
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserPreferencesRepository(
+        @ApplicationContext appContext: Context,
+    ): UserPreferencesRepository {
+        return UserPreferencesRepositoryImpl(appContext)
     }
 }

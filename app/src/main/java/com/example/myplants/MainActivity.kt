@@ -1,6 +1,7 @@
 package com.example.myplants
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -12,7 +13,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,6 +31,11 @@ import com.example.myplants.presentation.notifications.NotificationScreen
 import com.example.myplants.presentation.plantDetails.PlantDetailsScreen
 import com.example.myplants.presentation.plantList.PlantListScreen
 import com.example.myplants.presentation.settings.SettingsScreen
+import com.example.myplants.presentation.settings.appearance.SettingsAppearanceScreen
+import com.example.myplants.presentation.settings.appearance.SettingsAppearanceViewModel
+import com.example.myplants.presentation.settings.language.SettingsLanguageScreen
+import com.example.myplants.presentation.settings.notifications.SettingsNotificationsScreen
+import com.example.myplants.presentation.settings.notifications.SettingsNotificationsViewModel
 import com.example.myplants.presentation.theme.MyPlantsTheme
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -53,7 +63,22 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MyPlantsTheme {
+            val appearanceViewModel: SettingsAppearanceViewModel = hiltViewModel()
+            val isDarkModeEnabled = appearanceViewModel.isDarkModeEnabled.collectAsState().value
+
+            val view = LocalView.current
+            SideEffect {
+                if (view.isInEditMode) return@SideEffect
+
+                val activity = view.context as? Activity ?: return@SideEffect
+                val window = activity.window
+                window.statusBarColor = android.graphics.Color.TRANSPARENT
+
+                val insetsController = WindowCompat.getInsetsController(window, view)
+                insetsController.isAppearanceLightStatusBars = !isDarkModeEnabled
+            }
+
+            MyPlantsTheme(darkTheme = isDarkModeEnabled) {
                 val navController = rememberNavController()
                 // Listen for plant open events and navigate
                 LaunchedEffect(Unit) {
@@ -96,6 +121,16 @@ class MainActivity : AppCompatActivity() {
                         }
                         composable(Route.SETTINGS) {
                             SettingsScreen(navController)
+                        }
+                        composable(Route.SETTINGS_LANGUAGE) {
+                            SettingsLanguageScreen(navController)
+                        }
+                        composable(Route.SETTINGS_APPEARANCE) {
+                            SettingsAppearanceScreen(navController)
+                        }
+                        composable(Route.SETTINGS_NOTIFICATIONS) {
+                            val viewModel: SettingsNotificationsViewModel = hiltViewModel()
+                            SettingsNotificationsScreen(navController, viewModel)
                         }
                         composable(Route.BLE) {
                             BleScreen(

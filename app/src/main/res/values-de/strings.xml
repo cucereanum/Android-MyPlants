@@ -120,6 +120,8 @@
     <string name="settings_item_theme">App-Design</string>
     <string name="settings_item_reminder_defaults">Standard-Erinnerungen</string>
     <string name="settings_item_language">App-Sprache</string>
+    <string name="settings_item_appearance">Darstellung</string>
+    <string name="settings_item_notifications">Benachrichtigungen</string>
     <string name="settings_language_dialog_title">Sprache auswählen</string>
     <string name="settings_language_option_system">Systemstandard</string>
     <string name="settings_language_option_english">Englisch</string>
@@ -128,9 +130,22 @@
     <string name="settings_language_restart_dialog_title">Neustart erforderlich</string>
     <string name="settings_language_restart_dialog_message">Um die Sprachänderung anzuwenden, muss die App neu gestartet werden.</string>
     <string name="settings_language_restart_dialog_confirm">Neu starten</string>
+    <string name="settings_language_title">Sprache</string>
+    <string name="settings_language_subtitle">Wähle die App-Sprache. Die App wird neu gestartet, um Änderungen anzuwenden.</string>
+    <string name="settings_language_apply_restart">Anwenden &amp; neu starten</string>
+    <string name="settings_appearance_title">Darstellung</string>
+    <string name="settings_dark_mode_title">Dunkelmodus</string>
+    <string name="settings_dark_mode_subtitle">Ein dunkles Design für die App verwenden.</string>
+    <string name="settings_notifications_title">Benachrichtigungen</string>
+    <string name="settings_notifications_enabled_title">Benachrichtigungen aktivieren</string>
+    <string name="settings_notifications_enabled_subtitle">Erhalte Erinnerungen, deine Pflanzen zu gießen.</string>
     <string name="settings_section_about">Support</string>
     <string name="settings_item_about_app">Über MyPlants</string>
     <string name="settings_item_help_faq">Hilfe &amp; FAQ</string>
     <string name="settings_item_feedback">Feedback senden</string>
+
+    <!-- NotificationScreen -->
+    <string name="notification_item_daily_title">Tägliche Pflanzenbenachrichtigung</string>
+    <string name="notification_item_go_to_plant">Zur Pflanze</string>
 
 </resources>

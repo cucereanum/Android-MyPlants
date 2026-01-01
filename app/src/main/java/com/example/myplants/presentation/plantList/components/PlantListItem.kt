@@ -52,7 +52,7 @@ fun PlantListItem(
             .clip(RoundedCornerShape(8.dp))
             .border(
                 width = 1.dp,
-                color = Color(0xFFD9D9D9).copy(alpha = 0.25f),
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
                 shape = RoundedCornerShape(8.dp)
             )
     ) {
@@ -86,7 +86,7 @@ fun PlantListItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(70.dp)
-                    .background(MaterialTheme.colorScheme.onBackground),
+                    .background(MaterialTheme.colorScheme.surface),
             ) {
                 Row(
                     modifier = Modifier
@@ -104,7 +104,7 @@ fun PlantListItem(
                             text = plant.plantName,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -114,7 +114,7 @@ fun PlantListItem(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.secondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Column(

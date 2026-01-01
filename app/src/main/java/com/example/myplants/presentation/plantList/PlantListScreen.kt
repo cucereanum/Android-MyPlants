@@ -130,7 +130,7 @@ fun PlantListScreen(
                     ) {
                         Text(
                             text = stringResource(id = R.string.home_title),
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 26.sp,
                             lineHeight = 32.sp,
@@ -293,7 +293,8 @@ fun PlantListScreen(
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    Color.White.copy(alpha = 0f), Color.White.copy(alpha = 0.8f)
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0f),
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
                                 )
                             )
                         )

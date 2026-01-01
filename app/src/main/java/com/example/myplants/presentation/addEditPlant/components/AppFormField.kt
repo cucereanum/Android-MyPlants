@@ -48,6 +48,11 @@ fun AppFormField(
 ) {
     val shape = RoundedCornerShape(14.dp)
     val interactionSource = remember { MutableInteractionSource() }
+    val borderColor = if (isError) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.outline
+    }
 
     // If it's a selector, we listen for taps on the field
     if (readOnly && onClick != null) {
@@ -62,7 +67,7 @@ fun AppFormField(
         if (label != null) {
             Text(
                 text = label,
-                color = MaterialTheme.colorScheme.secondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -95,7 +100,7 @@ fun AppFormField(
                 .fillMaxWidth()
                 .heightIn(min = 60.dp)
                 .clip(shape)
-                .border(1.dp, MaterialTheme.colorScheme.onSecondary, shape)
+                .border(1.dp, borderColor, shape)
                 // Optional extra click surface for selectors (makes the whole field tappable)
                 .then(
                     if (readOnly && onClick != null) {
@@ -106,12 +111,20 @@ fun AppFormField(
                     } else Modifier
                 ),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.onBackground,
-                unfocusedContainerColor = MaterialTheme.colorScheme.onBackground,
-                disabledContainerColor = MaterialTheme.colorScheme.onBackground,
-                errorContainerColor = MaterialTheme.colorScheme.onBackground,
-                focusedTextColor = MaterialTheme.colorScheme.secondary,
-                unfocusedTextColor = MaterialTheme.colorScheme.secondary,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                errorContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                focusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 errorIndicatorColor = Color.Transparent
@@ -124,7 +137,7 @@ fun AppFormField(
             Text(
                 text = supportingText,
                 color = if (isError) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.onTertiaryContainer,
+                else MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium
             )
         }

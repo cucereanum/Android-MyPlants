@@ -120,6 +120,8 @@
     <string name="settings_item_theme">Tema aplicației</string>
     <string name="settings_item_reminder_defaults">Valori implicite pentru mementouri</string>
     <string name="settings_item_language">Limba aplicației</string>
+    <string name="settings_item_appearance">Aspect</string>
+    <string name="settings_item_notifications">Notificări</string>
     <string name="settings_language_dialog_title">Alege limba</string>
     <string name="settings_language_option_system">Implicit (sistem)</string>
     <string name="settings_language_option_english">Engleză</string>
@@ -128,9 +130,22 @@
     <string name="settings_language_restart_dialog_title">Este necesară repornirea</string>
     <string name="settings_language_restart_dialog_message">Pentru a aplica schimbarea limbii, aplicația trebuie repornită.</string>
     <string name="settings_language_restart_dialog_confirm">Repornește</string>
+    <string name="settings_language_title">Limbă</string>
+    <string name="settings_language_subtitle">Alege limba aplicației. Aplicația se va reporni pentru a aplica modificările.</string>
+    <string name="settings_language_apply_restart">Aplică &amp; repornește</string>
+    <string name="settings_appearance_title">Aspect</string>
+    <string name="settings_dark_mode_title">Mod întunecat</string>
+    <string name="settings_dark_mode_subtitle">Folosește o temă întunecată pentru aplicație.</string>
+    <string name="settings_notifications_title">Notificări</string>
+    <string name="settings_notifications_enabled_title">Activează notificările</string>
+    <string name="settings_notifications_enabled_subtitle">Primește mementouri să-ți uzi plantele.</string>
     <string name="settings_section_about">Asistență</string>
     <string name="settings_item_about_app">Despre MyPlants</string>
     <string name="settings_item_help_faq">Ajutor &amp; Întrebări frecvente</string>
     <string name="settings_item_feedback">Trimite feedback</string>
+
+    <!-- NotificationScreen -->
+    <string name="notification_item_daily_title">Notificare zilnică pentru plantă</string>
+    <string name="notification_item_go_to_plant">Mergi la plantă</string>
 
 </resources>

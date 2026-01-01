@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -86,7 +87,7 @@ fun NotificationScreen(
             modifier = Modifier.fillMaxWidth(),
             painter = painterResource(id = R.drawable.bg_plants),
             contentScale = ContentScale.FillWidth,
-            contentDescription = "Background plants"
+            contentDescription = stringResource(id = R.string.background_plants)
         )
 
         if (viewModel.isLoading) {
@@ -116,7 +117,10 @@ fun NotificationScreen(
                             modifier = Modifier
                                 .size(40.dp)
                                 .align(Alignment.CenterStart)
-                                .background(Color.White, CircleShape)
+                                .background(
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                                    CircleShape,
+                                )
                                 .clickable {
                                     DebounceClick.debounceClick {
                                         navController.popBackStack()
@@ -126,16 +130,16 @@ fun NotificationScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ChevronLeft,
-                                contentDescription = "Go Back",
+                                contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc),
                                 modifier = Modifier.size(30.dp),
-                                tint = Color.Black
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
 
                         Text(
-                            text = "Notifications",
+                            text = stringResource(id = R.string.notifications),
                             modifier = Modifier.align(Alignment.Center),
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Medium,
                             fontSize = 22.sp,
                             lineHeight = 32.sp
@@ -150,7 +154,7 @@ fun NotificationScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .padding(horizontal = 20.dp),
                     contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
@@ -159,7 +163,7 @@ fun NotificationScreen(
                             Text(
                                 text = sectionTitle,
                                 fontSize = 14.sp,
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier
                                     .padding(top = 24.dp, bottom = 8.dp)
@@ -207,7 +211,7 @@ fun NotificationItem(
                 modifier = Modifier
                     .size(48.dp) // Slightly larger than the image
                     .background(
-                        color = MaterialTheme.colorScheme.surface,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
                         shape = RoundedCornerShape(8.dp)
                     ), // Background color and shape
                 contentAlignment = Alignment.Center
@@ -225,17 +229,17 @@ fun NotificationItem(
                     .weight(1f)
             ) {
                 Text(
-                    text = "Daily plant notification",
+                    text = stringResource(id = R.string.notification_item_daily_title),
                     fontWeight = FontWeight.Medium,
                     fontSize = 16.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
 
                 Text(
                     text = time,
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -257,7 +261,7 @@ fun NotificationItem(
         )
 
         Text(
-            text = "Go to the plant",
+            text = stringResource(id = R.string.notification_item_go_to_plant),
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
             fontSize = 14.sp,

@@ -120,6 +120,17 @@
     <string name="settings_item_theme">App Theme</string>
     <string name="settings_item_reminder_defaults">Reminder Defaults</string>
     <string name="settings_item_language">App Language</string>
+    <string name="settings_item_appearance">Appearance</string>
+    <string name="settings_item_notifications">Notifications</string>
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_subtitle">Choose the app language. The app will restart to apply changes.</string>
+    <string name="settings_language_apply_restart">Apply &amp; Restart</string>
+    <string name="settings_appearance_title">Appearance</string>
+    <string name="settings_dark_mode_title">Dark mode</string>
+    <string name="settings_dark_mode_subtitle">Use a dark theme for the app.</string>
+    <string name="settings_notifications_title">Notifications</string>
+    <string name="settings_notifications_enabled_title">Enable notifications</string>
+    <string name="settings_notifications_enabled_subtitle">Get reminders to water your plants.</string>
     <string name="settings_language_dialog_title">Choose language</string>
     <string name="settings_language_option_system">System default</string>
     <string name="settings_language_option_english">English</string>
@@ -132,5 +143,9 @@
     <string name="settings_item_about_app">About MyPlants</string>
     <string name="settings_item_help_faq">Help &amp; FAQ</string>
     <string name="settings_item_feedback">Send Feedback</string>
+
+    <!-- NotificationScreen -->
+    <string name="notification_item_daily_title">Daily plant notification</string>
+    <string name="notification_item_go_to_plant">Go to the plant</string>
 
 </resources>

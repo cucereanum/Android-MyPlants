@@ -6,6 +6,9 @@ object Route {
     const val PLANT_DETAILS = "plant_details/{plantId}"
     const val NOTIFICATIONS = "notifications"
     const val SETTINGS = "settings"
+    const val SETTINGS_LANGUAGE = "settings/language"
+    const val SETTINGS_APPEARANCE = "settings/appearance"
+    const val SETTINGS_NOTIFICATIONS = "settings/notifications"
     const val BLE = "ble"
     const val BLE_LINK = "ble_link/{plantId}"
 

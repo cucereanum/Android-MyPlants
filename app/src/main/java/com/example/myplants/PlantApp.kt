@@ -8,13 +8,12 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.os.LocaleListCompat
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import com.example.myplants.infrastructure.worker.WateringCheckWorker
+import com.example.myplants.domain.repository.UserPreferencesRepository
+import com.example.myplants.infrastructure.worker.WateringReminderScheduler
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -23,6 +22,9 @@ class PlantApp : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
+    @Inject
+    lateinit var userPreferencesRepository: UserPreferencesRepository
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
@@ -30,7 +32,19 @@ class PlantApp : Application(), Configuration.Provider {
         super.onCreate()
         applyDefaultAppLanguageIfNotChosen()
         createNotificationChannel(this)
-        scheduleWateringCheckWorker()
+        applyNotificationSchedulingFromPreferences()
+    }
+
+    private fun applyNotificationSchedulingFromPreferences() {
+        val areNotificationsEnabled = runBlocking {
+            userPreferencesRepository.areNotificationsEnabledFlow.first()
+        }
+
+        if (areNotificationsEnabled) {
+            WateringReminderScheduler.schedule(this)
+        } else {
+            WateringReminderScheduler.cancel(this)
+        }
     }
 
     private fun applyDefaultAppLanguageIfNotChosen() {
@@ -48,16 +62,6 @@ class PlantApp : Application(), Configuration.Provider {
 
         AppCompatDelegate.setApplicationLocales(
             LocaleListCompat.forLanguageTags(languageToApply)
-        )
-    }
-
-    private fun scheduleWateringCheckWorker() {
-        val workRequest = PeriodicWorkRequestBuilder<WateringCheckWorker>(
-            15, TimeUnit.MINUTES
-        ).addTag("WateringCheckWorker").build()
-
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "WateringCheckWorker", ExistingPeriodicWorkPolicy.UPDATE, workRequest
         )
     }
 

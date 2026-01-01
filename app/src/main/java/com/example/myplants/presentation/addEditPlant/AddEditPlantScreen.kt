@@ -250,7 +250,7 @@ fun AddEditPlantScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(0.4f)
-                    .background(MaterialTheme.colorScheme.onBackground)
+                    .background(MaterialTheme.colorScheme.background)
             ) {
                 Box {
                     if (state.imageUri != null) {
@@ -275,7 +275,10 @@ fun AddEditPlantScreen(
                             .size(40.dp)
                             .offset(x = 20.dp, y = 60.dp)
                             .align(Alignment.TopStart)
-                            .background(Color.White, CircleShape)
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                                CircleShape
+                            )
                             .clickable {
                                 DebounceClick.debounceClick {
                                     navController.popBackStack()
@@ -287,7 +290,7 @@ fun AddEditPlantScreen(
                             modifier = Modifier
                                 .size(30.dp)
                                 .align(Alignment.Center),
-                            tint = Color.Black
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Column(
@@ -346,6 +349,7 @@ fun AddEditPlantScreen(
                     .verticalScroll(scrollState)
                     .imePadding()
                     .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
