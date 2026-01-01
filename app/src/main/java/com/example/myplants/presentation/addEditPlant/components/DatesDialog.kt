@@ -4,7 +4,6 @@ package com.example.myplants.presentation.addEditPlant.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,8 +16,11 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,14 +60,14 @@ fun DatesDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .padding(bottom = 20.dp)
                         .padding(vertical = 20.dp, horizontal = 20.dp)
                 ) {
                     Text(
                         modifier = Modifier.padding(bottom = 30.dp),
                         text = "Dates",
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Medium,
                         fontSize = 22.sp
                     )
@@ -78,29 +80,33 @@ fun DatesDialog(
                                 .clip(RoundedCornerShape(size = 6.dp))
                                 .border(
                                     width = 2.dp, // Set the border width
-                                    color = if (selectedDays.size == allDays.size) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondary, // Set the border color
+                                    color = if (selectedDays.size == allDays.size) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, // Set the border color
                                     shape = RoundedCornerShape(size = 6.dp) // Make the border shape match the clip shape
                                 )
-                                .background(if (selectedDays.size == allDays.size) MaterialTheme.colorScheme.primary else Color.White)
+                                .background(
+                                    if (selectedDays.size == allDays.size) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surfaceVariant
+                                )
                                 .clickable {
-                                    toggleDaySelection(null)   // 👈 pass actual enum, not string
+                                    toggleDaySelection(null)   // 
                                 }, contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 modifier = Modifier.size(20.dp),
                                 imageVector = Icons.Default.Check,
                                 contentDescription = "Check Day",
-                                tint = Color.White
+                                tint = if (selectedDays.size == allDays.size) Color.White else Color.Transparent
                             )
                         }
                         Text(
                             modifier = Modifier.padding(start = 16.dp),
                             text = "EveryDay",
-                            color = if (selectedDays.size != allDays.size) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onPrimary,
+                            color = if (selectedDays.size != allDays.size) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Medium
                         )
                     }
                     allDays.forEach { day ->
+                        val isSelected = selectedDays.contains(day)
                         Row(
                             modifier = Modifier.padding(top = 20.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -111,10 +117,13 @@ fun DatesDialog(
                                     .clip(RoundedCornerShape(size = 6.dp))
                                     .border(
                                         width = 2.dp, // Set the border width
-                                        color = if (selectedDays.contains(day)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondary, // Set the border color
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                                         shape = RoundedCornerShape(size = 6.dp) // Make the border shape match the clip shape
                                     )
-                                    .background(if (selectedDays.contains(day)) MaterialTheme.colorScheme.primary else Color.White)
+                                    .background(
+                                        if (isSelected) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant
+                                    )
                                     .clickable {
                                         toggleDaySelection(day)
                                     }, contentAlignment = Alignment.Center
@@ -123,13 +132,13 @@ fun DatesDialog(
                                     modifier = Modifier.size(20.dp),
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "Check Day",
-                                    tint = Color.White,
+                                    tint = if (isSelected) Color.White else Color.Transparent,
                                 )
                             }
                             Text(
                                 modifier = Modifier.padding(start = 16.dp),
                                 text = day.dayName,
-                                color = if (!selectedDays.contains(day)) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onPrimary,
+                                color = if (!isSelected) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -139,51 +148,46 @@ fun DatesDialog(
                             .fillMaxWidth()
                             .padding(top = 30.dp)
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .weight(0.4f)
-                                .padding(end = 10.dp)
-                                .height(50.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color.White)
-                                .border(
-                                    color = MaterialTheme.colorScheme.onBackground, width = 1.dp
-                                )
-                                .clickable {
-                                    onDismissRequest()
-                                },
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        val buttonShape = RoundedCornerShape(10.dp)
 
+                        OutlinedButton(
+                            onClick = onDismissRequest,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp)
+                                .padding(end = 10.dp),
+                            shape = buttonShape,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.outline,
+                            ),
                         ) {
                             Text(
                                 text = "Cancel",
-                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 16.sp
+                                fontSize = 16.sp,
                             )
                         }
-                        Column(
+
+                        Button(
+                            onClick = onDismissRequest,
                             modifier = Modifier
-                                .weight(0.4f)
-                                .padding(end = 10.dp)
-                                .height(50.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.primary)
-                                .border(
-                                    color = MaterialTheme.colorScheme.onBackground, width = 1.dp
-                                )
-                                .clickable {
-                                    onDismissRequest()
-                                },
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
+                                .weight(1f)
+                                .height(50.dp),
+                            shape = buttonShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
                         ) {
                             Text(
                                 text = "Got it",
-                                color = Color.White,
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 16.sp
+                                fontSize = 16.sp,
                             )
                         }
                     }

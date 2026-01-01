@@ -2,6 +2,8 @@ package com.example.myplants
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.NotificationManagerCompat
@@ -51,8 +53,8 @@ class PlantApp : Application(), Configuration.Provider {
         val currentAppLocales = AppCompatDelegate.getApplicationLocales()
         if (!currentAppLocales.isEmpty) return
 
-        val primaryDeviceLanguage = resources.configuration.locales[0].language
-            .lowercase(Locale.ROOT)
+        val primaryDeviceLanguage =
+            resources.configuration.locales[0].language.lowercase(Locale.ROOT)
 
         val languageToApply = when (primaryDeviceLanguage) {
             "de" -> "de"
@@ -71,12 +73,12 @@ class PlantApp : Application(), Configuration.Provider {
             val name = "Plant Reminders"
             val descriptionText = "Notifications to remind you to water your plants"
             val importance = NotificationManagerCompat.IMPORTANCE_HIGH
-            val channel = android.app.NotificationChannel("plant_channel", name, importance).apply {
+            val channel = NotificationChannel("plant_channel", name, importance).apply {
                 description = descriptionText
             }
 
-            val notificationManager: android.app.NotificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            val notificationManager: NotificationManager =
+                context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }

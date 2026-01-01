@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -192,6 +193,9 @@ fun NotificationItem(
     notification: NotificationEntity,
     onGoToPlantClick: (plantId: Int) -> Unit
 ) {
+    val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val goToPlantLinkColor = if (isDarkTheme) Color.White else MaterialTheme.colorScheme.primary
+
     val time = remember(notification.timestamp) {
         SimpleDateFormat("hh:mm a", Locale.getDefault())
             .format(Date(notification.timestamp))
@@ -263,7 +267,7 @@ fun NotificationItem(
         Text(
             text = stringResource(id = R.string.notification_item_go_to_plant),
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
+            color = goToPlantLinkColor,
             fontSize = 14.sp,
             modifier = Modifier
                 .padding(top = 8.dp)

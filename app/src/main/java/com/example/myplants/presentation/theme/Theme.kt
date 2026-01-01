@@ -8,10 +8,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = MyPlantsPalette.Brand.teal600,
+    primary = MyPlantsPalette.Brand.teal400,
     onPrimary = Color.White,
+    primaryContainer = MyPlantsPalette.Brand.teal600,
+    onPrimaryContainer = Color.White,
     secondary = MyPlantsPalette.Neutral.n300,
     onSecondary = MyPlantsPalette.Dark.onSurface,
+    secondaryContainer = MyPlantsPalette.Dark.surfaceVariant,
+    onSecondaryContainer = MyPlantsPalette.Dark.onSurface,
+    tertiary = MyPlantsPalette.Brand.teal400,
+    onTertiary = Color.White,
+    tertiaryContainer = MyPlantsPalette.Brand.teal600,
+    onTertiaryContainer = Color.White,
     background = MyPlantsPalette.Dark.background,
     onBackground = MyPlantsPalette.Dark.onSurface,
     surface = MyPlantsPalette.Dark.surface,
@@ -24,8 +32,16 @@ private val DarkColorScheme = darkColorScheme(
 private val LightColorScheme = lightColorScheme(
     primary = MyPlantsPalette.Brand.teal600,
     onPrimary = Color.White,
+    primaryContainer = MyPlantsPalette.Brand.teal400,
+    onPrimaryContainer = MyPlantsPalette.Brand.teal900,
     secondary = MyPlantsPalette.Neutral.n500,
-    onSecondary = MyPlantsPalette.Neutral.n900,
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFE9EFEA),
+    onSecondaryContainer = MyPlantsPalette.Neutral.n900,
+    tertiary = MyPlantsPalette.Brand.teal400,
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFBFE7EA),
+    onTertiaryContainer = MyPlantsPalette.Brand.teal900,
     background = MyPlantsPalette.Light.background,
     onBackground = MyPlantsPalette.Light.onBackground,
     surface = MyPlantsPalette.Light.surface,
@@ -33,22 +49,11 @@ private val LightColorScheme = lightColorScheme(
     surfaceVariant = Color(0xFFE9EFEA),
     onSurfaceVariant = Color(0xFF2F3A35),
     outline = MyPlantsPalette.Light.outline,
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
 )
 
 @Composable
 fun MyPlantsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) {

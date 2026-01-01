@@ -3,7 +3,6 @@ package com.example.myplants.presentation.addEditPlant.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,8 +16,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,18 +60,19 @@ fun PlantSizeDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .padding(bottom = 20.dp)
                         .padding(vertical = 20.dp, horizontal = 20.dp)
                 ) {
                     Text(
                         modifier = Modifier.padding(bottom = 20.dp),
                         text = "Plant Size",
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Medium,
                         fontSize = 22.sp
                     )
                     plantSizes.forEach { plant ->
+                        val isSelected = plant == selectedPlant
                         Row(
                             modifier = Modifier.padding(top = 20.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -80,10 +83,13 @@ fun PlantSizeDialog(
                                     .clip(CircleShape)
                                     .border(
                                         width = 2.dp,
-                                        color = if (plant == selectedPlant) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondary, // Set the border color
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                                         shape = CircleShape
                                     )
-                                    .background(if (plant == selectedPlant) MaterialTheme.colorScheme.primary else Color.White)
+                                    .background(
+                                        if (isSelected) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant
+                                    )
                                     .clickable {
                                         togglePlantSizeSelection(plant)
                                     },
@@ -93,13 +99,13 @@ fun PlantSizeDialog(
                                     modifier = Modifier.size(20.dp),
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "Check Day",
-                                    tint = Color.White,
+                                    tint = if (isSelected) Color.White else Color.Transparent,
                                 )
                             }
                             Text(
                                 modifier = Modifier.padding(start = 16.dp),
                                 text = plant.plantSize,
-                                color = if (plant != selectedPlant) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onPrimary,
+                                color = if (!isSelected) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -109,53 +115,46 @@ fun PlantSizeDialog(
                             .fillMaxWidth()
                             .padding(top = 30.dp)
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .weight(0.4f)
-                                .padding(end = 10.dp)
-                                .height(50.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color.White)
-                                .border(
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    width = 1.dp
-                                )
-                                .clickable {
-                                    onDismissRequest()
-                                },
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        val buttonShape = RoundedCornerShape(10.dp)
 
+                        OutlinedButton(
+                            onClick = onDismissRequest,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp)
+                                .padding(end = 10.dp),
+                            shape = buttonShape,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.outline,
+                            ),
                         ) {
                             Text(
                                 text = "Cancel",
-                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 16.sp
+                                fontSize = 16.sp,
                             )
                         }
-                        Column(
+
+                        Button(
+                            onClick = onDismissRequest,
                             modifier = Modifier
-                                .weight(0.4f)
-                                .padding(end = 10.dp)
-                                .height(50.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.primary)
-                                .border(
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    width = 1.dp
-                                )
-                                .clickable {
-                                    onDismissRequest()
-                                },
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
+                                .weight(1f)
+                                .height(50.dp),
+                            shape = buttonShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
                         ) {
                             Text(
                                 text = "Got it",
-                                color = Color.White,
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 16.sp
+                                fontSize = 16.sp,
                             )
                         }
                     }

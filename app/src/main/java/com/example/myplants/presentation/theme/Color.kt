@@ -2,11 +2,7 @@ package com.example.myplants.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
-/**
- * Centralized color palette for the app.
- *
- * Keep this file purely as "raw" colors; mapping to Material tokens happens in `Theme.kt`.
- */
+
 object MyPlantsPalette {
 
     object Brand {
