@@ -1,6 +1,5 @@
 package com.example.myplants.data.ble
 
-import android.bluetooth.BluetoothDevice
 import java.util.UUID
 
 data class BleDevice(

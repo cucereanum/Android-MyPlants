@@ -3,6 +3,7 @@ package com.example.myplants.presentation.plantDetails
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -36,6 +37,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -59,6 +61,7 @@ import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -82,9 +85,11 @@ fun PlantDetailsScreen(
     navController: NavController, plantId: Int, viewModel: PlantDetailsViewModel = hiltViewModel()
 ) {
     var showModal by remember { mutableStateOf(false) }
-    val linkedSensor by viewModel.linkedSensor.collectAsState()
-    val connectionState by viewModel.bleConnectionState.collectAsState()
-    val sensorReadings by viewModel.sensorReadings.collectAsState()
+    val uiState by viewModel.state.collectAsState()
+    val linkedSensor = uiState.linkedSensor
+    val connectionState = uiState.connectionState
+    val sensorReadings = uiState.sensorReadings
+    val context = LocalContext.current
 
     LaunchedEffect(plantId) {
         viewModel.loadPlant(plantId)
@@ -102,7 +107,22 @@ fun PlantDetailsScreen(
         }
     }
 
-    val plant by viewModel.plant.collectAsState()
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                PlantDetailsEffect.NavigateBack -> navController.popBackStack()
+                is PlantDetailsEffect.ShowMessage -> {
+                    Toast.makeText(
+                        context,
+                        context.getString(effect.messageResId),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+
+    val plant = uiState.plant
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val scope = rememberCoroutineScope()
     val tabs = listOf(
@@ -544,6 +564,22 @@ fun PlantDetailsScreen(
             }
         }
     }
+
+    if (uiState.isDeleting) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.6f)),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(56.dp),
+                strokeWidth = 6.dp,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+
     if (showModal) {
         Box(
             modifier = Modifier
@@ -605,9 +641,8 @@ fun PlantDetailsScreen(
                     Button(
                         onClick = {
                             DebounceClick.debounceClick {
-                                plant?.let { viewModel.deletePlant() }
-                                navController.popBackStack()
                                 showModal = false
+                                viewModel.deletePlant()
                             }
                         },
                         shape = RoundedCornerShape(8.dp),

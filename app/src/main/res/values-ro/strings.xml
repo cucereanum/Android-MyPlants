@@ -81,6 +81,7 @@
     <string name="plant_details_delete_dialog_title">Ești sigur(ă)?</string>
     <string name="plant_details_delete_dialog_message">Sigur vrei să ștergi această plantă? Această acțiune nu poate fi anulată.</string>
     <string name="plant_details_delete_dialog_confirm_button">Șterge</string>
+    <string name="plant_details_deleted_successfully_message">Planta a fost ștearsă cu succes!</string>
 
     <!-- PlantDetailsScreen - Tabs -->
     <string name="plant_details_tab_details">Detalii</string>

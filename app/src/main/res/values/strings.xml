@@ -81,6 +81,7 @@
     <string name="plant_details_delete_dialog_title">Are You Sure?</string>
     <string name="plant_details_delete_dialog_message">Are you sure you want to delete this plant? This action cannot be undone.</string>
     <string name="plant_details_delete_dialog_confirm_button">Delete</string>
+    <string name="plant_details_deleted_successfully_message">Plant deleted successfully!</string>
 
     <!-- PlantDetailsScreen - Tabs -->
     <string name="plant_details_tab_details">Details</string>

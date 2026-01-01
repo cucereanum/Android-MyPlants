@@ -252,12 +252,22 @@ class AddEditPlantViewModel @Inject constructor(
                     isWatered = currentState.isWatered,
                 )
 
-                if (currentState.plantId == null) {
+                val isNewPlant = currentState.plantId == null
+                if (isNewPlant) {
                     plantRepository.insertPlant(plant)
                 } else {
                     plantRepository.updatePlant(plant)
                 }
 
+                _effect.emit(
+                    AddEditPlantEffect.ShowMessage(
+                        if (isNewPlant) {
+                            R.string.add_edit_plant_added_successfully_message
+                        } else {
+                            R.string.add_edit_plant_updated_successfully_message
+                        }
+                    )
+                )
                 _effect.emit(AddEditPlantEffect.NavigateBack)
             } catch (t: Throwable) {
                 _state.update { it.copy(isSaving = false, errorMessage = t.message) }

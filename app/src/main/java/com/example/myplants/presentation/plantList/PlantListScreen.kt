@@ -75,6 +75,7 @@ import com.example.myplants.navigation.Route
 import com.example.myplants.presentation.notifications.RequestNotificationPermission
 import com.example.myplants.presentation.plantList.components.FilterRow
 import com.example.myplants.presentation.plantList.components.PlantListItem
+import com.example.myplants.presentation.theme.LocalIsDarkTheme
 import com.example.myplants.presentation.util.DebounceClick
 import kotlinx.coroutines.launch
 
@@ -83,11 +84,15 @@ fun PlantListScreen(
     navController: NavController, viewModel: PlantListViewModel = hiltViewModel()
 ) {
 
+
     val plants by viewModel.items.collectAsState()
     val hasUnreadNotifications by viewModel.hasUnreadNotifications.collectAsState()
+
     var tapCount by remember { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
+
     val context = LocalContext.current
+
 
     LaunchedEffect(Unit) {
         viewModel.getPlants()
@@ -334,6 +339,9 @@ fun EmptyState(
     val message: String
     val buttonText: String
 
+    val isDarkModeEnabled = LocalIsDarkTheme.current
+
+
     when (selectedFilterType) {
         PlantListFilter.UPCOMING -> {
             title = stringResource(id = R.string.plant_list_empty_upcoming_title)
@@ -373,7 +381,7 @@ fun EmptyState(
             modifier = Modifier.padding(top = 10.dp),
             fontWeight = FontWeight.Medium,
             text = title,
-            color = MaterialTheme.colorScheme.onPrimary,
+            color = if (!isDarkModeEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary,
             fontSize = 18.sp
         )
         Text(
