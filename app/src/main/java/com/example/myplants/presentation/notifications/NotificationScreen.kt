@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -114,27 +115,26 @@ fun NotificationScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 10.dp, vertical = 8.dp),
                     ) {
-                        Box(
+                        Surface(
                             modifier = Modifier
                                 .size(40.dp)
-                                .align(Alignment.CenterStart)
-                                .background(
-                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                                    CircleShape,
-                                )
-                                .clickable {
-                                    DebounceClick.debounceClick {
-                                        navController.popBackStack()
-                                    }
-                                },
-                            contentAlignment = Alignment.Center
+                                .align(Alignment.CenterStart),
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                            onClick = {
+                                DebounceClick.debounceClick {
+                                    navController.popBackStack()
+                                }
+                            },
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.ChevronLeft,
-                                contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc),
-                                modifier = Modifier.size(30.dp),
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.ChevronLeft,
+                                    contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc),
+                                    modifier = Modifier.size(30.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
 
                         Text(

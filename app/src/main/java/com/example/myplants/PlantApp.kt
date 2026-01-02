@@ -10,6 +10,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.os.LocaleListCompat
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import androidx.work.WorkManager
 import com.example.myplants.domain.repository.UserPreferencesRepository
 import com.example.myplants.infrastructure.worker.WateringReminderScheduler
 import dagger.hilt.android.HiltAndroidApp
@@ -19,7 +20,7 @@ import java.util.Locale
 import javax.inject.Inject
 
 @HiltAndroidApp
-class PlantApp : Application(), Configuration.Provider {
+class PlantApp : Application() {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
@@ -27,11 +28,14 @@ class PlantApp : Application(), Configuration.Provider {
     @Inject
     lateinit var userPreferencesRepository: UserPreferencesRepository
 
-    override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
-
     override fun onCreate() {
         super.onCreate()
+        WorkManager.initialize(
+            this,
+            Configuration.Builder()
+                .setWorkerFactory(workerFactory)
+                .build(),
+        )
         applyDefaultAppLanguageIfNotChosen()
         createNotificationChannel(this)
         applyNotificationSchedulingFromPreferences()
