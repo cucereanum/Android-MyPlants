@@ -74,10 +74,10 @@ import coil.compose.AsyncImage
 import com.example.myplants.R
 import com.example.myplants.data.ble.ConnectionState
 import com.example.myplants.navigation.Route
+import com.example.myplants.presentation.theme.LocalIsDarkTheme
 import com.example.myplants.presentation.util.DebounceClick
 import kotlinx.coroutines.launch
 
-//todo: create reusable components
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
@@ -85,11 +85,21 @@ fun PlantDetailsScreen(
     navController: NavController, plantId: Int, viewModel: PlantDetailsViewModel = hiltViewModel()
 ) {
     var showModal by remember { mutableStateOf(false) }
+
     val uiState by viewModel.state.collectAsState()
-    val linkedSensor = uiState.linkedSensor
-    val connectionState = uiState.connectionState
-    val sensorReadings = uiState.sensorReadings
+    val plant = uiState.plant
+
     val context = LocalContext.current
+    val isDarkModeEnabled = LocalIsDarkTheme.current
+
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+
+    val scope = rememberCoroutineScope()
+    val tabs = listOf(
+        stringResource(id = R.string.plant_details_tab_details),
+        stringResource(id = R.string.plant_details_tab_sensor),
+    )
+    val pagerState = rememberPagerState(pageCount = { tabs.size })
 
     LaunchedEffect(plantId) {
         viewModel.loadPlant(plantId)
@@ -101,8 +111,8 @@ fun PlantDetailsScreen(
         }
     }
 
-    LaunchedEffect(linkedSensor?.deviceId) {
-        if (linkedSensor != null) {
+    LaunchedEffect(uiState.linkedSensor?.deviceId) {
+        if (uiState.linkedSensor != null) {
             viewModel.connectToLinkedSensor()
         }
     }
@@ -122,14 +132,7 @@ fun PlantDetailsScreen(
         }
     }
 
-    val plant = uiState.plant
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    val scope = rememberCoroutineScope()
-    val tabs = listOf(
-        stringResource(id = R.string.plant_details_tab_details),
-        stringResource(id = R.string.plant_details_tab_sensor),
-    )
-    val pagerState = rememberPagerState(pageCount = { tabs.size })
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         Box(
@@ -281,14 +284,12 @@ fun PlantDetailsScreen(
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 12.sp
                             )
-                            plant?.waterAmount.let {
-                                Text(
-                                    text = "$it${stringResource(id = R.string.plant_details_water_amount_suffix)}",
-                                    color = MaterialTheme.colorScheme.primary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
+                            Text(
+                                text = "${plant?.waterAmount}${stringResource(id = R.string.plant_details_water_amount_suffix)}",
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                         Column(
                             modifier = Modifier.weight(2f)
@@ -329,7 +330,7 @@ fun PlantDetailsScreen(
             TabRow(
                 selectedTabIndex = pagerState.currentPage,
                 containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                contentColor = if (isDarkModeEnabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
             ) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
@@ -391,8 +392,8 @@ fun PlantDetailsScreen(
                                     modifier = Modifier.padding(14.dp),
                                     verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    val sensorName = linkedSensor?.name
-                                    val sensorAddress = linkedSensor?.deviceId
+                                    val sensorName = uiState.linkedSensor?.name
+                                    val sensorAddress = uiState.linkedSensor?.deviceId
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -405,7 +406,7 @@ fun PlantDetailsScreen(
                                             fontWeight = FontWeight.SemiBold
                                         )
 
-                                        val connectionLabelResId = when (connectionState) {
+                                        val connectionLabelResId = when (uiState.connectionState) {
                                             is ConnectionState.Connecting -> R.string.plant_details_sensor_status_connecting
                                             is ConnectionState.Connected -> R.string.plant_details_sensor_status_connected
                                             is ConnectionState.ServicesDiscovered -> R.string.plant_details_sensor_status_reading
@@ -432,7 +433,7 @@ fun PlantDetailsScreen(
                                         )
                                     }
 
-                                    if (linkedSensor == null) {
+                                    if (uiState.linkedSensor == null) {
                                         Text(
                                             text = stringResource(id = R.string.plant_details_sensor_no_linked),
                                             color = MaterialTheme.colorScheme.secondary
@@ -466,7 +467,7 @@ fun PlantDetailsScreen(
                                             )
                                         }
 
-                                        val parsed = sensorReadings
+                                        val parsed = uiState.sensorReadings
                                         if (parsed != null) {
                                             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                                 parsed.temperatureC?.let { temperatureC ->

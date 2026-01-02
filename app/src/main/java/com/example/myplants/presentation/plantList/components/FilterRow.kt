@@ -3,6 +3,7 @@ package com.example.myplants.presentation.plantList.components
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,13 +44,12 @@ fun FilterRow(
 
     val selectedRect = boundsByType[selectedFilterType]
     val indicatorX by animateDpAsState(
-        targetValue = with(density) { (selectedRect?.left ?: 0f).toDp() },
-        label = "indicatorX"
+        targetValue = with(density) { (selectedRect?.left ?: 0f).toDp() }, label = "indicatorX"
     )
-    val indicatorW by animateDpAsState(
-        targetValue = with(density) { (selectedRect?.width ?: 0f).toDp() } - 10.dp,
-        label = "indicatorW"
-    )
+    val indicatorW by animateDpAsState(targetValue = with(density) {
+        (selectedRect?.width ?: 0f).toDp()
+    } - 10.dp,
+        label = "indicatorW")
 
     Box(modifier.fillMaxWidth()) {
 
@@ -67,15 +67,13 @@ fun FilterRow(
                     modifier = Modifier
                         // report this item's bounds so the indicator can slide to it
                         .onGloballyPositioned { c -> boundsByType[type] = c.boundsInParent() }
-                        .padding(end = 30.dp)
-                )
+                        .padding(end = 30.dp))
             }
         }
 
         if (selectedRect != null) {
             Box(
-                modifier = Modifier
-                    .matchParentSize()
+                modifier = Modifier.matchParentSize()
             ) {
                 Box(
                     modifier = Modifier
@@ -100,8 +98,12 @@ fun FilterRowListItem(
     isSelected: Boolean = false,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+
     Column(
-        modifier = modifier.clickable(onClick = onClick)
+        modifier = modifier.clickable(
+            onClick = onClick, interactionSource = interactionSource, indication = null
+        )
     ) {
         Text(
             text = name.displayName,
