@@ -84,13 +84,13 @@ fun SettingsScreen(navController: NavController) {
                     onClick = { navController.navigate(Route.BLE) }
                 )
             }
-            item {
-                SettingsItem(
-                    icon = Icons.Outlined.Sync,
-                    title = stringResource(id = R.string.settings_item_sensor_sync),
-                    onClick = { /* navController.navigate(Route.SENSOR_SYNC_SETTINGS) */ }
-                )
-            }
+//            item {
+//                SettingsItem(
+//                    icon = Icons.Outlined.Sync,
+//                    title = stringResource(id = R.string.settings_item_sensor_sync),
+//                    onClick = { /* navController.navigate(Route.SENSOR_SYNC_SETTINGS) */ }
+//                )
+//            }
 
             // Section: Preferences
             item { SettingsSpacer() }

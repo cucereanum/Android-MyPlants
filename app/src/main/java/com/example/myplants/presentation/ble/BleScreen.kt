@@ -8,18 +8,23 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.example.myplants.R
 import com.example.myplants.data.ble.BleDevice
 import com.example.myplants.data.ble.BleUuids
 import com.example.myplants.data.ble.ConnectionState
@@ -29,7 +34,7 @@ import com.example.myplants.data.ble.ConnectionState
 fun BleScreen(
     navController: NavController,
     viewModel: BleViewModel = hiltViewModel(),
-    onClose: () -> Unit = {},
+    onClose: () -> Unit = { navController.popBackStack() },
     onDeviceSelected: ((BleDevice) -> Unit)? = null
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -40,9 +45,14 @@ fun BleScreen(
 
     // Make sure we disconnect if user leaves the screen (back/close)
     val latestOnClose by rememberUpdatedState(onClose)
+    val closeScreen = remember(viewModel) {
+        {
+            viewModel.disconnect()
+            latestOnClose()
+        }
+    }
     BackHandler {
-        viewModel.disconnect()
-        latestOnClose()
+        closeScreen()
     }
 
     // Also disconnect on disposal (e.g., navigate away)
@@ -65,13 +75,28 @@ fun BleScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("BLE Devices") },
-                actions = {
-                    TextButton(onClick = {
-                        viewModel.disconnect()
-                        onClose()
-                    }) { Text("Close") }
-                }
+                title = {
+                    Text(
+                        text = "BLE Devices",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 22.sp,
+                        lineHeight = 32.sp
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = closeScreen) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc)
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
     ) { padding ->
