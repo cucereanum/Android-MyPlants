@@ -11,14 +11,16 @@ import com.example.myplants.data.Plant
 import com.example.myplants.domain.repository.NotificationRepository
 import com.example.myplants.domain.repository.PlantRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import java.time.LocalTime
+import java.util.Calendar
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,50 +32,22 @@ class PlantListViewModel @Inject constructor(
     var filterList by mutableStateOf(PlantListFilter.entries)
         private set
 
-    var selectedFilterType by mutableStateOf(PlantListFilter.UPCOMING)
-        private set
+    private val selectedFilterTypeStateFlow = MutableStateFlow(PlantListFilter.UPCOMING)
 
-    private val _items = MutableStateFlow<List<Plant>>(emptyList())
-
-    val items: StateFlow<List<Plant>> = _items.asStateFlow()
-
-    var isLoading by mutableStateOf(false)
-        private set
-
-    val hasUnreadNotifications = notificationRepository
-        .hasUnreadNotificationsFlow()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
-        )
-
-
-    fun selectFilter(type: PlantListFilter) {
-        selectedFilterType = type
-        filterPlants()
-    }
-
-    suspend fun getPlants() {
-        isLoading = true
-        try {
-            val itemsList = repository.getPlants().first()
-            _items.value = itemsList
-            filterPlants()
-        } catch (e: Exception) {
-            e.message?.let { Log.e("Get Plant List Error", it) }
-        } finally {
-            isLoading = false
-        }
-    }
-
-    private fun filterPlants() {
-        viewModelScope.launch {
-            val allPlants = repository.getPlants().first()
+    private val filteredPlantsFlow: Flow<List<Plant>> =
+        combine(
+            repository.getPlants(),
+            selectedFilterTypeStateFlow,
+        ) { allPlants, selectedFilterType ->
             val today = DayOfWeek.today()
-            val currentTimeOfDayMillis = LocalTime.now().toSecondOfDay() * 1000L
+            val calendar = Calendar.getInstance()
+            val currentTimeOfDayMillis =
+                calendar.get(Calendar.HOUR_OF_DAY) * 60L * 60L * 1000L +
+                        calendar.get(Calendar.MINUTE) * 60L * 1000L +
+                        calendar.get(Calendar.SECOND) * 1000L +
+                        calendar.get(Calendar.MILLISECOND)
 
-            val filteredList = when (selectedFilterType) {
+            when (selectedFilterType) {
                 PlantListFilter.FORGOT_TO_WATER -> allPlants.filter { plant ->
                     !plant.isWatered && plant.selectedDays.any { day ->
                         day.ordinal < today.ordinal ||
@@ -93,12 +67,67 @@ class PlantListViewModel @Inject constructor(
                             }
                 }
 
-                PlantListFilter.HISTORY -> allPlants.filter {
-                    it.isWatered
+                PlantListFilter.HISTORY -> allPlants.filter { plant ->
+                    plant.isWatered
                 }
             }
-
-            _items.value = filteredList
         }
+
+    data class PlantListUiState(
+        val plants: List<Plant> = emptyList(),
+        val selectedFilterType: PlantListFilter = PlantListFilter.UPCOMING,
+        val isLoading: Boolean = false,
+        val errorMessage: String? = null,
+    )
+
+    val uiState: StateFlow<PlantListUiState> =
+        combine(
+            selectedFilterTypeStateFlow,
+            filteredPlantsFlow,
+        ) { selectedFilterType, filteredPlants ->
+            PlantListUiState(
+                plants = filteredPlants,
+                selectedFilterType = selectedFilterType,
+                isLoading = false,
+                errorMessage = null,
+            )
+        }
+            .onStart {
+                emit(
+                    PlantListUiState(
+                        selectedFilterType = selectedFilterTypeStateFlow.value,
+                        isLoading = true,
+                    )
+                )
+            }
+            .catch { throwable ->
+                Log.e("PlantListViewModel", "Failed to load plants", throwable)
+                emit(
+                    PlantListUiState(
+                        selectedFilterType = selectedFilterTypeStateFlow.value,
+                        isLoading = false,
+                        errorMessage = throwable.message,
+                    )
+                )
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = PlantListUiState(
+                    selectedFilterType = selectedFilterTypeStateFlow.value,
+                    isLoading = true,
+                ),
+            )
+
+    val hasUnreadNotifications = notificationRepository
+        .hasUnreadNotificationsFlow()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
+    fun selectFilter(type: PlantListFilter) {
+        selectedFilterTypeStateFlow.value = type
     }
 }

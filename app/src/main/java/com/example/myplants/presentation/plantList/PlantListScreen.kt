@@ -85,7 +85,7 @@ fun PlantListScreen(
 ) {
 
 
-    val plants by viewModel.items.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val hasUnreadNotifications by viewModel.hasUnreadNotifications.collectAsState()
 
     var tapCount by remember { mutableIntStateOf(0) }
@@ -94,9 +94,6 @@ fun PlantListScreen(
     val context = LocalContext.current
 
 
-    LaunchedEffect(Unit) {
-        viewModel.getPlants()
-    }
     RequestNotificationPermission()
 
     Box(
@@ -110,7 +107,7 @@ fun PlantListScreen(
             contentDescription = stringResource(id = R.string.background_plants)
         )
 
-        if (viewModel.isLoading) {
+        if (uiState.isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -219,13 +216,13 @@ fun PlantListScreen(
                     FilterRow(
                         filterList = viewModel.filterList, selectFilter = { filter ->
                             viewModel.selectFilter(filter as PlantListFilter)
-                        }, selectedFilterType = viewModel.selectedFilterType
+                        }, selectedFilterType = uiState.selectedFilterType
                     )
                 }
 
 
-                val selectedIndex = remember(viewModel.filterList, viewModel.selectedFilterType) {
-                    viewModel.filterList.indexOf(viewModel.selectedFilterType)
+                val selectedIndex = remember(viewModel.filterList, uiState.selectedFilterType) {
+                    viewModel.filterList.indexOf(uiState.selectedFilterType)
                 }
 
                 // Keep track of previous index to decide direction
@@ -236,7 +233,7 @@ fun PlantListScreen(
 
                 @OptIn(ExperimentalAnimationApi::class)
                 AnimatedContent(
-                    targetState = plants,
+                    targetState = uiState.plants,
                     transitionSpec = {
                         val enter = slideIn(
                             // fullSize: IntSize -> IntOffset
@@ -260,7 +257,7 @@ fun PlantListScreen(
                         if (currentPlants.isEmpty()) {
                             EmptyState(
                                 navController = navController,
-                                selectedFilterType = viewModel.selectedFilterType
+                                selectedFilterType = uiState.selectedFilterType
                             )
                         } else {
                             LazyVerticalGrid(
@@ -289,7 +286,7 @@ fun PlantListScreen(
 
             }
 
-            if (plants.isNotEmpty()) {
+            if (uiState.plants.isNotEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

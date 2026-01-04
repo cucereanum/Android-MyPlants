@@ -63,10 +63,10 @@ fun NotificationScreen(
     navController: NavController,
     viewModel: NotificationViewModel = hiltViewModel()
 ) {
-    val grouped by viewModel.groupedItems.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     val listState = rememberLazyListState()
-    val notifications by viewModel.items.collectAsState()
+    val notifications = uiState.notifications
 
     LaunchedEffect(notifications, listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.mapNotNull { it.key as? Int } }
@@ -75,9 +75,6 @@ fun NotificationScreen(
             .collect { visibleIds ->
                 viewModel.markNotificationsAsRead(visibleIds)
             }
-    }
-    LaunchedEffect(Unit) {
-        viewModel.getNotifications()
     }
 
     Box(
@@ -92,7 +89,7 @@ fun NotificationScreen(
             contentDescription = stringResource(id = R.string.background_plants)
         )
 
-        if (viewModel.isLoading) {
+        if (uiState.isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -159,7 +156,7 @@ fun NotificationScreen(
                         .padding(horizontal = 20.dp),
                     contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
-                    grouped.forEach { (sectionTitle, list) ->
+                    uiState.groupedNotifications.forEach { (sectionTitle, list) ->
                         item {
                             Text(
                                 text = sectionTitle,
