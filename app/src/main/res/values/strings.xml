@@ -149,4 +149,28 @@
     <string name="notification_item_daily_title">Daily plant notification</string>
     <string name="notification_item_go_to_plant">Go to the plant</string>
 
+    <!-- Widgets -->
+    <string name="widget_plants_today_name">Plants Today</string>
+    <string name="widget_plants_today_description">Shows plants that need watering today</string>
+    <string name="widget_single_plant_name">Single Plant</string>
+    <string name="widget_single_plant_description">Track and water a single plant</string>
+    <string name="widget_loading">Loading…</string>
+    <string name="widget_no_plants">No plants to water today! 🎉</string>
+    <string name="widget_add_plant">Add your first plant</string>
+    <string name="widget_water">Water</string>
+    <string name="widget_watered">Watered ✓</string>
+    <string name="widget_needs_water">Needs water</string>
+    <string name="widget_plants_today_title">🌱 Plants Today</string>
+    <string name="widget_select_plant">Select a plant</string>
+    <string name="widget_no_plant_selected">No plant selected</string>
+    <string name="widget_tap_to_configure">Tap to select a plant</string>
+    <string name="widget_mark_watered_success">Plant marked as watered!</string>
+
+    <!-- Settings - Widgets -->
+    <string name="settings_section_widgets">Widgets</string>
+    <string name="settings_item_add_widget">Add Home Screen Widget</string>
+
+    <!-- Plant Details - Widget -->
+    <string name="plant_details_add_widget">Add Widget to Home</string>
+
 </resources>
