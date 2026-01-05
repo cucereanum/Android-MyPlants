@@ -42,12 +42,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -85,14 +85,29 @@ fun PlantListScreen(
 ) {
 
 
-    val uiState by viewModel.uiState.collectAsState()
-    val hasUnreadNotifications by viewModel.hasUnreadNotifications.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val hasUnreadNotifications by viewModel.hasUnreadNotifications.collectAsStateWithLifecycle()
 
     var tapCount by remember { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
 
     val context = LocalContext.current
 
+    val onFilterSelected = remember<(PlantListFilter) -> Unit> {
+        { filter -> viewModel.selectFilter(filter) }
+    }
+
+    val onNavigateToSettings = remember {
+        { DebounceClick.debounceClick { navController.navigate(Route.SETTINGS) } }
+    }
+
+    val onNavigateToNotifications = remember {
+        { DebounceClick.debounceClick { navController.navigate(Route.NOTIFICATIONS) } }
+    }
+
+    val onNavigateToAddPlant = remember {
+        { DebounceClick.debounceClick { navController.navigate(Route.ADD_EDIT_PLANT) } }
+    }
 
     RequestNotificationPermission()
 
@@ -164,11 +179,7 @@ fun PlantListScreen(
                                         .shadow(elevation = 4.dp, shape = CircleShape, clip = false)
                                         .clip(CircleShape)
                                         .background(MaterialTheme.colorScheme.background)
-                                        .clickable {
-                                            DebounceClick.debounceClick {
-                                                navController.navigate(Route.SETTINGS)
-                                            }
-                                        }) {
+                                        .clickable { onNavigateToSettings() }) {
                                     Icon(
                                         imageVector = Icons.Outlined.Settings,
                                         contentDescription = stringResource(id = R.string.settings_title),
@@ -187,11 +198,7 @@ fun PlantListScreen(
                                         .shadow(elevation = 4.dp, shape = CircleShape, clip = false)
                                         .clip(CircleShape)
                                         .background(MaterialTheme.colorScheme.background)
-                                        .clickable {
-                                            DebounceClick.debounceClick {
-                                                navController.navigate(Route.NOTIFICATIONS)
-                                            }
-                                        }) {
+                                        .clickable { onNavigateToNotifications() }) {
                                     Icon(
                                         imageVector = Icons.Outlined.Notifications,
                                         contentDescription = stringResource(id = R.string.notifications),
@@ -214,9 +221,11 @@ fun PlantListScreen(
                     }
 
                     FilterRow(
-                        filterList = viewModel.filterList, selectFilter = { filter ->
-                            viewModel.selectFilter(filter as PlantListFilter)
-                        }, selectedFilterType = uiState.selectedFilterType
+                        filterList = viewModel.filterList,
+                        selectFilter = { filter ->
+                            onFilterSelected(filter as PlantListFilter)
+                        },
+                        selectedFilterType = uiState.selectedFilterType
                     )
                 }
 
@@ -256,7 +265,7 @@ fun PlantListScreen(
 
                         if (currentPlants.isEmpty()) {
                             EmptyState(
-                                navController = navController,
+                                onNavigateToAddPlant = onNavigateToAddPlant,
                                 selectedFilterType = uiState.selectedFilterType
                             )
                         } else {
@@ -303,11 +312,7 @@ fun PlantListScreen(
                         .blur(20.dp)
                 )
                 FloatingActionButton(
-                    onClick = {
-                        DebounceClick.debounceClick {
-                            navController.navigate(Route.ADD_EDIT_PLANT)
-                        }
-                    },
+                    onClick = { onNavigateToAddPlant() },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(16.dp)
@@ -330,7 +335,8 @@ fun PlantListScreen(
 
 @Composable
 fun EmptyState(
-    navController: NavController, selectedFilterType: PlantListFilter
+    onNavigateToAddPlant: () -> Unit,
+    selectedFilterType: PlantListFilter
 ) {
     val title: String
     val message: String
@@ -396,9 +402,8 @@ fun EmptyState(
                     .width(320.dp)
                     .height(54.dp),
                 shape = RoundedCornerShape(12.dp),
-                onClick = {
-                    navController.navigate(Route.ADD_EDIT_PLANT)
-                }) {
+                onClick = onNavigateToAddPlant
+            ) {
                 Text(
                     text = buttonText,
                     color = Color.White,

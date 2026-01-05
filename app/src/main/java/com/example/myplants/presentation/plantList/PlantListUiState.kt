@@ -1,0 +1,12 @@
+package com.example.myplants.presentation.plantList
+
+import androidx.compose.runtime.Immutable
+import com.example.myplants.data.Plant
+
+@Immutable
+data class PlantListUiState(
+    val plants: List<Plant> = emptyList(),
+    val selectedFilterType: PlantListFilter = PlantListFilter.UPCOMING,
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+)

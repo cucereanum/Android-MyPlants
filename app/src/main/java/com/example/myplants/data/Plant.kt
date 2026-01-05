@@ -1,8 +1,10 @@
 package com.example.myplants.data
 
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+@Immutable
 @Entity
 data class Plant(
     val plantName: String,

@@ -1,6 +1,7 @@
 package com.example.myplants.presentation.plantList
 
 import android.util.Log
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -73,12 +74,6 @@ class PlantListViewModel @Inject constructor(
             }
         }
 
-    data class PlantListUiState(
-        val plants: List<Plant> = emptyList(),
-        val selectedFilterType: PlantListFilter = PlantListFilter.UPCOMING,
-        val isLoading: Boolean = false,
-        val errorMessage: String? = null,
-    )
 
     val uiState: StateFlow<PlantListUiState> =
         combine(

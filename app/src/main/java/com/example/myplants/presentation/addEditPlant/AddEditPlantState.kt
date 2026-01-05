@@ -4,10 +4,12 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.camera.core.CameraSelector
+import androidx.compose.runtime.Immutable
 import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.PlantSizeType
 import java.time.LocalDateTime
 
+@Immutable
 @RequiresApi(Build.VERSION_CODES.O)
 data class AddEditPlantState(
     val plantId: Int? = null,
