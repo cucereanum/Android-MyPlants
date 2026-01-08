@@ -203,10 +203,22 @@ class BleManagerRepositoryImpl @Inject constructor(
         awaitClose { scanner?.stopScan(cb) }
     }.onStart { emit(emptyList()) }
 
+    @Volatile
+    private var connectionFlowActive = false
+
     @SuppressLint("MissingPermission")
     override fun connect(address: String, autoConnect: Boolean): Flow<ConnectionState> =
         callbackFlow {
+            // Prevent multiple concurrent connection flows
+            if (connectionFlowActive) {
+                Log.w(TAG, "Connection already in progress, ignoring new connect request")
+                close()
+                return@callbackFlow
+            }
+            connectionFlowActive = true
+
             val device = btAdapter?.getRemoteDevice(address) ?: run {
+                connectionFlowActive = false
                 close(IllegalArgumentException("Unknown device $address"))
                 return@callbackFlow
             }
@@ -216,6 +228,9 @@ class BleManagerRepositoryImpl @Inject constructor(
             )
             trySend(ConnectionState.Connecting(address))
 
+            // Track if services have been discovered to prevent duplicate emissions
+            var servicesDiscovered = false
+
             val gattCallback = object : BluetoothGattCallback() {
 
                 override fun onConnectionStateChange(
@@ -223,7 +238,7 @@ class BleManagerRepositoryImpl @Inject constructor(
                     status: Int,
                     newState: Int
                 ) {
-                    Log.w(
+                    Log.d(
                         TAG,
                         "Connection state changed: STATE=$newState status=$status device=${gatt.device.address}"
                     )
@@ -234,12 +249,13 @@ class BleManagerRepositoryImpl @Inject constructor(
                                 "Connected to plant sensor: address=${gatt.device.address} name=${gatt.device.name ?: "unknown"}"
                             }
                             trySend(ConnectionState.Connected(address))
-                            scope.launch {
-                                // Some Flower Care sensors have a short window before they drop the link.
-                                // Start service discovery immediately; MTU negotiation can be slow/ignored.
-                                delay(100)
-                                gatt.discoverServices()
-                            }
+                            // Start service discovery immediately on the main thread
+                            // Using a small delay helps with some firmware quirks
+                            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                if (connectionFlowActive && !servicesDiscovered) {
+                                    gatt.discoverServices()
+                                }
+                            }, 100)
                         }
 
                         BluetoothProfile.STATE_DISCONNECTED -> {
@@ -270,15 +286,18 @@ class BleManagerRepositoryImpl @Inject constructor(
                 }
 
                 override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+                    if (servicesDiscovered) {
+                        Log.w(TAG, "Services already discovered, ignoring duplicate callback")
+                        return
+                    }
+
                     if (status == BluetoothGatt.GATT_SUCCESS) {
+                        servicesDiscovered = true
                         logVerbose { "Services discovered successfully" }
                         logDiscoveredGattTable(gatt)
-                        // Avoid forcing connection parameters; some Flower Care sensors are sensitive
-                        // and may terminate the link when the central requests changes.
-                        scope.launch {
-                            delay(100)
-                            trySend(ConnectionState.ServicesDiscovered(address))
-                        }
+                        // Emit immediately without delay to prevent race conditions
+                        Log.d(TAG, "Emitting ServicesDiscovered state")
+                        trySend(ConnectionState.ServicesDiscovered(address))
                     } else {
                         Log.e(TAG, "Service discovery failed with status $status")
                         trySend(
@@ -365,6 +384,8 @@ class BleManagerRepositoryImpl @Inject constructor(
             }
 
             awaitClose {
+                Log.d(TAG, "Connection flow closing, cleaning up")
+                connectionFlowActive = false
                 try {
                     gatt?.disconnect()
                     gatt?.close()
@@ -447,6 +468,9 @@ class BleManagerRepositoryImpl @Inject constructor(
 
     @SuppressLint("MissingPermission")
     override suspend fun disconnect() {
+        Log.d(TAG, "disconnect() called")
+        connectionFlowActive = false
+        stopFlowerCareLive()
         gatt?.disconnect()
         gatt?.close()
         gatt = null
@@ -956,6 +980,7 @@ class BleManagerRepositoryImpl @Inject constructor(
     }
 
     override fun stopFlowerCareLive() {
+        Log.d(TAG, "stopFlowerCareLive() called")
         liveMode = false
         liveJob?.cancel()
         liveJob = null

@@ -77,6 +77,10 @@ import com.example.myplants.navigation.Route
 import com.example.myplants.presentation.theme.LocalIsDarkTheme
 import com.example.myplants.presentation.util.DebounceClick
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalLifecycleOwner
 
 
 @RequiresApi(Build.VERSION_CODES.S)
@@ -101,19 +105,32 @@ fun PlantDetailsScreen(
     )
     val pagerState = rememberPagerState(pageCount = { tabs.size })
 
+    // Clean up BLE connection when leaving the screen
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.disconnectSensor()
+        }
+    }
+
+    // Load plant data on first composition
     LaunchedEffect(plantId) {
         viewModel.loadPlant(plantId)
     }
 
-    LaunchedEffect(Unit) {
-        navController.currentBackStackEntryFlow.collect {
-            viewModel.refreshLinkedSensor(plantId)
+    // Check for linked sensor changes when screen resumes (e.g., coming back from linking a sensor)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            android.util.Log.d("PlantDetailsScreen", "Lifecycle event: $event")
+            if (event == Lifecycle.Event.ON_RESUME) {
+                android.util.Log.d("PlantDetailsScreen", "ON_RESUME - calling refreshLinkedSensor")
+                // Refresh linked sensor when screen resumes - this will auto-connect if a new sensor was just linked
+                viewModel.refreshLinkedSensor(plantId)
+            }
         }
-    }
-
-    LaunchedEffect(uiState.linkedSensor?.deviceId) {
-        if (uiState.linkedSensor != null) {
-            viewModel.connectToLinkedSensor()
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
@@ -284,12 +301,14 @@ fun PlantDetailsScreen(
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 12.sp
                             )
-                            Text(
-                                text = "${plant?.waterAmount}${stringResource(id = R.string.plant_details_water_amount_suffix)}",
-                                color = MaterialTheme.colorScheme.primary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            plant?.waterAmount?.let { waterAmount ->
+                                Text(
+                                    text = "$waterAmount${stringResource(id = R.string.plant_details_water_amount_suffix)}",
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                         Column(
                             modifier = Modifier.weight(2f)
@@ -561,6 +580,46 @@ fun PlantDetailsScreen(
                             fontSize = 16.sp
                         )
                     }
+                }
+            }
+        }
+    }
+
+    if (uiState.isLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.6f)),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(56.dp),
+                strokeWidth = 6.dp,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+
+    // Show error message if plant failed to load and is still null
+    if (!uiState.isLoading && plant == null && uiState.errorMessage != null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = uiState.errorMessage ?: "Failed to load plant",
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                )
+                Button(onClick = { viewModel.loadPlant(plantId) }) {
+                    Text("Retry")
                 }
             }
         }
