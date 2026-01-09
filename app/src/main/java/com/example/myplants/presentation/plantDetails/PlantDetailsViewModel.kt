@@ -12,6 +12,7 @@ import com.example.myplants.domain.repository.BleDatabaseRepository
 import com.example.myplants.domain.repository.BleManagerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -58,18 +59,12 @@ class PlantDetailsViewModel @Inject constructor(
             val linkedSensor = runCatching { bleDatabaseRepository.getDeviceByPlantId(plantId) }
                 .getOrElse { throwable ->
                     _state.update {
-                        it.copy(
-                            plant = plant,
-                            isLoading = false,
-                            errorMessage = throwable.message,
-                        )
+                        it.copy(plant = plant, isLoading = false, errorMessage = throwable.message)
                     }
                     return@launch
                 }
 
             _state.update { it.copy(plant = plant, linkedSensor = linkedSensor, isLoading = false) }
-
-            // Mark initial load as complete and track the sensor ID
             hasCompletedInitialLoad = true
             lastKnownSensorDeviceId = linkedSensor?.deviceId
         }
@@ -77,58 +72,39 @@ class PlantDetailsViewModel @Inject constructor(
 
     fun connectToLinkedSensor() {
         val address = _state.value.linkedSensor?.deviceId ?: return
+        if (isConnecting && lastConnectedAddress == address) return
 
-        // Prevent multiple concurrent connection attempts to the same device
-        if (isConnecting && lastConnectedAddress == address) {
-            android.util.Log.d("PlantDetails", "Already connecting to $address, skipping")
-            return
-        }
-
-        android.util.Log.d("PlantDetails", "connectToLinkedSensor called for $address")
-
-        // First, ensure any previous connection is properly cleaned up
         connectJob?.cancel()
         liveJob?.cancel()
 
         val currentConnectionState = _state.value.connectionState
 
         viewModelScope.launch {
-            // Only disconnect if we're not already in Idle state
-            // This avoids unnecessary disconnect when coming from a fresh link
             if (currentConnectionState !is ConnectionState.Idle) {
-                android.util.Log.d("PlantDetails", "Disconnecting before reconnecting...")
                 bleManagerRepository.disconnect()
-                kotlinx.coroutines.delay(200)
+                delay(200)
             }
             startConnection(address)
         }
     }
 
     private fun startConnection(address: String) {
-        android.util.Log.d("PlantDetails", "startConnection: Starting connection to $address")
         isConnecting = true
         lastConnectedAddress = address
 
         connectJob = bleManagerRepository
             .connect(address, autoConnect = false)
             .onEach { state ->
-                android.util.Log.d("PlantDetails", "Connection state received: $state")
                 _state.update { it.copy(connectionState = state, errorMessage = null) }
 
                 when (state) {
                     is ConnectionState.ServicesDiscovered -> {
-                        android.util.Log.d(
-                            "PlantDetails",
-                            "ServicesDiscovered - starting live readings"
-                        )
                         isConnecting = false
                         startLiveReadings()
                     }
 
                     is ConnectionState.Disconnected -> {
-                        android.util.Log.d("PlantDetails", "Disconnected: cause=${state.cause}")
                         isConnecting = false
-                        // Stay in Idle state - user can manually refresh if needed
                         _state.update { it.copy(connectionState = ConnectionState.Idle) }
                     }
 
@@ -136,11 +112,6 @@ class PlantDetailsViewModel @Inject constructor(
                 }
             }
             .catch { throwable ->
-                android.util.Log.e(
-                    "PlantDetails",
-                    "Connection error: ${throwable.message}",
-                    throwable
-                )
                 isConnecting = false
                 _state.update {
                     it.copy(
@@ -153,30 +124,23 @@ class PlantDetailsViewModel @Inject constructor(
     }
 
     private fun startLiveReadings() {
-        android.util.Log.d("PlantDetails", "startLiveReadings: Starting live readings flow")
         liveJob?.cancel()
         liveJob = bleManagerRepository
             .startFlowerCareLive()
             .onEach { parsed ->
-                android.util.Log.d(
-                    "PlantDetails",
-                    "Received sensor data: temp=${parsed.temperatureC}, moisture=${parsed.moisturePct}"
-                )
                 _state.update { it.copy(sensorReadings = parsed, errorMessage = null) }
             }
-            .catch { e ->
-                // Log error but keep last readings; connection state will surface errors
-                android.util.Log.w("PlantDetails", "Live readings error: ${e.message}", e)
-            }
+            .catch { }
             .launchIn(viewModelScope)
-        android.util.Log.d("PlantDetails", "startLiveReadings: Live job started")
     }
 
     fun disconnectSensor() {
         isConnecting = false
         lastConnectedAddress = null
-        connectJob?.cancel(); connectJob = null
-        liveJob?.cancel(); liveJob = null
+        connectJob?.cancel()
+        liveJob?.cancel()
+        connectJob = null
+        liveJob = null
         bleManagerRepository.stopFlowerCareLive()
         viewModelScope.launch { bleManagerRepository.disconnect() }
         _state.update { it.copy(connectionState = ConnectionState.Idle, sensorReadings = null) }
@@ -186,24 +150,14 @@ class PlantDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             disconnectSensor()
             bleDatabaseRepository.forgetDeviceByPlant(plantId)
-            // Reset tracked sensor ID so next linked sensor will auto-connect
             lastKnownSensorDeviceId = null
             _state.update {
-                it.copy(
-                    linkedSensor = null,
-                    sensorReadings = null,
-                    errorMessage = null
-                )
+                it.copy(linkedSensor = null, sensorReadings = null, errorMessage = null)
             }
         }
     }
 
     fun refreshLinkedSensor(plantId: Int) {
-        android.util.Log.d(
-            "PlantDetails",
-            "refreshLinkedSensor called: hasCompletedInitialLoad=$hasCompletedInitialLoad, lastKnownSensorDeviceId=$lastKnownSensorDeviceId"
-        )
-
         viewModelScope.launch {
             val linkedSensor = runCatching { bleDatabaseRepository.getDeviceByPlantId(plantId) }
                 .getOrElse { throwable ->
@@ -211,34 +165,14 @@ class PlantDetailsViewModel @Inject constructor(
                     return@launch
                 }
             _state.update { it.copy(linkedSensor = linkedSensor, errorMessage = null) }
-
-            val newDeviceId = linkedSensor?.deviceId
-
-            android.util.Log.d(
-                "PlantDetails",
-                "refreshLinkedSensor: newDeviceId=$newDeviceId, lastKnownSensorDeviceId=$lastKnownSensorDeviceId, hasCompletedInitialLoad=$hasCompletedInitialLoad"
-            )
-
-            // Update the tracked sensor ID (no auto-connect here anymore - handled by linkAndConnectSensor)
-            lastKnownSensorDeviceId = newDeviceId
+            lastKnownSensorDeviceId = linkedSensor?.deviceId
         }
     }
 
-    /**
-     * Links a BLE device to the plant and then connects to it.
-     * This is called when user selects a device from the BLE_LINK screen.
-     */
     fun linkAndConnectSensor(plantId: Int, deviceAddress: String, deviceName: String?) {
-        android.util.Log.d(
-            "PlantDetails",
-            "linkAndConnectSensor: plantId=$plantId, address=$deviceAddress, name=$deviceName"
-        )
-
         viewModelScope.launch {
-            // Small delay to ensure BleScreen has fully cleaned up
-            kotlinx.coroutines.delay(100)
+            delay(100) // Ensure BleScreen cleanup is complete
 
-            // Create BleDevice and save to database
             val device = BleDevice(
                 address = deviceAddress,
                 name = deviceName,
@@ -246,28 +180,12 @@ class PlantDetailsViewModel @Inject constructor(
                 serviceUuids = emptyList()
             )
 
-            runCatching {
-                bleDatabaseRepository.linkDeviceToPlant(
-                    plantId = plantId,
-                    device = device
-                )
-            }
+            runCatching { bleDatabaseRepository.linkDeviceToPlant(plantId, device) }
                 .onFailure { throwable ->
-                    android.util.Log.e(
-                        "PlantDetails",
-                        "Failed to link device: ${throwable.message}",
-                        throwable
-                    )
                     _state.update { it.copy(errorMessage = throwable.message) }
                     return@launch
                 }
 
-            android.util.Log.d(
-                "PlantDetails",
-                "Device linked successfully, refreshing and connecting..."
-            )
-
-            // Refresh the linked sensor from DB to update UI
             val linkedSensor = runCatching { bleDatabaseRepository.getDeviceByPlantId(plantId) }
                 .getOrElse { throwable ->
                     _state.update { it.copy(errorMessage = throwable.message) }
@@ -276,8 +194,6 @@ class PlantDetailsViewModel @Inject constructor(
 
             _state.update { it.copy(linkedSensor = linkedSensor, errorMessage = null) }
             lastKnownSensorDeviceId = linkedSensor?.deviceId
-
-            // Now connect to the sensor
             connectToLinkedSensor()
         }
     }
@@ -292,12 +208,7 @@ class PlantDetailsViewModel @Inject constructor(
                 unlinkSensor(plant.id)
                 repository.deletePlant(plant)
                 _state.update { it.copy(isDeleting = false, errorMessage = null) }
-
-                _effect.emit(
-                    PlantDetailsEffect.ShowMessage(
-                        R.string.plant_details_deleted_successfully_message
-                    )
-                )
+                _effect.emit(PlantDetailsEffect.ShowMessage(R.string.plant_details_deleted_successfully_message))
                 _effect.emit(PlantDetailsEffect.NavigateBack)
             } catch (t: Throwable) {
                 _state.update { it.copy(isDeleting = false, errorMessage = t.message) }
@@ -308,7 +219,6 @@ class PlantDetailsViewModel @Inject constructor(
     fun onMarkAsWatered() {
         _state.value.plant?.let { currentPlant ->
             val updatedPlant = currentPlant.copy(isWatered = true)
-
             viewModelScope.launch {
                 repository.updatePlant(updatedPlant)
                 _state.update { it.copy(plant = updatedPlant, errorMessage = null) }
@@ -318,15 +228,12 @@ class PlantDetailsViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        // Clean up BLE connection when ViewModel is destroyed
         isConnecting = false
         lastConnectedAddress = null
         connectJob?.cancel()
         liveJob?.cancel()
         bleManagerRepository.stopFlowerCareLive()
-        // Don't call disconnect() here as it's a suspend function and viewModelScope is cancelled
     }
-
 }
 
 sealed interface PlantDetailsEffect {

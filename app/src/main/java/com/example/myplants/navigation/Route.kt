@@ -12,7 +12,6 @@ object Route {
     const val BLE = "ble"
     const val BLE_LINK = "ble_link/{plantId}"
 
-    // Keys for passing selected device back from BLE_LINK screen
     const val KEY_SELECTED_DEVICE_ADDRESS = "selected_device_address"
     const val KEY_SELECTED_DEVICE_NAME = "selected_device_name"
 

@@ -44,7 +44,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-
     private val deepLinkVm: DeepLinkViewModel by viewModels()
 
     private fun handleIntent(i: Intent?) {
@@ -54,11 +53,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
-
-
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -68,36 +64,31 @@ class MainActivity : AppCompatActivity() {
             val view = LocalView.current
             SideEffect {
                 if (view.isInEditMode) return@SideEffect
-
                 val activity = view.context as? Activity ?: return@SideEffect
                 val window = activity.window
                 window.statusBarColor = android.graphics.Color.TRANSPARENT
-
                 val insetsController = WindowCompat.getInsetsController(window, view)
                 insetsController.isAppearanceLightStatusBars = !isDarkModeEnabled
             }
 
             MyPlantsTheme(darkTheme = isDarkModeEnabled) {
                 val navController = rememberNavController()
-                // Listen for plant open events and navigate
+
                 LaunchedEffect(Unit) {
                     deepLinkVm.openPlant.collect { plantId ->
-                        // navigate to the route that expects an id
                         navController.navigate("${Route.ADD_EDIT_PLANT}/$plantId") {
                             launchSingleTop = true
                         }
                     }
                 }
-                Scaffold(modifier = Modifier.fillMaxSize()) {
 
+                Scaffold(modifier = Modifier.fillMaxSize()) {
                     NavHost(navController = navController, startDestination = Route.PLANT_LIST) {
                         composable(Route.PLANT_LIST) {
                             PlantListScreen(navController)
                         }
                         composable(Route.ADD_EDIT_PLANT) {
-                            AddEditPlantScreen(
-                                navController, plantId = -1,
-                            )
+                            AddEditPlantScreen(navController, plantId = -1)
                         }
                         composable(
                             "${Route.ADD_EDIT_PLANT}/{plantId}",
@@ -105,15 +96,17 @@ class MainActivity : AppCompatActivity() {
                         ) { backStackEntry ->
                             AddEditPlantScreen(
                                 navController,
-                                plantId = backStackEntry.arguments?.getInt("plantId") ?: -1,
+                                plantId = backStackEntry.arguments?.getInt("plantId") ?: -1
                             )
                         }
                         composable(
                             Route.PLANT_DETAILS,
                             arguments = listOf(navArgument("plantId") { type = NavType.IntType })
                         ) { backStackEntry ->
-                            val plantId = backStackEntry.arguments?.getInt("plantId") ?: 0
-                            PlantDetailsScreen(navController, plantId)
+                            PlantDetailsScreen(
+                                navController,
+                                backStackEntry.arguments?.getInt("plantId") ?: 0
+                            )
                         }
                         composable(Route.NOTIFICATIONS) {
                             NotificationScreen(navController)
@@ -132,20 +125,16 @@ class MainActivity : AppCompatActivity() {
                             SettingsNotificationsScreen(navController, viewModel)
                         }
                         composable(Route.BLE) {
-                            BleScreen(
-                                navController
-                            )
+                            BleScreen(navController)
                         }
                         composable(
                             Route.BLE_LINK,
                             arguments = listOf(navArgument("plantId") { type = NavType.IntType })
-                        ) { backStackEntry ->
+                        ) {
                             BleScreen(
                                 navController = navController,
                                 onClose = { navController.popBackStack() },
                                 onDeviceSelected = { device ->
-                                    // Pass the selected device info back to PlantDetailsScreen
-                                    // PlantDetailsScreen will handle both linking and connecting
                                     navController.previousBackStackEntry?.savedStateHandle?.apply {
                                         set(Route.KEY_SELECTED_DEVICE_ADDRESS, device.address)
                                         set(Route.KEY_SELECTED_DEVICE_NAME, device.name)
@@ -159,18 +148,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
         handleIntent(intent)
-
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
-
-    // Handle intents when Activity already exists (foreground case)
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         handleIntent(intent)
     }
-
 }
