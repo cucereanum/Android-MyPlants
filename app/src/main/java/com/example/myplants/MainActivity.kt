@@ -39,7 +39,6 @@ import com.example.myplants.presentation.settings.notifications.SettingsNotifica
 import com.example.myplants.presentation.theme.MyPlantsTheme
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.myplants.presentation.bleLink.BleLinkViewModel
 
 @RequiresApi(Build.VERSION_CODES.S)
 @AndroidEntryPoint
@@ -141,13 +140,16 @@ class MainActivity : AppCompatActivity() {
                             Route.BLE_LINK,
                             arguments = listOf(navArgument("plantId") { type = NavType.IntType })
                         ) { backStackEntry ->
-                            val plantId = backStackEntry.arguments?.getInt("plantId") ?: 0
-                            val viewModel: BleLinkViewModel = hiltViewModel()
                             BleScreen(
                                 navController = navController,
                                 onClose = { navController.popBackStack() },
                                 onDeviceSelected = { device ->
-                                    viewModel.linkDeviceToPlant(plantId = plantId, device = device)
+                                    // Pass the selected device info back to PlantDetailsScreen
+                                    // PlantDetailsScreen will handle both linking and connecting
+                                    navController.previousBackStackEntry?.savedStateHandle?.apply {
+                                        set(Route.KEY_SELECTED_DEVICE_ADDRESS, device.address)
+                                        set(Route.KEY_SELECTED_DEVICE_NAME, device.name)
+                                    }
                                     navController.popBackStack()
                                 }
                             )

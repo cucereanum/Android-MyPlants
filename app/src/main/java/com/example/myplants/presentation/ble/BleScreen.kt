@@ -43,11 +43,18 @@ fun BleScreen(
     // Xiaomi FE95 service UUID (scan filter)
     val fe95 = remember { BleUuids.SERVICE_XIAOMI_FE95 }
 
+    val isLinkMode = onDeviceSelected != null
+
     // Make sure we disconnect if user leaves the screen (back/close)
     val latestOnClose by rememberUpdatedState(onClose)
-    val closeScreen = remember(viewModel) {
+    val closeScreen = remember(viewModel, isLinkMode) {
         {
-            viewModel.disconnect()
+            if (!isLinkMode) {
+                viewModel.disconnect()
+            } else {
+                // In link mode, just stop scanning - don't disconnect
+                viewModel.stopScan()
+            }
             latestOnClose()
         }
     }
@@ -56,8 +63,16 @@ fun BleScreen(
     }
 
     // Also disconnect on disposal (e.g., navigate away)
-    DisposableEffect(Unit) {
-        onDispose { viewModel.disconnect() }
+    // But only if NOT in link mode - PlantDetailsScreen will handle the connection
+    DisposableEffect(isLinkMode) {
+        onDispose {
+            if (!isLinkMode) {
+                viewModel.disconnect()
+            } else {
+                // In link mode, just stop scanning - don't disconnect the BLE manager
+                viewModel.stopScan()
+            }
+        }
     }
 
     // Permission launcher

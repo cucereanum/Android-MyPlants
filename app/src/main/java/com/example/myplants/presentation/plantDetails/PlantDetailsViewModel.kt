@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.annotation.StringRes
 import com.example.myplants.data.Plant
+import com.example.myplants.data.ble.BleDevice
 import com.example.myplants.data.ble.ConnectionState
 import com.example.myplants.R
 import com.example.myplants.domain.repository.PlantRepository
@@ -89,11 +90,16 @@ class PlantDetailsViewModel @Inject constructor(
         connectJob?.cancel()
         liveJob?.cancel()
 
-        // Small delay to ensure cleanup is complete before starting new connection
+        val currentConnectionState = _state.value.connectionState
+
         viewModelScope.launch {
-            // Disconnect to reset the BLE repository state
-            bleManagerRepository.disconnect()
-            kotlinx.coroutines.delay(200)
+            // Only disconnect if we're not already in Idle state
+            // This avoids unnecessary disconnect when coming from a fresh link
+            if (currentConnectionState !is ConnectionState.Idle) {
+                android.util.Log.d("PlantDetails", "Disconnecting before reconnecting...")
+                bleManagerRepository.disconnect()
+                kotlinx.coroutines.delay(200)
+            }
             startConnection(address)
         }
     }
@@ -213,27 +219,66 @@ class PlantDetailsViewModel @Inject constructor(
                 "refreshLinkedSensor: newDeviceId=$newDeviceId, lastKnownSensorDeviceId=$lastKnownSensorDeviceId, hasCompletedInitialLoad=$hasCompletedInitialLoad"
             )
 
-            // Auto-connect if:
-            // 1. Initial load is complete (not first composition)
-            // 2. We didn't have a sensor before (lastKnownSensorDeviceId was null)
-            // 3. We now have a sensor (newDeviceId is not null)
-            val shouldAutoConnect = hasCompletedInitialLoad &&
-                    lastKnownSensorDeviceId == null &&
-                    newDeviceId != null
+            // Update the tracked sensor ID (no auto-connect here anymore - handled by linkAndConnectSensor)
+            lastKnownSensorDeviceId = newDeviceId
+        }
+    }
 
-            android.util.Log.d("PlantDetails", "shouldAutoConnect=$shouldAutoConnect")
+    /**
+     * Links a BLE device to the plant and then connects to it.
+     * This is called when user selects a device from the BLE_LINK screen.
+     */
+    fun linkAndConnectSensor(plantId: Int, deviceAddress: String, deviceName: String?) {
+        android.util.Log.d(
+            "PlantDetails",
+            "linkAndConnectSensor: plantId=$plantId, address=$deviceAddress, name=$deviceName"
+        )
 
-            if (shouldAutoConnect) {
-                android.util.Log.d(
-                    "PlantDetails",
-                    "New sensor linked, auto-connecting to $newDeviceId"
+        viewModelScope.launch {
+            // Small delay to ensure BleScreen has fully cleaned up
+            kotlinx.coroutines.delay(100)
+
+            // Create BleDevice and save to database
+            val device = BleDevice(
+                address = deviceAddress,
+                name = deviceName,
+                rssi = null,
+                serviceUuids = emptyList()
+            )
+
+            runCatching {
+                bleDatabaseRepository.linkDeviceToPlant(
+                    plantId = plantId,
+                    device = device
                 )
-                lastKnownSensorDeviceId = newDeviceId
-                connectToLinkedSensor()
-            } else {
-                // Update the tracked sensor ID
-                lastKnownSensorDeviceId = newDeviceId
             }
+                .onFailure { throwable ->
+                    android.util.Log.e(
+                        "PlantDetails",
+                        "Failed to link device: ${throwable.message}",
+                        throwable
+                    )
+                    _state.update { it.copy(errorMessage = throwable.message) }
+                    return@launch
+                }
+
+            android.util.Log.d(
+                "PlantDetails",
+                "Device linked successfully, refreshing and connecting..."
+            )
+
+            // Refresh the linked sensor from DB to update UI
+            val linkedSensor = runCatching { bleDatabaseRepository.getDeviceByPlantId(plantId) }
+                .getOrElse { throwable ->
+                    _state.update { it.copy(errorMessage = throwable.message) }
+                    return@launch
+                }
+
+            _state.update { it.copy(linkedSensor = linkedSensor, errorMessage = null) }
+            lastKnownSensorDeviceId = linkedSensor?.deviceId
+
+            // Now connect to the sensor
+            connectToLinkedSensor()
         }
     }
 

@@ -117,6 +117,26 @@ fun PlantDetailsScreen(
         viewModel.loadPlant(plantId)
     }
 
+    // Observe savedStateHandle for selected device from BLE_LINK screen
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+    LaunchedEffect(savedStateHandle) {
+        val deviceAddress = savedStateHandle?.get<String>(Route.KEY_SELECTED_DEVICE_ADDRESS)
+        val deviceName = savedStateHandle?.get<String>(Route.KEY_SELECTED_DEVICE_NAME)
+
+        if (deviceAddress != null) {
+            android.util.Log.d(
+                "PlantDetailsScreen",
+                "Received selected device: address=$deviceAddress, name=$deviceName"
+            )
+            // Clear the saved state to prevent re-processing on recomposition
+            savedStateHandle.remove<String>(Route.KEY_SELECTED_DEVICE_ADDRESS)
+            savedStateHandle.remove<String>(Route.KEY_SELECTED_DEVICE_NAME)
+
+            // Link the device and connect to it
+            viewModel.linkAndConnectSensor(plantId, deviceAddress, deviceName)
+        }
+    }
+
     // Check for linked sensor changes when screen resumes (e.g., coming back from linking a sensor)
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -124,7 +144,7 @@ fun PlantDetailsScreen(
             android.util.Log.d("PlantDetailsScreen", "Lifecycle event: $event")
             if (event == Lifecycle.Event.ON_RESUME) {
                 android.util.Log.d("PlantDetailsScreen", "ON_RESUME - calling refreshLinkedSensor")
-                // Refresh linked sensor when screen resumes - this will auto-connect if a new sensor was just linked
+                // Refresh linked sensor when screen resumes
                 viewModel.refreshLinkedSensor(plantId)
             }
         }
