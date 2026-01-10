@@ -149,4 +149,67 @@
     <string name="notification_item_daily_title">Tägliche Pflanzenbenachrichtigung</string>
     <string name="notification_item_go_to_plant">Zur Pflanze</string>
 
+    <!-- Notification Messages (Push) -->
+    <string name="notification_title_water_plant">Gieße deine Pflanze!</string>
+    <string name="notification_title_reminder">Vergiss nicht, deine Pflanze heute zu gießen!</string>
+    <string name="notification_content_needs_watering">%s muss gegossen werden</string>
+    <string name="notification_content_will_need_watering">%s muss heute gegossen werden</string>
+
+    <!-- Permission Toasts -->
+    <string name="permission_notification_denied">Benachrichtigungsberechtigung abgelehnt</string>
+    <string name="permission_notification_granted">Benachrichtigungsberechtigung erteilt</string>
+
+    <!-- BLE Screen -->
+    <string name="ble_title">BLE-Geräte</string>
+    <string name="ble_bluetooth_on">Bluetooth: AN</string>
+    <string name="ble_bluetooth_off">Bluetooth: AUS</string>
+    <string name="ble_stop_scan">Scan stoppen</string>
+    <string name="ble_scan_flower_care">Scannen (Flower Care)</string>
+    <string name="ble_connecting_address">Verbinde %s…</string>
+    <string name="ble_connected_address">Verbunden %s</string>
+    <string name="ble_services_ready_address">Dienste bereit %s</string>
+    <string name="ble_scan_error">Scan-Fehler: %s</string>
+    <string name="ble_plant_parameters_live">Pflanzenparameter (live)</string>
+    <string name="ble_reconnecting">Verbinde erneut…</string>
+    <string name="ble_reading_live_data">Lese Live-Daten…</string>
+    <string name="ble_connecting">Verbinde…</string>
+    <string name="ble_no_data_yet">Noch keine Daten</string>
+    <string name="ble_refresh_now">Jetzt aktualisieren</string>
+    <string name="ble_disconnect">Trennen</string>
+    <string name="ble_unnamed_device">Unbenannt</string>
+    <string name="ble_signal_strength">%d dBm</string>
+
+    <!-- Dates Dialog -->
+    <string name="dates_dialog_title">Termine</string>
+    <string name="dates_dialog_everyday">Jeden Tag</string>
+    <string name="dates_dialog_check_day_desc">Tag auswählen</string>
+    <string name="dialog_got_it">Verstanden</string>
+
+    <!-- Plant Size Dialog -->
+    <string name="plant_size_dialog_title">Pflanzengröße</string>
+    <string name="plant_size_dialog_check_size_desc">Größe auswählen</string>
+
+    <!-- Error/Retry -->
+    <string name="error_retry">Erneut versuchen</string>
+
+    <!-- Days of Week -->
+    <string name="day_monday">Montag</string>
+    <string name="day_tuesday">Dienstag</string>
+    <string name="day_wednesday">Mittwoch</string>
+    <string name="day_thursday">Donnerstag</string>
+    <string name="day_friday">Freitag</string>
+    <string name="day_saturday">Samstag</string>
+    <string name="day_sunday">Sonntag</string>
+
+    <!-- Plant Sizes -->
+    <string name="plant_size_small">Klein</string>
+    <string name="plant_size_medium">Mittel</string>
+    <string name="plant_size_large">Groß</string>
+    <string name="plant_size_extra_large">Sehr groß</string>
+
+    <!-- Filter Types -->
+    <string name="filter_upcoming">Anstehend</string>
+    <string name="filter_forgot_to_water">Vergessen zu gießen</string>
+    <string name="filter_history">Verlauf</string>
+
 </resources>

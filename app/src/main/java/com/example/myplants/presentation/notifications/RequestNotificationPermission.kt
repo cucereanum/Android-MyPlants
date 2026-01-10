@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.example.myplants.R
 
 @Composable
 fun RequestNotificationPermission() {
@@ -18,9 +19,15 @@ fun RequestNotificationPermission() {
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (!isGranted) {
-            Toast.makeText(context, "Notification permission denied", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                context,
+                context.getString(R.string.permission_notification_denied),
+                Toast.LENGTH_SHORT
+            ).show()
         } else {
-            Toast.makeText(context, "Notification permission granted", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                context,
+                context.getString(R.string.permission_notification_granted), Toast.LENGTH_SHORT).show()
         }
     }
 
