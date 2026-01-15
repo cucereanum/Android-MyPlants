@@ -51,8 +51,6 @@ class PlantsTodayWidget : GlanceAppWidget() {
 
 @Composable
 private fun PlantsTodayWidgetContent(context: Context) {
-    // For now, using hardcoded data to verify the widget works
-    // We'll connect to the database in the next step
     val plants = listOf(
         WidgetPlantData(1, "Monstera", false),
         WidgetPlantData(2, "Pothos", true),
