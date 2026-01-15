@@ -156,6 +156,8 @@
     <string name="widget_single_plant_description">Verfolge und gieße eine einzelne Pflanze</string>
     <string name="widget_loading">Laden…</string>
     <string name="widget_no_plants">Heute keine Pflanzen zu gießen! 🎉</string>
+    <string name="widget_no_plants_today">Keine Pflanzen für heute geplant</string>
+    <string name="widget_all_watered">Alle Pflanzen gegossen! 🎉</string>
     <string name="widget_add_plant">Füge deine erste Pflanze hinzu</string>
     <string name="widget_water">Gießen</string>
     <string name="widget_watered">Gegossen ✓</string>

@@ -1,10 +1,11 @@
 package com.example.myplants.widget
 
 import android.content.Context
-import android.content.Intent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -19,7 +20,9 @@ import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.background
+import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
@@ -35,27 +38,55 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.example.myplants.MainActivity
 import com.example.myplants.R
+import com.example.myplants.data.DayOfWeek
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
-/**
- * Plants Today Widget (4x2)
- * Shows a list of plants that need watering today
- */
 class PlantsTodayWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            PlantsTodayWidgetContent(context)
+            val updateTimestamp = currentState(key = LAST_UPDATE_KEY) ?: 0L
+
+            val plants = remember(updateTimestamp) {
+                runBlocking {
+                    getPlantsNeedingWaterToday(context)
+                }
+            }
+
+            PlantsTodayWidgetContent(context, plants)
+        }
+    }
+
+    companion object {
+        val LAST_UPDATE_KEY = longPreferencesKey("last_update_timestamp")
+    }
+
+    private suspend fun getPlantsNeedingWaterToday(context: Context): List<WidgetPlantData> {
+        val database = WidgetDatabaseHelper.getDatabase(context)
+
+        return try {
+            val allPlants = database.plantDao().getPlants().first()
+            val today = DayOfWeek.today()
+
+            allPlants
+                .filter { plant -> plant.selectedDays.contains(today) }
+                .map { plant ->
+                    WidgetPlantData(
+                        id = plant.id,
+                        name = plant.plantName,
+                        isWatered = plant.isWatered
+                    )
+                }
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 }
 
 @Composable
-private fun PlantsTodayWidgetContent(context: Context) {
-    val plants = listOf(
-        WidgetPlantData(1, "Monstera", false),
-        WidgetPlantData(2, "Pothos", true),
-        WidgetPlantData(3, "Snake Plant", false)
-    )
+private fun PlantsTodayWidgetContent(context: Context, plants: List<WidgetPlantData>) {
+    val plantsNeedingWater = plants.filter { !it.isWatered }
 
     GlanceTheme {
         Box(
@@ -70,7 +101,6 @@ private fun PlantsTodayWidgetContent(context: Context) {
                     .fillMaxSize()
                     .padding(12.dp)
             ) {
-                // Header
                 Row(
                     modifier = GlanceModifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -97,28 +127,41 @@ private fun PlantsTodayWidgetContent(context: Context) {
 
                 Spacer(modifier = GlanceModifier.height(8.dp))
 
-                if (plants.isEmpty()) {
-                    // Empty state
+                if (plantsNeedingWater.isEmpty()) {
                     Box(
                         modifier = GlanceModifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = context.getString(R.string.widget_no_plants),
-                            style = TextStyle(
-                                color = WidgetColorProviders.secondary,
-                                fontSize = 14.sp
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = GlanceModifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = "✓",
+                                style = TextStyle(
+                                    color = WidgetColorProviders.primary,
+                                    fontSize = 32.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             )
-                        )
+                            Spacer(modifier = GlanceModifier.height(8.dp))
+                            Text(
+                                text = if (plants.isEmpty()) {
+                                    context.getString(R.string.widget_no_plants_today)
+                                } else {
+                                    context.getString(R.string.widget_all_watered)
+                                },
+                                style = TextStyle(
+                                    color = WidgetColorProviders.secondary,
+                                    fontSize = 14.sp
+                                )
+                            )
+                        }
                     }
                 } else {
-                    // Plant list
                     LazyColumn {
-                        items(plants, itemId = { it.id.toLong() }) { plant ->
-                            PlantRowItem(
-                                context = context,
-                                plant = plant
-                            )
+                        items(plantsNeedingWater, itemId = { it.id.toLong() }) { plant ->
+                            PlantRowItem(context = context, plant = plant)
                         }
                     }
                 }
@@ -209,9 +252,21 @@ class MarkAsWateredAction : ActionCallback {
         parameters: ActionParameters
     ) {
         val plantId = parameters[plantIdKey] ?: return
+        val database = WidgetDatabaseHelper.getDatabase(context)
 
-        // TODO: Connect to repository to update plant
-        // For now, just update the widget
+        try {
+            val plant = database.plantDao().getPlantById(plantId) ?: return
+            database.plantDao().updatePlant(plant.copy(isWatered = true))
+            kotlinx.coroutines.delay(50)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return
+        }
+
+        updateAppWidgetState(context, glanceId) { prefs ->
+            prefs[PlantsTodayWidget.LAST_UPDATE_KEY] = System.currentTimeMillis()
+        }
+
         PlantsTodayWidget().update(context, glanceId)
     }
 }

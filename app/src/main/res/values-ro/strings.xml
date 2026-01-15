@@ -156,6 +156,8 @@
     <string name="widget_single_plant_description">Urmărește și udă o singură plantă</string>
     <string name="widget_loading">Se încarcă…</string>
     <string name="widget_no_plants">Nicio plantă de udat azi! 🎉</string>
+    <string name="widget_no_plants_today">Nicio plantă programată pentru azi</string>
+    <string name="widget_all_watered">Toate plantele udate! 🎉</string>
     <string name="widget_add_plant">Adaugă prima ta plantă</string>
     <string name="widget_water">Udă</string>
     <string name="widget_watered">Udat ✓</string>
