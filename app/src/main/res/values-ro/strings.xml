@@ -175,4 +175,67 @@
     <!-- Plant Details - Widget -->
     <string name="plant_details_add_widget">Adaugă widget pe ecranul de pornire</string>
 
+    <!-- Notification Messages (Push) -->
+    <string name="notification_title_water_plant">Udă-ți planta!</string>
+    <string name="notification_title_reminder">Nu uita să-ți uzi planta astăzi!</string>
+    <string name="notification_content_needs_watering">%s trebuie udată</string>
+    <string name="notification_content_will_need_watering">%s va trebui udată astăzi</string>
+
+    <!-- Permission Toasts -->
+    <string name="permission_notification_denied">Permisiunea pentru notificări a fost refuzată</string>
+    <string name="permission_notification_granted">Permisiunea pentru notificări a fost acordată</string>
+
+    <!-- BLE Screen -->
+    <string name="ble_title">Dispozitive BLE</string>
+    <string name="ble_bluetooth_on">Bluetooth: PORNIT</string>
+    <string name="ble_bluetooth_off">Bluetooth: OPRIT</string>
+    <string name="ble_stop_scan">Oprește scanarea</string>
+    <string name="ble_scan_flower_care">Scanează (Flower Care)</string>
+    <string name="ble_connecting_address">Se conectează %s…</string>
+    <string name="ble_connected_address">Conectat %s</string>
+    <string name="ble_services_ready_address">Servicii pregătite %s</string>
+    <string name="ble_scan_error">Eroare de scanare: %s</string>
+    <string name="ble_plant_parameters_live">Parametrii plantei (live)</string>
+    <string name="ble_reconnecting">Se reconectează…</string>
+    <string name="ble_reading_live_data">Se citesc datele live…</string>
+    <string name="ble_connecting">Se conectează…</string>
+    <string name="ble_no_data_yet">Încă nu există date</string>
+    <string name="ble_refresh_now">Actualizează acum</string>
+    <string name="ble_disconnect">Deconectează</string>
+    <string name="ble_unnamed_device">Fără nume</string>
+    <string name="ble_signal_strength">%d dBm</string>
+
+    <!-- Dates Dialog -->
+    <string name="dates_dialog_title">Date</string>
+    <string name="dates_dialog_everyday">În fiecare zi</string>
+    <string name="dates_dialog_check_day_desc">Selectează ziua</string>
+    <string name="dialog_got_it">Am înțeles</string>
+
+    <!-- Plant Size Dialog -->
+    <string name="plant_size_dialog_title">Dimensiunea plantei</string>
+    <string name="plant_size_dialog_check_size_desc">Selectează dimensiunea</string>
+
+    <!-- Error/Retry -->
+    <string name="error_retry">Reîncearcă</string>
+
+    <!-- Days of Week -->
+    <string name="day_monday">Luni</string>
+    <string name="day_tuesday">Marți</string>
+    <string name="day_wednesday">Miercuri</string>
+    <string name="day_thursday">Joi</string>
+    <string name="day_friday">Vineri</string>
+    <string name="day_saturday">Sâmbătă</string>
+    <string name="day_sunday">Duminică</string>
+
+    <!-- Plant Sizes -->
+    <string name="plant_size_small">Mică</string>
+    <string name="plant_size_medium">Medie</string>
+    <string name="plant_size_large">Mare</string>
+    <string name="plant_size_extra_large">Foarte mare</string>
+
+    <!-- Filter Types -->
+    <string name="filter_upcoming">Programate</string>
+    <string name="filter_forgot_to_water">Uitate de udat</string>
+    <string name="filter_history">Istoric</string>
+
 </resources>

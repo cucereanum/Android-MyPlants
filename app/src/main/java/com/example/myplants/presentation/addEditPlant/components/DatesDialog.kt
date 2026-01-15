@@ -28,11 +28,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.myplants.R
 import com.example.myplants.data.DayOfWeek
 
 @Composable
@@ -66,7 +68,7 @@ fun DatesDialog(
                 ) {
                     Text(
                         modifier = Modifier.padding(bottom = 30.dp),
-                        text = "Dates",
+                        text = stringResource(id = R.string.dates_dialog_title),
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Medium,
                         fontSize = 22.sp
@@ -94,13 +96,13 @@ fun DatesDialog(
                             Icon(
                                 modifier = Modifier.size(20.dp),
                                 imageVector = Icons.Default.Check,
-                                contentDescription = "Check Day",
+                                contentDescription = stringResource(id = R.string.dates_dialog_check_day_desc),
                                 tint = if (selectedDays.size == allDays.size) Color.White else Color.Transparent
                             )
                         }
                         Text(
                             modifier = Modifier.padding(start = 16.dp),
-                            text = "EveryDay",
+                            text = stringResource(id = R.string.dates_dialog_everyday),
                             color = if (selectedDays.size != allDays.size) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Medium
                         )

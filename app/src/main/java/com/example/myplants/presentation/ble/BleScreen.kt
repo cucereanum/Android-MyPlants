@@ -1,6 +1,5 @@
 package com.example.myplants.presentation.ble
 
-
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -11,7 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,32 +38,29 @@ fun BleScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // Xiaomi FE95 service UUID (scan filter)
     val fe95 = remember { BleUuids.SERVICE_XIAOMI_FE95 }
+    val isLinkMode = onDeviceSelected != null
 
-    // Make sure we disconnect if user leaves the screen (back/close)
     val latestOnClose by rememberUpdatedState(onClose)
-    val closeScreen = remember(viewModel) {
+    val closeScreen = remember(viewModel, isLinkMode) {
         {
-            viewModel.disconnect()
+            if (isLinkMode) viewModel.stopScan() else viewModel.disconnect()
             latestOnClose()
         }
     }
-    BackHandler {
-        closeScreen()
+
+    BackHandler { closeScreen() }
+
+    DisposableEffect(isLinkMode) {
+        onDispose {
+            if (isLinkMode) viewModel.stopScan() else viewModel.disconnect()
+        }
     }
 
-    // Also disconnect on disposal (e.g., navigate away)
-    DisposableEffect(Unit) {
-        onDispose { viewModel.disconnect() }
-    }
-
-    // Permission launcher
     val requestPerms = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { grantMap ->
-        val allGranted = grantMap.values.all { it }
-        if (allGranted) {
+        if (grantMap.values.all { it }) {
             viewModel.startScan(filterServiceUuid = fe95)
         } else {
             viewModel.stopScan()
@@ -77,7 +72,7 @@ fun BleScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "BLE Devices",
+                        text = stringResource(id = R.string.ble_title),
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Medium,
                         fontSize = 22.sp,
@@ -107,20 +102,20 @@ fun BleScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
-            // Bluetooth status + scan action
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    if (state.isBluetoothOn) "Bluetooth: ON" else "Bluetooth: OFF",
+                    if (state.isBluetoothOn) stringResource(id = R.string.ble_bluetooth_on) else stringResource(
+                        id = R.string.ble_bluetooth_off
+                    ),
                     style = MaterialTheme.typography.bodyLarge
                 )
 
                 if (state.scanning) {
-                    OutlinedButton(onClick = { viewModel.stopScan() }) { Text("Stop scan") }
+                    OutlinedButton(onClick = { viewModel.stopScan() }) { Text(stringResource(id = R.string.ble_stop_scan)) }
                 } else {
                     Button(
                         enabled = state.isBluetoothOn,
@@ -131,32 +126,50 @@ fun BleScreen(
                                 requestPerms.launch(BlePermissions.required())
                             }
                         }
-                    ) { Text("Scan (Flower Care)") }
+                    ) { Text(stringResource(id = R.string.ble_scan_flower_care)) }
                 }
             }
 
-            // Connection state chip / errors
             when (val cs = state.connectionState) {
                 is ConnectionState.Connecting ->
-                    AssistChip(onClick = {}, label = { Text("Connecting ${cs.deviceAddress}…") })
+                    AssistChip(onClick = {}, label = { Text(
+                        stringResource(
+                            id = R.string.ble_connecting_address,
+                            cs.deviceAddress
+                        )
+                    )
+                    })
 
                 is ConnectionState.Connected ->
-                    AssistChip(onClick = {}, label = { Text("Connected ${cs.deviceAddress}") })
+                    AssistChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                stringResource(
+                                    id = R.string.ble_connected_address,
+                                    cs.deviceAddress
+                                )
+                            )
+                        })
 
                 is ConnectionState.ServicesDiscovered ->
-                    AssistChip(onClick = {}, label = { Text("Services ready ${cs.deviceAddress}") })
-
-                is ConnectionState.Disconnected -> {
-                    // Don't show error message on disconnection (auto-reconnect handles it)
-                }
+                    AssistChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                stringResource(
+                                    id = R.string.ble_services_ready_address,
+                                    cs.deviceAddress
+                                )
+                            )
+                        })
 
                 is ConnectionState.ScanError ->
-                    Text("Scan error: ${cs.message}", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(id = R.string.ble_scan_error, cs.message), color = MaterialTheme.colorScheme.error)
 
                 else -> {}
             }
 
-            // Live readings card
             if (state.readings.isNotEmpty()) {
                 Card(Modifier.fillMaxWidth()) {
                     Column(
@@ -169,7 +182,7 @@ fun BleScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                "Plant parameters (live)",
+                                stringResource(id = R.string.ble_plant_parameters_live),
                                 style = MaterialTheme.typography.titleMedium
                             )
                             if (state.isReconnecting) {
@@ -187,19 +200,20 @@ fun BleScreen(
             } else {
                 Text(
                     when {
-                        state.isReconnecting -> "Reconnecting…"
+                        state.isReconnecting -> stringResource(id = R.string.ble_reconnecting)
                         state.connectionState is ConnectionState.ServicesDiscovered ||
-                                state.connectionState is ConnectionState.Connected -> "Reading live data…"
+                                state.connectionState is ConnectionState.Connected -> stringResource(
+                            id = R.string.ble_reading_live_data
+                        )
 
-                        state.connectionState is ConnectionState.Connecting -> "Connecting…"
-                        else -> "No data yet"
+                        state.connectionState is ConnectionState.Connecting -> stringResource(id = R.string.ble_connecting)
+                        else -> stringResource(id = R.string.ble_no_data_yet)
                     }
                 )
             }
 
             Spacer(Modifier.height(8.dp))
 
-            // Controls: refresh (reconnect) & disconnect
             val currentAddr: String? =
                 state.lastConnectedAddress ?: when (val cs = state.connectionState) {
                     is ConnectionState.Connecting -> cs.deviceAddress
@@ -212,20 +226,21 @@ fun BleScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
                     enabled = currentAddr != null && !state.isReconnecting,
-                    onClick = {
-                        currentAddr?.let { viewModel.connectTo(it, autoConnect = false) }
-                    }
-                ) { Text(if (state.isReconnecting) "Reconnecting..." else "Refresh now") }
+                    onClick = { currentAddr?.let { viewModel.connectTo(it, autoConnect = false) } }
+                ) { Text(if (state.isReconnecting) stringResource(id = R.string.ble_reconnecting) else stringResource(
+                    id = R.string.ble_refresh_now
+                )
+                )
+                }
 
                 OutlinedButton(
                     enabled = currentAddr != null,
                     onClick = { viewModel.disconnect() }
-                ) { Text("Disconnect") }
+                ) { Text(stringResource(id = R.string.ble_disconnect)) }
             }
 
             HorizontalDivider()
 
-            // Device list (tap to connect; live will start automatically after services)
             if (state.devices.isEmpty() && state.scanning) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                     CircularProgressIndicator()
@@ -237,8 +252,9 @@ fun BleScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(state.devices, key = { it.address }) { d ->
+                        val unnamedLabel = stringResource(id = R.string.ble_unnamed_device)
                         DeviceRow(
-                            name = d.name ?: "Unnamed",
+                            name = d.name ?: unnamedLabel,
                             address = d.address,
                             rssi = d.rssi,
                             onClick = {
@@ -282,7 +298,7 @@ private fun DeviceRow(
                 Text(address, style = MaterialTheme.typography.bodySmall)
             }
             if (rssi != null) {
-                Text("$rssi dBm", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(id = R.string.ble_signal_strength, rssi), style = MaterialTheme.typography.bodyMedium)
             }
         }
     }

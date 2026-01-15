@@ -79,12 +79,18 @@ import com.example.myplants.presentation.theme.LocalIsDarkTheme
 import com.example.myplants.presentation.util.DebounceClick
 import com.example.myplants.widget.WidgetUtils
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalLifecycleOwner
 
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun PlantDetailsScreen(
-    navController: NavController, plantId: Int, viewModel: PlantDetailsViewModel = hiltViewModel()
+    navController: NavController,
+    plantId: Int,
+    viewModel: PlantDetailsViewModel = hiltViewModel()
 ) {
     var showModal by remember { mutableStateOf(false) }
 
@@ -103,20 +109,36 @@ fun PlantDetailsScreen(
     )
     val pagerState = rememberPagerState(pageCount = { tabs.size })
 
+    DisposableEffect(Unit) {
+        onDispose { viewModel.disconnectSensor() }
+    }
+
     LaunchedEffect(plantId) {
         viewModel.loadPlant(plantId)
     }
 
-    LaunchedEffect(Unit) {
-        navController.currentBackStackEntryFlow.collect {
-            viewModel.refreshLinkedSensor(plantId)
+    // Handle selected device from BLE_LINK screen
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+    LaunchedEffect(savedStateHandle) {
+        val deviceAddress = savedStateHandle?.get<String>(Route.KEY_SELECTED_DEVICE_ADDRESS)
+        val deviceName = savedStateHandle?.get<String>(Route.KEY_SELECTED_DEVICE_NAME)
+
+        if (deviceAddress != null) {
+            savedStateHandle.remove<String>(Route.KEY_SELECTED_DEVICE_ADDRESS)
+            savedStateHandle.remove<String>(Route.KEY_SELECTED_DEVICE_NAME)
+            viewModel.linkAndConnectSensor(plantId, deviceAddress, deviceName)
         }
     }
 
-    LaunchedEffect(uiState.linkedSensor?.deviceId) {
-        if (uiState.linkedSensor != null) {
-            viewModel.connectToLinkedSensor()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshLinkedSensor(plantId)
+            }
         }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     LaunchedEffect(Unit) {
@@ -134,8 +156,6 @@ fun PlantDetailsScreen(
         }
     }
 
-
-
     Box(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
@@ -146,7 +166,7 @@ fun PlantDetailsScreen(
         ) {
             AsyncImage(
                 model = plant?.imageUri,
-                contentDescription = plant?.plantName, // Assuming plantName is sufficient for CD
+                contentDescription = plant?.plantName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -166,9 +186,8 @@ fun PlantDetailsScreen(
                             MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
                             CircleShape
                         )
-                        .clickable {
-                            navController.popBackStack()
-                        }) {
+                        .clickable { navController.popBackStack() }
+                ) {
                     Icon(
                         imageVector = Icons.Default.ChevronLeft,
                         contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc),
@@ -222,7 +241,8 @@ fun PlantDetailsScreen(
                                 DebounceClick.debounceClick {
                                     navController.navigate("${Route.ADD_EDIT_PLANT}/${plantId}")
                                 }
-                            }) {
+                            }
+                    ) {
                         Icon(
                             imageVector = Icons.Outlined.Edit,
                             contentDescription = stringResource(id = R.string.plant_details_edit_desc),
@@ -241,9 +261,8 @@ fun PlantDetailsScreen(
                                 MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
                                 CircleShape
                             )
-                            .clickable {
-                                showModal = true
-                            }) {
+                            .clickable { showModal = true }
+                    ) {
                         Icon(
                             imageVector = Icons.Outlined.Delete,
                             contentDescription = stringResource(id = R.string.plant_details_delete_desc),
@@ -283,7 +302,6 @@ fun PlantDetailsScreen(
                         .clip(RoundedCornerShape(10.dp))
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.surface)
-
                 ) {
                     Row(
                         modifier = Modifier
@@ -292,9 +310,7 @@ fun PlantDetailsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = stringResource(id = R.string.plant_details_size_label),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
@@ -310,25 +326,23 @@ fun PlantDetailsScreen(
                                 )
                             }
                         }
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = stringResource(id = R.string.plant_details_water_label),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 12.sp
                             )
-                            Text(
-                                text = "${plant?.waterAmount}${stringResource(id = R.string.plant_details_water_amount_suffix)}",
-                                color = MaterialTheme.colorScheme.primary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            plant?.waterAmount?.let { waterAmount ->
+                                Text(
+                                    text = "$waterAmount${stringResource(id = R.string.plant_details_water_amount_suffix)}",
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
-                        Column(
-                            modifier = Modifier.weight(2f)
-                        ) {
+                        Column(modifier = Modifier.weight(2f)) {
                             Text(
                                 text = stringResource(id = R.string.plant_details_frequency_label),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
@@ -346,7 +360,6 @@ fun PlantDetailsScreen(
                         }
                     }
                 }
-
             }
         }
 
@@ -359,7 +372,6 @@ fun PlantDetailsScreen(
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
-
             Spacer(modifier = Modifier.height(4.dp))
 
             TabRow(
@@ -370,9 +382,7 @@ fun PlantDetailsScreen(
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = pagerState.currentPage == index,
-                        onClick = {
-                            scope.launch { pagerState.animateScrollToPage(index) }
-                        },
+                        onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
                         text = { Text(title) }
                     )
                 }
@@ -385,193 +395,13 @@ fun PlantDetailsScreen(
                 modifier = Modifier.weight(1f)
             ) { pageIndex ->
                 when (pageIndex) {
-                    0 -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            plant?.plantName?.let {
-                                Text(
-                                    text = it,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-
-                            plant?.description?.let {
-                                Text(
-                                    text = it,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                            }
-                        }
-                    }
-
-                    1 -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(14.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    val sensorName = uiState.linkedSensor?.name
-                                    val sensorAddress = uiState.linkedSensor?.deviceId
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = stringResource(id = R.string.plant_details_sensor_title),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-
-                                        val connectionLabelResId = when (uiState.connectionState) {
-                                            is ConnectionState.Connecting -> R.string.plant_details_sensor_status_connecting
-                                            is ConnectionState.Connected -> R.string.plant_details_sensor_status_connected
-                                            is ConnectionState.ServicesDiscovered -> R.string.plant_details_sensor_status_reading
-                                            else -> R.string.plant_details_sensor_status_idle
-                                        }
-
-                                        AssistChip(
-                                            onClick = {},
-                                            enabled = false,
-                                            label = { Text(stringResource(id = connectionLabelResId)) },
-                                            colors = AssistChipDefaults.assistChipColors(
-                                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        )
-                                    }
-
-                                    if (!sensorName.isNullOrBlank()) {
-                                        Text(
-                                            text = sensorName,
-                                            color = MaterialTheme.colorScheme.secondary,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-
-                                    if (uiState.linkedSensor == null) {
-                                        Text(
-                                            text = stringResource(id = R.string.plant_details_sensor_no_linked),
-                                            color = MaterialTheme.colorScheme.secondary
-                                        )
-                                        Button(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            shape = RoundedCornerShape(12.dp),
-                                            onClick = {
-                                                DebounceClick.debounceClick {
-                                                    navController.navigate(
-                                                        Route.bleLinkRoute(
-                                                            plantId
-                                                        )
-                                                    )
-                                                }
-                                            }
-                                        ) {
-                                            Text(
-                                                text = stringResource(id = R.string.plant_details_sensor_link_button),
-                                                color = Color.White
-                                            )
-                                        }
-                                    } else {
-                                        if (!sensorAddress.isNullOrBlank()) {
-                                            Text(
-                                                text = sensorAddress,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
-
-                                        val parsed = uiState.sensorReadings
-                                        if (parsed != null) {
-                                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                parsed.temperatureC?.let { temperatureC ->
-                                                    SensorReadingRow(
-                                                        label = stringResource(id = R.string.plant_details_sensor_label_temperature),
-                                                        value = stringResource(
-                                                            id = R.string.plant_details_sensor_value_temperature,
-                                                            temperatureC
-                                                        )
-                                                    )
-                                                }
-                                                parsed.moisturePct?.let { moisturePct ->
-                                                    SensorReadingRow(
-                                                        label = stringResource(id = R.string.plant_details_sensor_label_moisture),
-                                                        value = stringResource(
-                                                            id = R.string.plant_details_sensor_value_percent,
-                                                            moisturePct
-                                                        )
-                                                    )
-                                                }
-                                                parsed.lightLux?.let { lightLux ->
-                                                    SensorReadingRow(
-                                                        label = stringResource(id = R.string.plant_details_sensor_label_light),
-                                                        value = stringResource(
-                                                            id = R.string.plant_details_sensor_value_lux,
-                                                            lightLux
-                                                        )
-                                                    )
-                                                }
-                                                parsed.conductivity?.let { conductivity ->
-                                                    SensorReadingRow(
-                                                        label = stringResource(id = R.string.plant_details_sensor_label_conductivity),
-                                                        value = stringResource(
-                                                            id = R.string.plant_details_sensor_value_conductivity,
-                                                            conductivity
-                                                        )
-                                                    )
-                                                }
-                                            }
-                                        } else {
-                                            Text(
-                                                text = stringResource(id = R.string.plant_details_sensor_no_data),
-                                                color = MaterialTheme.colorScheme.secondary
-                                            )
-                                        }
-
-                                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                            OutlinedButton(
-                                                modifier = Modifier.weight(1f),
-                                                onClick = { viewModel.connectToLinkedSensor() }
-                                            ) {
-                                                Text(stringResource(id = R.string.plant_details_sensor_refresh_button))
-                                            }
-                                            OutlinedButton(
-                                                modifier = Modifier.weight(1f),
-                                                onClick = {
-                                                    DebounceClick.debounceClick {
-                                                        viewModel.unlinkSensor(plantId)
-                                                    }
-                                                }
-                                            ) {
-                                                Text(stringResource(id = R.string.plant_details_sensor_unlink_button))
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    0 -> DetailsTab(plant)
+                    1 -> SensorTab(
+                        uiState = uiState,
+                        plantId = plantId,
+                        navController = navController,
+                        viewModel = viewModel
+                    )
                 }
             }
 
@@ -584,116 +414,351 @@ fun PlantDetailsScreen(
                     onClick = {
                         viewModel.onMarkAsWatered()
                         navController.popBackStack()
-                    }) {
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.plant_details_mark_as_watered_button),
-                            color = Color.White,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 16.sp
-                        )
                     }
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.plant_details_mark_as_watered_button),
+                        color = Color.White,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp
+                    )
                 }
             }
         }
     }
 
+    if (uiState.isLoading) {
+        LoadingOverlay()
+    }
+
+    if (!uiState.isLoading && plant == null && uiState.errorMessage != null) {
+        ErrorState(
+            message = uiState.errorMessage ?: "Failed to load plant",
+            onRetry = { viewModel.loadPlant(plantId) }
+        )
+    }
+
     if (uiState.isDeleting) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.6f)),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(56.dp),
-                strokeWidth = 6.dp,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
+        LoadingOverlay()
     }
 
     if (showModal) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.6f))
-                .graphicsLayer {
-                    renderEffect = RenderEffect.createBlurEffect(
-                        100f, 100f, Shader.TileMode.CLAMP
-                    ).asComposeRenderEffect()
+        DeleteConfirmationDialog(
+            onDismiss = { showModal = false },
+            onConfirm = {
+                DebounceClick.debounceClick {
+                    showModal = false
+                    viewModel.deletePlant()
                 }
-                .clickable { showModal = false })
+            }
+        )
+    }
+}
 
-        Box(
-            modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+@Composable
+private fun DetailsTab(plant: com.example.myplants.data.Plant?) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        plant?.plantName?.let {
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        plant?.description?.let {
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SensorTab(
+    uiState: PlantDetailsUiState,
+    plantId: Int,
+    navController: NavController,
+    viewModel: PlantDetailsViewModel
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .clickable { // This clickable on the dialog itself might be unintentional
-                        showModal = true
-                    }
-                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = stringResource(id = R.string.plant_details_delete_dialog_title),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = stringResource(id = R.string.plant_details_delete_dialog_message),
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(20.dp))
+                modifier = Modifier.padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                val sensorName = uiState.linkedSensor?.name
+                val sensorAddress = uiState.linkedSensor?.deviceId
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedButton(
-                        onClick = { showModal = false },
-                        shape = RoundedCornerShape(8.dp),
-                        border = BorderStroke(
-                            1.dp, color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1F)
-                        ),
-                        modifier = Modifier
-                            .width(140.dp)
-                            .height(40.dp),
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.dialog_cancel),
-                            color = MaterialTheme.colorScheme.secondary,
-                            fontSize = 16.sp
-                        )
+                    Text(
+                        text = stringResource(id = R.string.plant_details_sensor_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    val connectionLabelResId = when (uiState.connectionState) {
+                        is ConnectionState.Connecting -> R.string.plant_details_sensor_status_connecting
+                        is ConnectionState.Connected -> R.string.plant_details_sensor_status_connected
+                        is ConnectionState.ServicesDiscovered -> R.string.plant_details_sensor_status_reading
+                        else -> R.string.plant_details_sensor_status_idle
                     }
+
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        label = { Text(stringResource(id = connectionLabelResId)) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                }
+
+                if (!sensorName.isNullOrBlank()) {
+                    Text(
+                        text = sensorName,
+                        color = MaterialTheme.colorScheme.secondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                if (uiState.linkedSensor == null) {
+                    Text(
+                        text = stringResource(id = R.string.plant_details_sensor_no_linked),
+                        color = MaterialTheme.colorScheme.secondary
+                    )
                     Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
                         onClick = {
                             DebounceClick.debounceClick {
-                                showModal = false
-                                viewModel.deletePlant()
+                                navController.navigate(Route.bleLinkRoute(plantId))
                             }
-                        },
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier
-                            .width(140.dp)
-                            .height(40.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        }
                     ) {
                         Text(
-                            text = stringResource(id = R.string.plant_details_delete_dialog_confirm_button),
-                            color = Color.White,
-                            fontSize = 16.sp
+                            text = stringResource(id = R.string.plant_details_sensor_link_button),
+                            color = Color.White
+                        )
+                    }
+                } else {
+                    if (!sensorAddress.isNullOrBlank()) {
+                        Text(
+                            text = sensorAddress,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
+                    val parsed = uiState.sensorReadings
+                    if (parsed != null) {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            parsed.temperatureC?.let {
+                                SensorReadingRow(
+                                    label = stringResource(id = R.string.plant_details_sensor_label_temperature),
+                                    value = stringResource(
+                                        id = R.string.plant_details_sensor_value_temperature,
+                                        it
+                                    )
+                                )
+                            }
+                            parsed.moisturePct?.let {
+                                SensorReadingRow(
+                                    label = stringResource(id = R.string.plant_details_sensor_label_moisture),
+                                    value = stringResource(
+                                        id = R.string.plant_details_sensor_value_percent,
+                                        it
+                                    )
+                                )
+                            }
+                            parsed.lightLux?.let {
+                                SensorReadingRow(
+                                    label = stringResource(id = R.string.plant_details_sensor_label_light),
+                                    value = stringResource(
+                                        id = R.string.plant_details_sensor_value_lux,
+                                        it
+                                    )
+                                )
+                            }
+                            parsed.conductivity?.let {
+                                SensorReadingRow(
+                                    label = stringResource(id = R.string.plant_details_sensor_label_conductivity),
+                                    value = stringResource(
+                                        id = R.string.plant_details_sensor_value_conductivity,
+                                        it
+                                    )
+                                )
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = stringResource(id = R.string.plant_details_sensor_no_data),
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedButton(
+                            modifier = Modifier.weight(1f),
+                            onClick = { viewModel.connectToLinkedSensor() }
+                        ) {
+                            Text(stringResource(id = R.string.plant_details_sensor_refresh_button))
+                        }
+                        OutlinedButton(
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                DebounceClick.debounceClick { viewModel.unlinkSensor(plantId) }
+                            }
+                        ) {
+                            Text(stringResource(id = R.string.plant_details_sensor_unlink_button))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LoadingOverlay() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.6f)),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(56.dp),
+            strokeWidth = 6.dp,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+private fun ErrorState(message: String, onRetry: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp)
+            )
+            Button(onClick = onRetry) {
+                Text("Retry")
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.S)
+@Composable
+private fun DeleteConfirmationDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.6f))
+            .graphicsLayer {
+                renderEffect = RenderEffect
+                    .createBlurEffect(100f, 100f, Shader.TileMode.CLAMP)
+                    .asComposeRenderEffect()
+            }
+            .clickable { onDismiss() }
+    )
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .clickable { }
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(id = R.string.plant_details_delete_dialog_title),
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = stringResource(id = R.string.plant_details_delete_dialog_message),
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                OutlinedButton(
+                    onClick = onDismiss,
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.1F)
+                    ),
+                    modifier = Modifier
+                        .width(140.dp)
+                        .height(40.dp),
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.dialog_cancel),
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontSize = 16.sp
+                    )
+                }
+                Button(
+                    onClick = onConfirm,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .width(140.dp)
+                        .height(40.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.plant_details_delete_dialog_confirm_button),
+                        color = Color.White,
+                        fontSize = 16.sp
+                    )
                 }
             }
         }

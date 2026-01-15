@@ -175,4 +175,67 @@
     <!-- Plant Details - Widget -->
     <string name="plant_details_add_widget">Add Widget to Home</string>
 
+    <!-- Notification Messages (Push) -->
+    <string name="notification_title_water_plant">Water your plant!</string>
+    <string name="notification_title_reminder">Don\'t forget to water your plant today!</string>
+    <string name="notification_content_needs_watering">%s needs watering</string>
+    <string name="notification_content_will_need_watering">%s will need watering today</string>
+
+    <!-- Permission Toasts -->
+    <string name="permission_notification_denied">Notification permission denied</string>
+    <string name="permission_notification_granted">Notification permission granted</string>
+
+    <!-- BLE Screen -->
+    <string name="ble_title">BLE Devices</string>
+    <string name="ble_bluetooth_on">Bluetooth: ON</string>
+    <string name="ble_bluetooth_off">Bluetooth: OFF</string>
+    <string name="ble_stop_scan">Stop scan</string>
+    <string name="ble_scan_flower_care">Scan (Flower Care)</string>
+    <string name="ble_connecting_address">Connecting %s…</string>
+    <string name="ble_connected_address">Connected %s</string>
+    <string name="ble_services_ready_address">Services ready %s</string>
+    <string name="ble_scan_error">Scan error: %s</string>
+    <string name="ble_plant_parameters_live">Plant parameters (live)</string>
+    <string name="ble_reconnecting">Reconnecting…</string>
+    <string name="ble_reading_live_data">Reading live data…</string>
+    <string name="ble_connecting">Connecting…</string>
+    <string name="ble_no_data_yet">No data yet</string>
+    <string name="ble_refresh_now">Refresh now</string>
+    <string name="ble_disconnect">Disconnect</string>
+    <string name="ble_unnamed_device">Unnamed</string>
+    <string name="ble_signal_strength">%d dBm</string>
+
+    <!-- Dates Dialog -->
+    <string name="dates_dialog_title">Dates</string>
+    <string name="dates_dialog_everyday">EveryDay</string>
+    <string name="dates_dialog_check_day_desc">Check Day</string>
+    <string name="dialog_got_it">Got it</string>
+
+    <!-- Plant Size Dialog -->
+    <string name="plant_size_dialog_title">Plant Size</string>
+    <string name="plant_size_dialog_check_size_desc">Check Size</string>
+
+    <!-- Error/Retry -->
+    <string name="error_retry">Retry</string>
+
+    <!-- Days of Week -->
+    <string name="day_monday">Monday</string>
+    <string name="day_tuesday">Tuesday</string>
+    <string name="day_wednesday">Wednesday</string>
+    <string name="day_thursday">Thursday</string>
+    <string name="day_friday">Friday</string>
+    <string name="day_saturday">Saturday</string>
+    <string name="day_sunday">Sunday</string>
+
+    <!-- Plant Sizes -->
+    <string name="plant_size_small">Small</string>
+    <string name="plant_size_medium">Medium</string>
+    <string name="plant_size_large">Large</string>
+    <string name="plant_size_extra_large">Extra Large</string>
+
+    <!-- Filter Types -->
+    <string name="filter_upcoming">Upcoming</string>
+    <string name="filter_forgot_to_water">Forgot to Water</string>
+    <string name="filter_history">History</string>
+
 </resources>

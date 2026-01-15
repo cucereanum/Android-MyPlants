@@ -12,6 +12,9 @@ object Route {
     const val BLE = "ble"
     const val BLE_LINK = "ble_link/{plantId}"
 
+    const val KEY_SELECTED_DEVICE_ADDRESS = "selected_device_address"
+    const val KEY_SELECTED_DEVICE_NAME = "selected_device_name"
+
     fun plantDetailsRoute(plantId: Int): String {
         return "plant_details/$plantId"
     }

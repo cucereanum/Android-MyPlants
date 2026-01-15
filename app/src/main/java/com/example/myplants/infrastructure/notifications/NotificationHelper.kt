@@ -35,14 +35,14 @@ class NotificationHelper @Inject constructor(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val title = if (type == NotificationType.FORGOT) {
-            "Water your plant!"
+            context.getString(R.string.notification_title_water_plant)
         } else {
-            "Don't forget to water your plant today!"
+            context.getString(R.string.notification_title_reminder)
         }
         val contentText = if (type == NotificationType.FORGOT) {
-            "${plant.plantName} needs watering"
+            context.getString(R.string.notification_content_needs_watering, plant.plantName)
         } else {
-            "${plant.plantName} will need watering today"
+            context.getString(R.string.notification_content_will_need_watering, plant.plantName)
         }
 
         val notificationManager = NotificationManagerCompat.from(context)
