@@ -44,12 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
-import androidx.glance.appwidget.updateAll
 import coil.compose.AsyncImage
 import com.example.myplants.R
 import com.example.myplants.data.Plant
@@ -78,13 +74,10 @@ class SinglePlantWidgetConfigActivity : ComponentActivity() {
         // Set result to CANCELED in case the user backs out
         setResult(RESULT_CANCELED)
 
-        // Get the widget ID from the intent
         appWidgetId = intent?.extras?.getInt(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID
+            AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
         ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
 
-        // If widget ID is invalid, finish
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             finish()
             return
@@ -93,11 +86,9 @@ class SinglePlantWidgetConfigActivity : ComponentActivity() {
         setContent {
             MyPlantsTheme {
                 PlantSelectionScreen(
-                    plantsFlow = database.plantDao().getPlants(),
-                    onPlantSelected = { plant ->
+                    plantsFlow = database.plantDao().getPlants(), onPlantSelected = { plant ->
                         saveWidgetConfig(plant)
-                    }
-                )
+                    })
             }
         }
     }
@@ -105,25 +96,26 @@ class SinglePlantWidgetConfigActivity : ComponentActivity() {
     private fun saveWidgetConfig(plant: Plant) {
         val scope = kotlinx.coroutines.MainScope()
         scope.launch {
-            // Save the selected plant to widget state
-            val glanceId = GlanceAppWidgetManager(this@SinglePlantWidgetConfigActivity)
-                .getGlanceIdBy(appWidgetId)
+            try {
+                val glanceId =
+                    GlanceAppWidgetManager(this@SinglePlantWidgetConfigActivity).getGlanceIdBy(
+                        appWidgetId
+                    )
 
-            updateAppWidgetState(this@SinglePlantWidgetConfigActivity, glanceId) { prefs ->
-                prefs[intPreferencesKey("selected_plant_id")] = plant.id
-                prefs[stringPreferencesKey("selected_plant_name")] = plant.plantName
-                prefs[booleanPreferencesKey("selected_plant_watered")] = plant.isWatered
+                updateAppWidgetState(this@SinglePlantWidgetConfigActivity, glanceId) { prefs ->
+                    prefs[SinglePlantWidget.PLANT_ID_KEY] = plant.id
+                }
+
+                SinglePlantWidget().update(this@SinglePlantWidgetConfigActivity, glanceId)
+
+                val resultIntent = Intent().apply {
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                }
+                setResult(RESULT_OK, resultIntent)
+                finish()
+            } catch (e: Exception) {
+                finish()
             }
-
-            // Update the widget
-            SinglePlantWidget().update(this@SinglePlantWidgetConfigActivity, glanceId)
-
-            // Return success
-            val resultIntent = Intent().apply {
-                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-            }
-            setResult(RESULT_OK, resultIntent)
-            finish()
         }
     }
 }
@@ -131,11 +123,9 @@ class SinglePlantWidgetConfigActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PlantSelectionScreen(
-    plantsFlow: Flow<List<Plant>>,
-    onPlantSelected: (Plant) -> Unit
+    plantsFlow: Flow<List<Plant>>, onPlantSelected: (Plant) -> Unit
 ) {
     val plants by plantsFlow.collectAsState(initial = emptyList())
-    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -146,15 +136,12 @@ private fun PlantSelectionScreen(
                         fontWeight = FontWeight.Medium,
                         fontSize = 20.sp
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
+                }, colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
-        }
-    ) { paddingValues ->
+        }) { paddingValues ->
         if (plants.isEmpty()) {
-            // Loading or empty state
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -174,16 +161,13 @@ private fun PlantSelectionScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item { Spacer(modifier = Modifier.height(8.dp)) }
 
                 items(plants, key = { it.id }) { plant ->
                     PlantSelectionItem(
-                        plant = plant,
-                        onClick = { onPlantSelected(plant) }
-                    )
+                        plant = plant, onClick = { onPlantSelected(plant) })
                 }
 
                 item { Spacer(modifier = Modifier.height(8.dp)) }
@@ -194,8 +178,7 @@ private fun PlantSelectionScreen(
 
 @Composable
 private fun PlantSelectionItem(
-    plant: Plant,
-    onClick: () -> Unit
+    plant: Plant, onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -212,7 +195,6 @@ private fun PlantSelectionItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Plant image
             AsyncImage(
                 model = plant.imageUri,
                 contentDescription = plant.plantName,
@@ -224,7 +206,6 @@ private fun PlantSelectionItem(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Plant info
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = plant.plantName,
@@ -242,7 +223,6 @@ private fun PlantSelectionItem(
                 )
             }
 
-            // Selection indicator
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,

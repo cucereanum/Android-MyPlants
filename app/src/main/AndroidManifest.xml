@@ -88,6 +88,11 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/single_plant_widget_info" />
         </receiver>
+
+        <!-- Single Plant Widget Pin Callback Receiver -->
+        <receiver
+            android:name=".widget.SinglePlantWidgetPinReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

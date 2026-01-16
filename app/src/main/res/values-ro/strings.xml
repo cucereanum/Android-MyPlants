@@ -167,6 +167,7 @@
     <string name="widget_no_plant_selected">Nicio plantă selectată</string>
     <string name="widget_tap_to_configure">Apasă pentru a selecta o plantă</string>
     <string name="widget_mark_watered_success">Planta a fost marcată ca udată!</string>
+    <string name="widget_no_need_water_today">Nu trebuie udată astăzi</string>
 
     <!-- Settings - Widgets -->
     <string name="settings_section_widgets">Widgeturi</string>

@@ -209,7 +209,12 @@ fun PlantDetailsScreen(
                             .clickable {
                                 DebounceClick.debounceClick {
                                     if (WidgetUtils.isWidgetPinningSupported(context)) {
-                                        WidgetUtils.requestPinSinglePlantWidget(context)
+                                        scope.launch {
+                                            WidgetUtils.requestPinSinglePlantWidget(
+                                                context,
+                                                plantId
+                                            )
+                                        }
                                     } else {
                                         Toast.makeText(
                                             context,
