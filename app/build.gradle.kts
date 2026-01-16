@@ -99,4 +99,7 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.ble)
+    // Glance for App Widgets
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
 }

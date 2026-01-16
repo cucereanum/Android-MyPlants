@@ -31,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -76,6 +77,7 @@ import com.example.myplants.data.ble.ConnectionState
 import com.example.myplants.navigation.Route
 import com.example.myplants.presentation.theme.LocalIsDarkTheme
 import com.example.myplants.presentation.util.DebounceClick
+import com.example.myplants.widget.WidgetUtils
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.Lifecycle
@@ -196,6 +198,43 @@ fun PlantDetailsScreen(
                     )
                 }
                 Row {
+                    // Add Widget button
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                                CircleShape
+                            )
+                            .clickable {
+                                DebounceClick.debounceClick {
+                                    if (WidgetUtils.isWidgetPinningSupported(context)) {
+                                        scope.launch {
+                                            WidgetUtils.requestPinSinglePlantWidget(
+                                                context,
+                                                plantId
+                                            )
+                                        }
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "Please add widgets manually from your home screen",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Widgets,
+                            contentDescription = stringResource(id = R.string.plant_details_add_widget),
+                            modifier = Modifier
+                                .size(24.dp)
+                                .align(Alignment.Center),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    // Edit button
                     Box(
                         modifier = Modifier
                             .size(40.dp)
@@ -218,7 +257,8 @@ fun PlantDetailsScreen(
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    // Delete button
                     Box(
                         modifier = Modifier
                             .size(40.dp)

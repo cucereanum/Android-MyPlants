@@ -1,5 +1,6 @@
 package com.example.myplants.presentation.plantDetails
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.annotation.StringRes
@@ -10,6 +11,7 @@ import com.example.myplants.R
 import com.example.myplants.domain.repository.PlantRepository
 import com.example.myplants.domain.repository.BleDatabaseRepository
 import com.example.myplants.domain.repository.BleManagerRepository
+import com.example.myplants.widget.WidgetUpdateManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -31,6 +33,7 @@ class PlantDetailsViewModel @Inject constructor(
     private val repository: PlantRepository,
     private val bleDatabaseRepository: BleDatabaseRepository,
     private val bleManagerRepository: BleManagerRepository,
+    private val application: Application,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PlantDetailsUiState())
@@ -208,6 +211,15 @@ class PlantDetailsViewModel @Inject constructor(
                 unlinkSensor(plant.id)
                 repository.deletePlant(plant)
                 _state.update { it.copy(isDeleting = false, errorMessage = null) }
+
+                // Update widgets after deleting a plant
+                WidgetUpdateManager.updateAllWidgets(application)
+
+                _effect.emit(
+                    PlantDetailsEffect.ShowMessage(
+                        R.string.plant_details_deleted_successfully_message
+                    )
+                )
                 _effect.emit(PlantDetailsEffect.ShowMessage(R.string.plant_details_deleted_successfully_message))
                 _effect.emit(PlantDetailsEffect.NavigateBack)
             } catch (t: Throwable) {
@@ -222,6 +234,9 @@ class PlantDetailsViewModel @Inject constructor(
             viewModelScope.launch {
                 repository.updatePlant(updatedPlant)
                 _state.update { it.copy(plant = updatedPlant, errorMessage = null) }
+
+                // Update widgets after marking plant as watered
+                WidgetUpdateManager.updateAllWidgets(application)
             }
         }
     }

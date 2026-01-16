@@ -212,4 +212,31 @@
     <string name="filter_forgot_to_water">Vergessen zu gießen</string>
     <string name="filter_history">Verlauf</string>
 
+    <!-- Widgets -->
+    <string name="widget_plants_today_name">Pflanzen heute</string>
+    <string name="widget_plants_today_description">Zeigt Pflanzen, die heute gegossen werden müssen</string>
+    <string name="widget_single_plant_name">Einzelne Pflanze</string>
+    <string name="widget_single_plant_description">Verfolge und gieße eine einzelne Pflanze</string>
+    <string name="widget_loading">Laden…</string>
+    <string name="widget_no_plants">Heute keine Pflanzen zu gießen! 🎉</string>
+    <string name="widget_no_plants_today">Keine Pflanzen für heute geplant</string>
+    <string name="widget_all_watered">Alle Pflanzen gegossen! 🎉</string>
+    <string name="widget_add_plant">Füge deine erste Pflanze hinzu</string>
+    <string name="widget_water">Gießen</string>
+    <string name="widget_watered">Gegossen ✓</string>
+    <string name="widget_needs_water">Braucht Wasser</string>
+    <string name="widget_plants_today_title">🌱 Pflanzen heute</string>
+    <string name="widget_select_plant">Pflanze auswählen</string>
+    <string name="widget_no_plant_selected">Keine Pflanze ausgewählt</string>
+    <string name="widget_tap_to_configure">Tippen, um eine Pflanze auszuwählen</string>
+    <string name="widget_mark_watered_success">Pflanze als gegossen markiert!</string>
+    <string name="widget_no_need_water_today">Muss heute nicht gegossen werden</string>
+
+    <!-- Settings - Widgets -->
+    <string name="settings_section_widgets">Widgets</string>
+    <string name="settings_item_add_widget">Widget zum Startbildschirm hinzufügen</string>
+
+    <!-- Plant Details - Widget -->
+    <string name="plant_details_add_widget">Widget zum Startbildschirm hinzufügen</string>
+
 </resources>

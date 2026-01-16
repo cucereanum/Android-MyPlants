@@ -1,5 +1,6 @@
 package com.example.myplants.presentation.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,8 @@ import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.outlined.Widgets
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,10 +40,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myplants.R
 import com.example.myplants.navigation.Route
+import com.example.myplants.widget.WidgetUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavController) {
+    val context = LocalContext.current
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -74,6 +80,27 @@ fun SettingsScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Section: Widgets
+            item { SettingsSpacer() }
+            item { SettingsSectionTitle(title = stringResource(id = R.string.settings_section_widgets)) }
+            item {
+                SettingsItem(
+                    icon = Icons.Outlined.Widgets,
+                    title = stringResource(id = R.string.settings_item_add_widget),
+                    onClick = {
+                        if (WidgetUtils.isWidgetPinningSupported(context)) {
+                            WidgetUtils.requestPinPlantsTodayWidget(context)
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Widget pinning is not supported on this device. Please add widgets manually from your home screen.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                )
+            }
+
             // Section: My Devices
             item { SettingsSpacer() }
             item { SettingsSectionTitle(title = stringResource(id = R.string.settings_section_devices)) }
@@ -84,13 +111,6 @@ fun SettingsScreen(navController: NavController) {
                     onClick = { navController.navigate(Route.BLE) }
                 )
             }
-//            item {
-//                SettingsItem(
-//                    icon = Icons.Outlined.Sync,
-//                    title = stringResource(id = R.string.settings_item_sensor_sync),
-//                    onClick = { /* navController.navigate(Route.SENSOR_SYNC_SETTINGS) */ }
-//                )
-//            }
 
             // Section: Preferences
             item { SettingsSpacer() }

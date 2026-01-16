@@ -21,7 +21,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.delay
@@ -47,7 +46,6 @@ class BleManagerRepositoryImpl @Inject constructor(
     @ApplicationContext private val appContext: Context,
 ) : BleManagerRepository {
 
-    private val scope = CoroutineScope(Dispatchers.IO)
 
     private val btManager by lazy { appContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager }
     private val btAdapter: BluetoothAdapter? get() = btManager.adapter

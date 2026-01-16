@@ -52,6 +52,47 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Widget Configuration Activity -->
+        <activity
+            android:name=".widget.SinglePlantWidgetConfigActivity"
+            android:exported="true"
+            android:theme="@style/Theme.MyPlants">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <!-- Plants Today Widget (4x2) -->
+        <receiver
+            android:name=".widget.PlantsTodayWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_plants_today_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/plants_today_widget_info" />
+        </receiver>
+
+        <!-- Single Plant Widget (2x2) -->
+        <receiver
+            android:name=".widget.SinglePlantWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_single_plant_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/single_plant_widget_info" />
+        </receiver>
+
+        <!-- Single Plant Widget Pin Callback Receiver -->
+        <receiver
+            android:name=".widget.SinglePlantWidgetPinReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

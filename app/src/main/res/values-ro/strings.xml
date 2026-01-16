@@ -149,6 +149,33 @@
     <string name="notification_item_daily_title">Notificare zilnică pentru plantă</string>
     <string name="notification_item_go_to_plant">Mergi la plantă</string>
 
+    <!-- Widgets -->
+    <string name="widget_plants_today_name">Plantele de azi</string>
+    <string name="widget_plants_today_description">Arată plantele care trebuie udate azi</string>
+    <string name="widget_single_plant_name">Plantă individuală</string>
+    <string name="widget_single_plant_description">Urmărește și udă o singură plantă</string>
+    <string name="widget_loading">Se încarcă…</string>
+    <string name="widget_no_plants">Nicio plantă de udat azi! 🎉</string>
+    <string name="widget_no_plants_today">Nicio plantă programată pentru azi</string>
+    <string name="widget_all_watered">Toate plantele udate! 🎉</string>
+    <string name="widget_add_plant">Adaugă prima ta plantă</string>
+    <string name="widget_water">Udă</string>
+    <string name="widget_watered">Udat ✓</string>
+    <string name="widget_needs_water">Are nevoie de apă</string>
+    <string name="widget_plants_today_title">🌱 Plantele de azi</string>
+    <string name="widget_select_plant">Selectează o plantă</string>
+    <string name="widget_no_plant_selected">Nicio plantă selectată</string>
+    <string name="widget_tap_to_configure">Apasă pentru a selecta o plantă</string>
+    <string name="widget_mark_watered_success">Planta a fost marcată ca udată!</string>
+    <string name="widget_no_need_water_today">Nu trebuie udată astăzi</string>
+
+    <!-- Settings - Widgets -->
+    <string name="settings_section_widgets">Widgeturi</string>
+    <string name="settings_item_add_widget">Adaugă widget pe ecranul de pornire</string>
+
+    <!-- Plant Details - Widget -->
+    <string name="plant_details_add_widget">Adaugă widget pe ecranul de pornire</string>
+
     <!-- Notification Messages (Push) -->
     <string name="notification_title_water_plant">Udă-ți planta!</string>
     <string name="notification_title_reminder">Nu uita să-ți uzi planta astăzi!</string>

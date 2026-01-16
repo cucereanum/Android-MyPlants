@@ -1,5 +1,6 @@
 package com.example.myplants.presentation.addEditPlant
 
+import android.app.Application
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
@@ -10,6 +11,7 @@ import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.Plant
 import com.example.myplants.domain.repository.ImageStorageRepository
 import com.example.myplants.domain.repository.PlantRepository
+import com.example.myplants.widget.WidgetUpdateManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +31,7 @@ import javax.inject.Inject
 class AddEditPlantViewModel @Inject constructor(
     private val plantRepository: PlantRepository,
     private val imageStorageRepository: ImageStorageRepository,
+    private val application: Application,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AddEditPlantState())
@@ -258,6 +261,9 @@ class AddEditPlantViewModel @Inject constructor(
                 } else {
                     plantRepository.updatePlant(plant)
                 }
+
+                // Update widgets after adding/updating a plant
+                WidgetUpdateManager.updateAllWidgets(application)
 
                 _effect.emit(
                     AddEditPlantEffect.ShowMessage(
