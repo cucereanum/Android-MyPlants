@@ -11,7 +11,7 @@ import com.example.myplants.data.converters.NotificationConverter
 
 @Database(
     entities = [Plant::class, NotificationEntity::class, ConnectedBleDeviceEntity::class],
-    version = 10
+    version = 11
 )
 @TypeConverters(value = [Converters::class, NotificationConverter::class])
 abstract class PlantDatabase : RoomDatabase() {

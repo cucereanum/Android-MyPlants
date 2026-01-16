@@ -34,7 +34,9 @@ object AppModule {
             app,
             PlantDatabase::class.java,
             PlantDatabase.DATABASE_NAME
-        ).fallbackToDestructiveMigration().build()
+        )
+            .fallbackToDestructiveMigration(false)
+            .build()
     }
 
     @Provides

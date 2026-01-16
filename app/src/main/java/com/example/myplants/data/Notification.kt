@@ -2,6 +2,7 @@ package com.example.myplants.data
 
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 enum class NotificationType {
@@ -9,7 +10,15 @@ enum class NotificationType {
 }
 
 @Immutable
-@Entity(tableName = "notifications")
+@Entity(
+    tableName = "notifications",
+    indices = [
+        Index(value = ["plantId"]),
+        Index(value = ["isRead"]),
+        Index(value = ["timestamp"]),
+        Index(value = ["type"])
+    ]
+)
 data class NotificationEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val plantId: Int,

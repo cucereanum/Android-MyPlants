@@ -2,10 +2,17 @@ package com.example.myplants.data
 
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Immutable
-@Entity
+@Entity(
+    indices = [
+        Index(value = ["isWatered"]),
+        Index(value = ["time"]),
+        Index(value = ["id"])
+    ]
+)
 data class Plant(
     val plantName: String,
     val imageUri: String,
