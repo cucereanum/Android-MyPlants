@@ -11,6 +11,7 @@ import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.Plant
 import com.example.myplants.domain.repository.ImageStorageRepository
 import com.example.myplants.domain.repository.PlantRepository
+import com.example.myplants.domain.util.handle
 import com.example.myplants.widget.WidgetUpdateManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -141,42 +142,43 @@ class AddEditPlantViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
-            try {
-                val plant = plantRepository.getPlantById(plantId)
-                if (plant == null) {
-                    _state.update { it.copy(isLoading = false) }
+
+            plantRepository.getPlantById(plantId).handle(
+                onSuccess = { plant ->
+                    _state.update {
+                        it.copy(
+                            plantId = plant.id,
+                            isWatered = plant.isWatered,
+                            plantName = plant.plantName,
+                            description = plant.description,
+                            waterAmount = plant.waterAmount,
+                            imageUri = plant.imageUri,
+                            selectedDays = plant.selectedDays,
+                            time = localDateTimeFromMillisOfDay(plant.time),
+                            plantSize = runCatching {
+                                com.example.myplants.data.PlantSizeType.valueOf(plant.size)
+                            }.getOrElse { com.example.myplants.data.PlantSizeType.Medium },
+                            isLoading = false,
+                        )
+                    }
+                },
+                onError = { message ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = message
+                        )
+                    }
                     _effect.emit(
                         AddEditPlantEffect.ShowMessage(
                             R.string.add_edit_plant_error_plant_not_found
                         )
                     )
-                    return@launch
+                },
+                onLoading = {
+                    _state.update { it.copy(isLoading = true) }
                 }
-
-                _state.update {
-                    it.copy(
-                        plantId = plant.id,
-                        isWatered = plant.isWatered,
-                        plantName = plant.plantName,
-                        description = plant.description,
-                        waterAmount = plant.waterAmount,
-                        imageUri = plant.imageUri,
-                        selectedDays = plant.selectedDays,
-                        time = localDateTimeFromMillisOfDay(plant.time),
-                        plantSize = runCatching {
-                            com.example.myplants.data.PlantSizeType.valueOf(plant.size)
-                        }.getOrElse { com.example.myplants.data.PlantSizeType.Medium },
-                        isLoading = false,
-                    )
-                }
-            } catch (t: Throwable) {
-                _state.update { it.copy(isLoading = false, errorMessage = t.message) }
-                _effect.emit(
-                    AddEditPlantEffect.ShowMessage(
-                        R.string.add_edit_plant_error_failed_to_load_plant
-                    )
-                )
-            }
+            )
         }
     }
 
@@ -256,25 +258,45 @@ class AddEditPlantViewModel @Inject constructor(
                 )
 
                 val isNewPlant = currentState.plantId == null
-                if (isNewPlant) {
+                val result = if (isNewPlant) {
                     plantRepository.insertPlant(plant)
                 } else {
                     plantRepository.updatePlant(plant)
                 }
 
-                // Update widgets after adding/updating a plant
-                WidgetUpdateManager.updateAllWidgets(application)
+                result.handle(
+                    onSuccess = {
+                        WidgetUpdateManager.updateAllWidgets(application)
 
-                _effect.emit(
-                    AddEditPlantEffect.ShowMessage(
-                        if (isNewPlant) {
-                            R.string.add_edit_plant_added_successfully_message
-                        } else {
-                            R.string.add_edit_plant_updated_successfully_message
+                        _effect.emit(
+                            AddEditPlantEffect.ShowMessage(
+                                if (isNewPlant) {
+                                    R.string.add_edit_plant_added_successfully_message
+                                } else {
+                                    R.string.add_edit_plant_updated_successfully_message
+                                }
+                            )
+                        )
+                        _effect.emit(AddEditPlantEffect.NavigateBack)
+                        _state.update { it.copy(isSaving = false) }
+                    },
+                    onError = { message ->
+                        _state.update {
+                            it.copy(
+                                isSaving = false,
+                                errorMessage = message
+                            )
                         }
-                    )
+                        _effect.emit(
+                            AddEditPlantEffect.ShowMessage(
+                                R.string.add_edit_plant_error_failed_to_save_plant
+                            )
+                        )
+                    },
+                    onLoading = {
+                        // Already in saving state
+                    }
                 )
-                _effect.emit(AddEditPlantEffect.NavigateBack)
             } catch (t: Throwable) {
                 _state.update { it.copy(isSaving = false, errorMessage = t.message) }
                 _effect.emit(
@@ -282,10 +304,7 @@ class AddEditPlantViewModel @Inject constructor(
                         R.string.add_edit_plant_error_failed_to_save_plant
                     )
                 )
-                return@launch
             }
-
-            _state.update { it.copy(isSaving = false) }
         }
     }
 

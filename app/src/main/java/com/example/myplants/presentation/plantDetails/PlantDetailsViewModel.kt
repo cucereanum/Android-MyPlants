@@ -4,13 +4,13 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.annotation.StringRes
-import com.example.myplants.data.Plant
 import com.example.myplants.data.ble.BleDevice
 import com.example.myplants.data.ble.ConnectionState
 import com.example.myplants.R
 import com.example.myplants.domain.repository.PlantRepository
 import com.example.myplants.domain.repository.BleDatabaseRepository
 import com.example.myplants.domain.repository.BleManagerRepository
+import com.example.myplants.domain.util.handle
 import com.example.myplants.widget.WidgetUpdateManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -53,23 +53,43 @@ class PlantDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
-            val plant: Plant? = runCatching { repository.getPlantById(plantId) }
-                .getOrElse { throwable ->
-                    _state.update { it.copy(isLoading = false, errorMessage = throwable.message) }
-                    return@launch
-                }
+            repository.getPlantById(plantId).handle(
+                onSuccess = { plant ->
+                    val linkedSensor =
+                        runCatching { bleDatabaseRepository.getDeviceByPlantId(plantId) }
+                            .getOrElse { throwable ->
+                                _state.update {
+                                    it.copy(
+                                        plant = plant,
+                                        isLoading = false,
+                                        errorMessage = throwable.message
+                                    )
+                                }
+                                return@handle
+                            }
 
-            val linkedSensor = runCatching { bleDatabaseRepository.getDeviceByPlantId(plantId) }
-                .getOrElse { throwable ->
                     _state.update {
-                        it.copy(plant = plant, isLoading = false, errorMessage = throwable.message)
+                        it.copy(
+                            plant = plant,
+                            linkedSensor = linkedSensor,
+                            isLoading = false
+                        )
                     }
-                    return@launch
+                    hasCompletedInitialLoad = true
+                    lastKnownSensorDeviceId = linkedSensor?.deviceId
+                },
+                onError = { message ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = message ?: "Failed to load plant"
+                        )
+                    }
+                },
+                onLoading = {
+                    _state.update { it.copy(isLoading = true) }
                 }
-
-            _state.update { it.copy(plant = plant, linkedSensor = linkedSensor, isLoading = false) }
-            hasCompletedInitialLoad = true
-            lastKnownSensorDeviceId = linkedSensor?.deviceId
+            )
         }
     }
 
@@ -207,24 +227,34 @@ class PlantDetailsViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isDeleting = true, errorMessage = null) }
-            try {
-                unlinkSensor(plant.id)
-                repository.deletePlant(plant)
-                _state.update { it.copy(isDeleting = false, errorMessage = null) }
 
-                // Update widgets after deleting a plant
-                WidgetUpdateManager.updateAllWidgets(application)
+            unlinkSensor(plant.id)
 
-                _effect.emit(
-                    PlantDetailsEffect.ShowMessage(
-                        R.string.plant_details_deleted_successfully_message
+            repository.deletePlant(plant).handle(
+                onSuccess = {
+                    _state.update { it.copy(isDeleting = false, errorMessage = null) }
+
+                    WidgetUpdateManager.updateAllWidgets(application)
+
+                    _effect.emit(
+                        PlantDetailsEffect.ShowMessage(
+                            R.string.plant_details_deleted_successfully_message
+                        )
                     )
-                )
-                _effect.emit(PlantDetailsEffect.ShowMessage(R.string.plant_details_deleted_successfully_message))
-                _effect.emit(PlantDetailsEffect.NavigateBack)
-            } catch (t: Throwable) {
-                _state.update { it.copy(isDeleting = false, errorMessage = t.message) }
-            }
+                    _effect.emit(PlantDetailsEffect.NavigateBack)
+                },
+                onError = { message ->
+                    _state.update {
+                        it.copy(
+                            isDeleting = false,
+                            errorMessage = message ?: "Failed to delete plant"
+                        )
+                    }
+                },
+                onLoading = {
+                    // Already in deleting state
+                }
+            )
         }
     }
 
@@ -232,11 +262,18 @@ class PlantDetailsViewModel @Inject constructor(
         _state.value.plant?.let { currentPlant ->
             val updatedPlant = currentPlant.copy(isWatered = true)
             viewModelScope.launch {
-                repository.updatePlant(updatedPlant)
-                _state.update { it.copy(plant = updatedPlant, errorMessage = null) }
-
-                // Update widgets after marking plant as watered
-                WidgetUpdateManager.updateAllWidgets(application)
+                repository.updatePlant(updatedPlant).handle(
+                    onSuccess = {
+                        _state.update { it.copy(plant = updatedPlant, errorMessage = null) }
+                        WidgetUpdateManager.updateAllWidgets(application)
+                    },
+                    onError = { message ->
+                        // Silently fail, could show a toast if needed
+                    },
+                    onLoading = {
+                        // No-op
+                    }
+                )
             }
         }
     }

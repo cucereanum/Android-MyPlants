@@ -89,10 +89,8 @@ fun PlantListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val hasUnreadNotifications by viewModel.hasUnreadNotifications.collectAsStateWithLifecycle()
 
-    var tapCount by remember { mutableIntStateOf(0) }
-    val scope = rememberCoroutineScope()
-
-    val context = LocalContext.current
+    val settingsContentDescription = stringResource(id = R.string.settings_title)
+    val notificationsContentDescription = stringResource(id = R.string.notifications)
 
     val onFilterSelected = remember<(PlantListFilter) -> Unit> {
         { filter -> viewModel.selectFilter(filter) }
@@ -123,7 +121,13 @@ fun PlantListScreen(
             contentDescription = stringResource(id = R.string.background_plants)
         )
 
-        if (uiState.isLoading) {
+        if (uiState.errorMessage != null && uiState.plants.isEmpty()) {
+            ErrorState(
+                message = uiState.errorMessage!!,
+                onRetry = { viewModel.retryLoading() },
+                modifier = Modifier.align(Alignment.Center)
+            )
+        } else if (uiState.isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -152,24 +156,7 @@ fun PlantListScreen(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 26.sp,
                             lineHeight = 32.sp,
-                            modifier = Modifier.pointerInput(Unit) {
-                                detectTapGestures {
-                                    tapCount++
-                                    if (tapCount >= 5) {
-                                        tapCount = 0
-                                        scope.launch {
-                                            val request =
-                                                OneTimeWorkRequestBuilder<WateringCheckWorker>().build()
-                                            WorkManager.getInstance(context).enqueue(request)
-                                            Toast.makeText(
-                                                context,
-                                                context.getString(R.string.plant_list_debug_worker_triggered_toast),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-                                }
-                            })
+                        )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)
@@ -183,7 +170,7 @@ fun PlantListScreen(
                                         .clickable { onNavigateToSettings() }) {
                                     Icon(
                                         imageVector = Icons.Outlined.Settings,
-                                        contentDescription = stringResource(id = R.string.settings_title),
+                                        contentDescription = settingsContentDescription,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.align(Alignment.Center)
                                     )
@@ -202,7 +189,7 @@ fun PlantListScreen(
                                         .clickable { onNavigateToNotifications() }) {
                                     Icon(
                                         imageVector = Icons.Outlined.Notifications,
-                                        contentDescription = stringResource(id = R.string.notifications),
+                                        contentDescription = notificationsContentDescription,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.align(Alignment.Center)
                                     )
@@ -357,6 +344,56 @@ fun PlantListScreen(
 
             }
 
+        }
+    }
+}
+
+@Composable
+fun ErrorState(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "⚠️",
+            fontSize = 64.sp,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        Text(
+            text = "Oops! Something went wrong",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        Text(
+            text = message,
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+        Button(
+            onClick = onRetry,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.error_retry),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White
+            )
         }
     }
 }

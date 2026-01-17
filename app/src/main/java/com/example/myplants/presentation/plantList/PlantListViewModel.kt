@@ -10,6 +10,7 @@ import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.Plant
 import com.example.myplants.domain.repository.NotificationRepository
 import com.example.myplants.domain.repository.PlantRepository
+import com.example.myplants.domain.util.collectResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -53,22 +54,37 @@ class PlantListViewModel @Inject constructor(
 
     private fun loadInitialPlants() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            repository.getPlants().collect { allPlants ->
-                val filtered = filterPlants(allPlants, _uiState.value.selectedFilterType)
-                allFilteredPlants = filtered
-                currentPage = 0
+            repository.getPlants().collectResult(
+                onSuccess = { allPlants ->
+                    val filtered = filterPlants(allPlants, _uiState.value.selectedFilterType)
+                    allFilteredPlants = filtered
+                    currentPage = 0
 
-                val initialBatch = filtered.take(PAGE_SIZE)
-                _uiState.update {
-                    it.copy(
-                        plants = initialBatch,
-                        isLoading = false,
-                        hasMoreToLoad = filtered.size > PAGE_SIZE
-                    )
+                    val initialBatch = filtered.take(PAGE_SIZE)
+                    _uiState.update {
+                        it.copy(
+                            plants = initialBatch,
+                            isLoading = false,
+                            hasMoreToLoad = filtered.size > PAGE_SIZE,
+                            errorMessage = null
+                        )
+                    }
+                },
+                onError = { message ->
+                    Log.e("PlantListViewModel", "Failed to load plants: $message")
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = message ?: "Failed to load plants"
+                        )
+                    }
+                },
+                onLoading = {
+                    _uiState.update { it.copy(isLoading = true) }
                 }
-            }
+            )
         }
     }
 
@@ -76,23 +92,44 @@ class PlantListViewModel @Inject constructor(
         if (_uiState.value.selectedFilterType == type) return
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, selectedFilterType = type) }
-
-            repository.getPlants().collect { allPlants ->
-                val filtered = filterPlants(allPlants, type)
-                allFilteredPlants = filtered
-                currentPage = 0
-
-                val initialBatch = filtered.take(PAGE_SIZE)
-                _uiState.update {
-                    it.copy(
-                        plants = initialBatch,
-                        isLoading = false,
-                        hasMoreToLoad = filtered.size > PAGE_SIZE,
-                        selectedFilterType = type
-                    )
-                }
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    selectedFilterType = type,
+                    errorMessage = null
+                )
             }
+
+            repository.getPlants().collectResult(
+                onSuccess = { allPlants ->
+                    val filtered = filterPlants(allPlants, type)
+                    allFilteredPlants = filtered
+                    currentPage = 0
+
+                    val initialBatch = filtered.take(PAGE_SIZE)
+                    _uiState.update {
+                        it.copy(
+                            plants = initialBatch,
+                            isLoading = false,
+                            hasMoreToLoad = filtered.size > PAGE_SIZE,
+                            selectedFilterType = type,
+                            errorMessage = null
+                        )
+                    }
+                },
+                onError = { message ->
+                    Log.e("PlantListViewModel", "Failed to load plants: $message")
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = message ?: "Failed to load plants"
+                        )
+                    }
+                },
+                onLoading = {
+                    _uiState.update { it.copy(isLoading = true) }
+                }
+            )
         }
     }
 
@@ -126,6 +163,10 @@ class PlantListViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun retryLoading() {
+        loadInitialPlants()
     }
 
     private fun filterPlants(allPlants: List<Plant>, filterType: PlantListFilter): List<Plant> {
