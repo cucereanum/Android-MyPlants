@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
@@ -270,7 +271,7 @@ fun PlantListScreen(
                             )
                         } else {
                             LazyVerticalGrid(
-                                columns = GridCells.Fixed(2), // 2 per row
+                                columns = GridCells.Fixed(2),
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(top = 16.dp),
@@ -279,7 +280,7 @@ fun PlantListScreen(
                             ) {
                                 items(
                                     items = currentPlants,
-                                    key = { it.id }  // 👈 stable key
+                                    key = { it.id }
                                 ) { plant ->
                                     PlantListItem(
                                         plant,
@@ -287,6 +288,33 @@ fun PlantListScreen(
                                             navController.navigate(Route.plantDetailsRoute(plant.id))
                                         }
                                     )
+                                }
+
+                                if (uiState.hasMoreToLoad) {
+                                    item(span = {
+                                        GridItemSpan(
+                                            2
+                                        )
+                                    }) {
+                                        LaunchedEffect(Unit) {
+                                            viewModel.loadNextPage()
+                                        }
+
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (uiState.isLoadingMore) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(32.dp),
+                                                    strokeWidth = 3.dp,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
