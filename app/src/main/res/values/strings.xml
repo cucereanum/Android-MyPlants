@@ -2,6 +2,7 @@
     <!-- General App Strings -->
     <string name="app_name">MyPlants</string>
     <string name="add">Add</string>
+    <string name="back">Back</string>
     <string name="notifications">Notifications</string>
     <string name="background_plants">Background plants</string>
     <string name="camera_permission_denied_message">Please enable the camera permissions from the settings.</string>
@@ -238,5 +239,44 @@
     <string name="filter_upcoming">Upcoming</string>
     <string name="filter_forgot_to_water">Forgot to Water</string>
     <string name="filter_history">History</string>
+
+    <!-- Analytics Screen -->
+    <string name="analytics_title">Analytics</string>
+    <string name="analytics_loading">Calculating your plant care stats…</string>
+    <string name="analytics_error_title">Oops! Something went wrong</string>
+    
+    <!-- Header Card -->
+    <string name="analytics_your_plants">Your Plants</string>
+    <string name="analytics_health_score">Health Score</string>
+    <string name="analytics_health_excellent">Excellent!</string>
+    <string name="analytics_health_great">Great job!</string>
+    <string name="analytics_health_good">Good</string>
+    <string name="analytics_health_fair">Fair</string>
+    <string name="analytics_health_needs_work">Needs work</string>
+    
+    <!-- Streak Card -->
+    <string name="analytics_current_streak">Current Streak</string>
+    <string name="analytics_day">day</string>
+    <string name="analytics_days">days</string>
+    <string name="analytics_best_streak">Best Streak</string>
+    <string name="analytics_progress">Progress</string>
+    <string name="analytics_days_count">%d days</string>
+    <string name="analytics_streak_new_record">New record! Keep it going! 🏆</string>
+    <string name="analytics_streak_champion">You\'re a plant parent champion! 🌟</string>
+    <string name="analytics_streak_great">Amazing! Keep up the great work! 💪</string>
+    <string name="analytics_streak_week">A full week! You\'re doing great! 🌱</string>
+    <string name="analytics_streak_keep_going">Keep going! You\'re building a habit! 🌿</string>
+    <string name="analytics_streak_start">Every journey starts with a single step! 🚀</string>
+    
+    <!-- Stats Row -->
+    <string name="analytics_this_week">This Week</string>
+    <string name="analytics_this_month">This Month</string>
+    <string name="analytics_total">Total</string>
+    
+    <!-- Plant Insights -->
+    <string name="analytics_most_cared_for">Most Cared For</string>
+    <string name="analytics_needs_attention">Needs Attention</string>
+    <string name="analytics_insight_positive">You\'re doing amazing with this one! 🌹</string>
+    <string name="analytics_insight_negative">Give me some love! 💚</string>
 
 </resources>

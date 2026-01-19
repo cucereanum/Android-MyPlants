@@ -5,6 +5,7 @@ object Route {
     const val ADD_EDIT_PLANT = "add_edit_plant"
     const val PLANT_DETAILS = "plant_details/{plantId}"
     const val NOTIFICATIONS = "notifications"
+    const val ANALYTICS = "analytics"
     const val SETTINGS = "settings"
     const val SETTINGS_LANGUAGE = "settings/language"
     const val SETTINGS_APPEARANCE = "settings/appearance"

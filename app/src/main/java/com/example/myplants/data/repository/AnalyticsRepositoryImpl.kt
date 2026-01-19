@@ -5,12 +5,12 @@ import androidx.annotation.RequiresApi
 import com.example.myplants.data.DayOfWeek
 import com.example.myplants.data.Plant
 import com.example.myplants.data.WateringHistory
-import com.example.myplants.data.data_source.PlantDao
 import com.example.myplants.data.data_source.WateringHistoryDao
 import com.example.myplants.domain.model.DayData
 import com.example.myplants.domain.model.PlantAnalytics
 import com.example.myplants.domain.model.StreakData
 import com.example.myplants.domain.repository.AnalyticsRepository
+import com.example.myplants.domain.repository.PlantRepository
 import com.example.myplants.domain.util.Result
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -23,7 +23,7 @@ import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.O)
 class AnalyticsRepositoryImpl @Inject constructor(
-    private val plantDao: PlantDao,
+    private val plantRepository: PlantRepository,
     private val wateringHistoryDao: WateringHistoryDao
 ) : AnalyticsRepository {
 
@@ -37,21 +37,26 @@ class AnalyticsRepositoryImpl @Inject constructor(
 
     override fun getAnalytics(): Flow<Result<PlantAnalytics>> =
         combine(
-            plantDao.getPlants(),
+            plantRepository.getPlants(),
             wateringHistoryDao.getRecentHistory(limit = HISTORY_LIMIT)
         ) { plantsResult, history ->
             try {
-                if (plantsResult is Result.Success<*>) {
-                    @Suppress("UNCHECKED_CAST")
-                    val plants = plantsResult.data as List<Plant>
-                    val analytics = calculateAnalytics(plants, history)
-                    Result.Success(analytics)
-                } else if (plantsResult is Result.Error) {
-                    Result.Error(plantsResult.exception, plantsResult.message)
-                } else {
-                    Result.Loading
+                when (plantsResult) {
+                    is Result.Success<*> -> {
+                        @Suppress("UNCHECKED_CAST")
+                        val plants = plantsResult.data as List<Plant>
+                        val analytics = calculateAnalytics(plants, history)
+                        Result.Success(analytics)
+                    }
+                    is Result.Error -> {
+                        Result.Error(plantsResult.exception, plantsResult.message)
+                    }
+                    is Result.Loading -> {
+                        Result.Loading
+                    }
                 }
             } catch (e: Exception) {
+                e.printStackTrace()
                 Result.Error(e, "Failed to calculate analytics: ${e.message}")
             }
         }

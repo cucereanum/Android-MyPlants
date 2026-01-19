@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.Language
@@ -80,6 +81,17 @@ fun SettingsScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Section: Insights & Data
+            item { SettingsSpacer() }
+            item { SettingsSectionTitle(title = stringResource(id = R.string.settings_section_insights)) }
+            item {
+                SettingsItem(
+                    icon = Icons.Outlined.BarChart,
+                    title = stringResource(id = R.string.settings_item_analytics),
+                    onClick = { navController.navigate(Route.ANALYTICS) }
+                )
+            }
+
             // Section: Widgets
             item { SettingsSpacer() }
             item { SettingsSectionTitle(title = stringResource(id = R.string.settings_section_widgets)) }

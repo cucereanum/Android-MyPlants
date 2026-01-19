@@ -25,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.myplants.navigation.Route
 import com.example.myplants.presentation.addEditPlant.AddEditPlantScreen
+import com.example.myplants.presentation.analytics.AnalyticsScreen
 import com.example.myplants.presentation.ble.BleScreen
 import com.example.myplants.presentation.deeplink.DeepLinkViewModel
 import com.example.myplants.presentation.notifications.NotificationScreen
@@ -110,6 +111,9 @@ class MainActivity : AppCompatActivity() {
                         }
                         composable(Route.NOTIFICATIONS) {
                             NotificationScreen(navController)
+                        }
+                        composable(Route.ANALYTICS) {
+                            AnalyticsScreen(navController)
                         }
                         composable(Route.SETTINGS) {
                             SettingsScreen(navController)

@@ -5,12 +5,16 @@ import android.content.Context
 import androidx.room.Room
 import com.example.myplants.data.data_source.BleDeviceDao
 import com.example.myplants.data.data_source.NotificationDao
+import com.example.myplants.data.data_source.PlantDao
 import com.example.myplants.data.data_source.PlantDatabase
+import com.example.myplants.data.data_source.WateringHistoryDao
+import com.example.myplants.data.repository.AnalyticsRepositoryImpl
 import com.example.myplants.data.repository.BleDatabaseRepositoryImpl
 import com.example.myplants.data.repository.ImageStorageRepositoryImpl
 import com.example.myplants.data.repository.NotificationRepositoryImpl
 import com.example.myplants.data.repository.PlantRepositoryImpl
 import com.example.myplants.data.repository.UserPreferencesRepositoryImpl
+import com.example.myplants.domain.repository.AnalyticsRepository
 import com.example.myplants.domain.repository.BleDatabaseRepository
 import com.example.myplants.domain.repository.ImageStorageRepository
 import com.example.myplants.domain.repository.NotificationRepository
@@ -37,6 +41,18 @@ object AppModule {
         )
             .fallbackToDestructiveMigration(false)
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun providePlantDao(db: PlantDatabase): PlantDao {
+        return db.plantDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideWateringHistoryDao(db: PlantDatabase): WateringHistoryDao {
+        return db.wateringHistoryDao()
     }
 
     @Provides
@@ -82,5 +98,11 @@ object AppModule {
         @ApplicationContext appContext: Context,
     ): UserPreferencesRepository {
         return UserPreferencesRepositoryImpl(appContext)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAnalyticsRepository(impl: AnalyticsRepositoryImpl): AnalyticsRepository {
+        return impl
     }
 }
