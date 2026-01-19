@@ -7,6 +7,7 @@ import com.example.myplants.data.NotificationType
 import com.example.myplants.data.Plant
 import com.example.myplants.domain.repository.NotificationRepository
 import com.example.myplants.domain.repository.PlantRepository
+import com.example.myplants.domain.util.Result
 import com.example.myplants.infrastructure.notifications.NotificationHelper
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
@@ -25,7 +26,13 @@ class CheckForWateringUseCase @Inject constructor(
 
 
     suspend fun execute() {
-        val allPlants = repository.getPlants().first()
+        val plantsResult = repository.getPlants().first()
+        val allPlants = when (plantsResult) {
+            is Result.Success -> plantsResult.data
+            is Result.Error -> return
+            is Result.Loading -> return
+        }
+
         val startOfTodayMillis = LocalDate
             .now()
             .atStartOfDay(ZoneId.systemDefault())

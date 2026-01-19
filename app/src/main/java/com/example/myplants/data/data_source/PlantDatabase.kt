@@ -6,18 +6,25 @@ import androidx.room.TypeConverters
 import com.example.myplants.data.ConnectedBleDeviceEntity
 import com.example.myplants.data.NotificationEntity
 import com.example.myplants.data.Plant
+import com.example.myplants.data.WateringHistory
 import com.example.myplants.data.converters.Converters
 import com.example.myplants.data.converters.NotificationConverter
 
 @Database(
-    entities = [Plant::class, NotificationEntity::class, ConnectedBleDeviceEntity::class],
-    version = 11
+    entities = [
+        Plant::class,
+        NotificationEntity::class,
+        ConnectedBleDeviceEntity::class,
+        WateringHistory::class
+    ],
+    version = 12
 )
 @TypeConverters(value = [Converters::class, NotificationConverter::class])
 abstract class PlantDatabase : RoomDatabase() {
     abstract fun plantDao(): PlantDao
     abstract fun notificationDao(): NotificationDao
     abstract fun bleDeviceDao(): BleDeviceDao
+    abstract fun wateringHistoryDao(): WateringHistoryDao
 
     companion object {
         const val DATABASE_NAME = "plant_db"
