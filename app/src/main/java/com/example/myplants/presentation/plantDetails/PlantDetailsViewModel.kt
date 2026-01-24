@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.annotation.StringRes
 import com.example.myplants.data.ble.BleDevice
 import com.example.myplants.data.ble.ConnectionState
+import com.example.myplants.data.WateringHistory
+import com.example.myplants.data.data_source.WateringHistoryDao
 import com.example.myplants.R
 import com.example.myplants.domain.repository.PlantRepository
 import com.example.myplants.domain.repository.BleDatabaseRepository
@@ -33,6 +35,7 @@ class PlantDetailsViewModel @Inject constructor(
     private val repository: PlantRepository,
     private val bleDatabaseRepository: BleDatabaseRepository,
     private val bleManagerRepository: BleManagerRepository,
+    private val wateringHistoryDao: WateringHistoryDao,
     private val application: Application,
 ) : ViewModel() {
 
@@ -262,6 +265,21 @@ class PlantDetailsViewModel @Inject constructor(
         _state.value.plant?.let { currentPlant ->
             val updatedPlant = currentPlant.copy(isWatered = true)
             viewModelScope.launch {
+                // Save watering event to history for analytics
+                try {
+                    wateringHistoryDao.insertWateringEvent(
+                        WateringHistory(
+                            plantId = currentPlant.id,
+                            plantName = currentPlant.plantName,
+                            wateredAt = System.currentTimeMillis()
+                        )
+                    )
+                } catch (e: Exception) {
+                    // Log but don't fail the operation
+                    e.printStackTrace()
+                }
+                
+                // Update plant watered status
                 repository.updatePlant(updatedPlant).handle(
                     onSuccess = {
                         _state.update { it.copy(plant = updatedPlant, errorMessage = null) }

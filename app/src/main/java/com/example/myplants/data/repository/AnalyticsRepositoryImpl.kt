@@ -179,32 +179,90 @@ class AnalyticsRepositoryImpl @Inject constructor(
     /**
      * Calculate health score - accepts pre-calculated streak to avoid duplication
      */
+    /**
+     * Calculate health score based on scheduled watering days (not arbitrary daily watering)
+     * 
+     * Formula:
+     * - Adherence (50%): Did you water plants on THEIR scheduled days?
+     * - Completion (30%): What % of plants got all scheduled waterings?
+     * - Streak (20%): Consecutive days watered (encourages daily check-ins)
+     */
     private fun calculateHealthScore(
         plants: List<Plant>,
         historyWithDates: List<EventWithDate>,
-        streakData: StreakData,  // Pre-calculated!
+        streakData: StreakData,
         oneWeekAgo: Long
     ): Float {
-        if (plants.isEmpty() || historyWithDates.isEmpty()) return 0f
+        if (plants.isEmpty()) return 0f
 
         val lastWeekHistory = historyWithDates.filter { it.event.wateredAt >= oneWeekAgo }
+        if (lastWeekHistory.isEmpty()) return 0f
 
-        // Factor 1: Consistency (40%)
-        val consistency = if (lastWeekHistory.isEmpty()) 0f else {
-            val daysWatered = lastWeekHistory.map { it.date }.distinct().size
-            (daysWatered / 7f) * 100f
+        val today = LocalDate.now()
+        
+        // Factor 1: Adherence (50%) - Schedule-aware!
+        // Check if plants were watered on THEIR scheduled days
+        var scheduledWaterings = 0
+        var completedWaterings = 0
+        val plantAdherence = mutableMapOf<Int, Pair<Int, Int>>() // plantId -> (completed, total)
+        
+        plants.forEach { plant ->
+            var plantScheduled = 0
+            var plantCompleted = 0
+            
+            // Check each day in last 7 days
+            for (daysAgo in 0 until 7) {
+                val date = today.minusDays(daysAgo.toLong())
+                val dayOfWeek = date.dayOfWeek.value.toDayOfWeek()
+                
+                // Is this a scheduled watering day for this plant?
+                if (plant.selectedDays.contains(dayOfWeek)) {
+                    plantScheduled++
+                    scheduledWaterings++
+                    
+                    // Was it actually watered on this day?
+                    val dayStart = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    val dayEnd = date.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    
+                    val wasWatered = lastWeekHistory.any { 
+                        it.event.plantId == plant.id && 
+                        it.event.wateredAt in dayStart until dayEnd 
+                    }
+                    
+                    if (wasWatered) {
+                        plantCompleted++
+                        completedWaterings++
+                    }
+                }
+            }
+            
+            if (plantScheduled > 0) {
+                plantAdherence[plant.id] = Pair(plantCompleted, plantScheduled)
+            }
         }
-
-        // Factor 2: Completion (30%)
-        val completion = if (plants.isEmpty()) 100f else {
-            (lastWeekHistory.map { it.event.plantId }
-                .distinct().size.toFloat() / plants.size) * 100f
+        
+        val adherence = if (scheduledWaterings > 0) {
+            (completedWaterings.toFloat() / scheduledWaterings) * 100f
+        } else {
+            100f // No scheduled waterings = perfect score
         }
-
-        // Factor 3: Streak bonus (30%) - using pre-calculated value!
-        val streakBonus = minOf(streakData.currentStreak * 3f, 30f)
-
-        return ((consistency * 0.4f) + (completion * 0.3f) + (streakBonus * 0.3f))
+        
+        // Factor 2: Completion (30%) - What % of plants got ALL their scheduled waterings?
+        val plantsFullyCaredFor = plantAdherence.count { (_, pair) ->
+            pair.first == pair.second // completed == total scheduled
+        }
+        
+        val completion = if (plantAdherence.isNotEmpty()) {
+            (plantsFullyCaredFor.toFloat() / plantAdherence.size) * 100f
+        } else {
+            100f
+        }
+        
+        // Factor 3: Streak bonus (20%) - Maxes out at 10-day streak
+        // Need to reach 100 before multiplying by 0.2 to get 20 points
+        val streakBonus = minOf(streakData.currentStreak * 10f, 100f)
+        
+        return ((adherence * 0.5f) + (completion * 0.3f) + (streakBonus * 0.2f))
             .coerceIn(0f, 100f)
     }
 

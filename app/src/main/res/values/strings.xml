@@ -273,6 +273,9 @@
     <string name="analytics_this_month">This Month</string>
     <string name="analytics_total">Total</string>
     
+    <!-- Chart -->
+    <string name="analytics_chart_coming_soon">📊 Chart visualization coming soon!</string>
+    
     <!-- Plant Insights -->
     <string name="analytics_most_cared_for">Most Cared For</string>
     <string name="analytics_needs_attention">Needs Attention</string>

@@ -256,6 +256,17 @@ class MarkAsWateredAction : ActionCallback {
 
         try {
             val plant = database.plantDao().getPlantById(plantId) ?: return
+            
+            // Save watering event to history for analytics
+            database.wateringHistoryDao().insertWateringEvent(
+                com.example.myplants.data.WateringHistory(
+                    plantId = plant.id,
+                    plantName = plant.plantName,
+                    wateredAt = System.currentTimeMillis()
+                )
+            )
+            
+            // Update plant watered status
             database.plantDao().updatePlant(plant.copy(isWatered = true))
             kotlinx.coroutines.delay(50)
         } catch (e: Exception) {

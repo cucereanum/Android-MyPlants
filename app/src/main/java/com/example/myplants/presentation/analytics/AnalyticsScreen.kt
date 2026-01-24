@@ -33,7 +33,6 @@ import androidx.navigation.NavController
 import com.example.myplants.R
 import com.example.myplants.domain.model.PlantAnalytics
 import com.example.myplants.presentation.analytics.components.HeaderCard
-import com.example.myplants.presentation.analytics.components.PlantInsightCard
 import com.example.myplants.presentation.analytics.components.StatsRow
 import com.example.myplants.presentation.analytics.components.StreakCard
 
@@ -151,8 +150,8 @@ private fun ErrorState(
 private fun AnalyticsContent(analytics: PlantAnalytics) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         // Header Card - Total plants and health score
         item {
@@ -179,28 +178,14 @@ private fun AnalyticsContent(analytics: PlantAnalytics) {
             )
         }
 
-        // TODO: Chart will go here in Phase 4
-
-        // Most Cared For Plant
-        analytics.mostCaredForPlant?.let { plant ->
-            item {
-                PlantInsightCard(
-                    title = stringResource(R.string.analytics_most_cared_for),
-                    plant = plant,
-                    isPositive = true
-                )
-            }
-        }
-
-        // Needs Attention Plant
-        analytics.needsAttentionPlant?.let { plant ->
-            item {
-                PlantInsightCard(
-                    title = stringResource(R.string.analytics_needs_attention),
-                    plant = plant,
-                    isPositive = false
-                )
-            }
+        // Chart placeholder - coming in Phase 4
+        item {
+            Text(
+                text = stringResource(R.string.analytics_chart_coming_soon),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
         }
     }
 }
