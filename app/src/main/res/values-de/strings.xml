@@ -21,6 +21,9 @@
     <string name="add_edit_plant_single_plant_image_desc">Einzelne Pflanze</string>
     <string name="add_edit_plant_upload_image_icon_desc">Bild hochladen</string>
     <string name="add_edit_plant_add_image_button">Bild hinzufügen</string>
+    <string name="add_edit_plant_change_image_button">Bild ändern</string>
+    <string name="add_edit_plant_create_button">Pflanze erstellen</string>
+    <string name="add_edit_plant_save_changes_button">Änderungen speichern</string>
     <string name="add_edit_plant_plant_name_label">Pflanzenname*</string>
     <string name="add_edit_plant_dates_label">Daten</string>
     <string name="add_edit_plant_dropdown_icon_desc">Dropdown-Symbol</string>

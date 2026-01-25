@@ -7,7 +7,9 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,8 +32,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -42,8 +45,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -75,22 +76,19 @@ import coil.compose.AsyncImage
 import com.example.myplants.R
 import com.example.myplants.data.ble.ConnectionState
 import com.example.myplants.navigation.Route
-import com.example.myplants.presentation.theme.LocalIsDarkTheme
 import com.example.myplants.presentation.util.DebounceClick
 import com.example.myplants.widget.WidgetUtils
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun PlantDetailsScreen(
-    navController: NavController,
-    plantId: Int,
-    viewModel: PlantDetailsViewModel = hiltViewModel()
+    navController: NavController, plantId: Int, viewModel: PlantDetailsViewModel = hiltViewModel()
 ) {
     var showModal by remember { mutableStateOf(false) }
 
@@ -98,7 +96,6 @@ fun PlantDetailsScreen(
     val plant = uiState.plant
 
     val context = LocalContext.current
-    val isDarkModeEnabled = LocalIsDarkTheme.current
 
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
@@ -109,36 +106,34 @@ fun PlantDetailsScreen(
     )
     val pagerState = rememberPagerState(pageCount = { tabs.size })
 
-    DisposableEffect(Unit) {
-        onDispose { viewModel.disconnectSensor() }
-    }
-
-    LaunchedEffect(plantId) {
-        viewModel.loadPlant(plantId)
-    }
-
-    // Handle selected device from BLE_LINK screen
-    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
-    LaunchedEffect(savedStateHandle) {
-        val deviceAddress = savedStateHandle?.get<String>(Route.KEY_SELECTED_DEVICE_ADDRESS)
-        val deviceName = savedStateHandle?.get<String>(Route.KEY_SELECTED_DEVICE_NAME)
-
-        if (deviceAddress != null) {
-            savedStateHandle.remove<String>(Route.KEY_SELECTED_DEVICE_ADDRESS)
-            savedStateHandle.remove<String>(Route.KEY_SELECTED_DEVICE_NAME)
-            viewModel.linkAndConnectSensor(plantId, deviceAddress, deviceName)
-        }
-    }
-
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
+    DisposableEffect(lifecycleOwner, plantId) {
+        viewModel.loadPlant(plantId)
+
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.refreshLinkedSensor(plantId)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.disconnectSensor()
+        }
+    }
+
+    // Handle BLE device selection from navigation result
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+    val deviceAddress = savedStateHandle?.get<String>(Route.KEY_SELECTED_DEVICE_ADDRESS)
+    val deviceName = savedStateHandle?.get<String>(Route.KEY_SELECTED_DEVICE_NAME)
+
+    LaunchedEffect(deviceAddress) {
+        if (deviceAddress != null) {
+            savedStateHandle.remove<String>(Route.KEY_SELECTED_DEVICE_ADDRESS)
+            savedStateHandle.remove<String>(Route.KEY_SELECTED_DEVICE_NAME)
+            viewModel.linkAndConnectSensor(plantId, deviceAddress, deviceName)
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -147,9 +142,7 @@ fun PlantDetailsScreen(
                 PlantDetailsEffect.NavigateBack -> navController.popBackStack()
                 is PlantDetailsEffect.ShowMessage -> {
                     Toast.makeText(
-                        context,
-                        context.getString(effect.messageResId),
-                        Toast.LENGTH_SHORT
+                        context, context.getString(effect.messageResId), Toast.LENGTH_SHORT
                     ).show()
                 }
             }
@@ -182,37 +175,30 @@ fun PlantDetailsScreen(
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .background(
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                            CircleShape
-                        )
-                        .clickable { navController.popBackStack() }
-                ) {
+                        .clip(CircleShape)
+                        .background(Color.DarkGray.copy(alpha = 0.7f))
+                        .clickable { navController.popBackStack() }) {
                     Icon(
                         imageVector = Icons.Default.ChevronLeft,
                         contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc),
                         modifier = Modifier
                             .size(30.dp)
                             .align(Alignment.Center),
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = Color.White
                     )
                 }
                 Row {
-                    // Add Widget button
                     Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .background(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                                CircleShape
-                            )
+                            .clip(CircleShape)
+                            .background(Color.DarkGray.copy(alpha = 0.7f))
                             .clickable {
                                 DebounceClick.debounceClick {
                                     if (WidgetUtils.isWidgetPinningSupported(context)) {
                                         scope.launch {
                                             WidgetUtils.requestPinSinglePlantWidget(
-                                                context,
-                                                plantId
+                                                context, plantId
                                             )
                                         }
                                     } else {
@@ -228,53 +214,45 @@ fun PlantDetailsScreen(
                             imageVector = Icons.Outlined.Widgets,
                             contentDescription = stringResource(id = R.string.plant_details_add_widget),
                             modifier = Modifier
-                                .size(24.dp)
+                                .size(22.dp)
                                 .align(Alignment.Center),
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = Color.White
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    // Edit button
                     Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .background(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                                CircleShape
-                            )
+                            .clip(CircleShape)
+                            .background(Color.DarkGray.copy(alpha = 0.7f))
                             .clickable {
                                 DebounceClick.debounceClick {
                                     navController.navigate("${Route.ADD_EDIT_PLANT}/${plantId}")
                                 }
-                            }
-                    ) {
+                            }) {
                         Icon(
-                            imageVector = Icons.Outlined.Edit,
+                            imageVector = Icons.Filled.Edit,
                             contentDescription = stringResource(id = R.string.plant_details_edit_desc),
                             modifier = Modifier
-                                .size(30.dp)
+                                .size(22.dp)
                                 .align(Alignment.Center),
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = Color.White
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    // Delete button
                     Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .background(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                                CircleShape
-                            )
-                            .clickable { showModal = true }
-                    ) {
+                            .clip(CircleShape)
+                            .background(Color.DarkGray.copy(alpha = 0.7f))
+                            .clickable { showModal = true }) {
                         Icon(
-                            imageVector = Icons.Outlined.Delete,
+                            imageVector = Icons.Filled.Delete,
                             contentDescription = stringResource(id = R.string.plant_details_delete_desc),
                             modifier = Modifier
-                                .size(30.dp)
+                                .size(22.dp)
                                 .align(Alignment.Center),
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = Color.White
                         )
                     }
                 }
@@ -311,53 +289,74 @@ fun PlantDetailsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 30.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                            .padding(horizontal = 20.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             Text(
-                                text = stringResource(id = R.string.plant_details_size_label),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                text = stringResource(id = R.string.plant_details_size_label).uppercase(),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 12.sp
+                                fontSize = 11.sp,
+                                letterSpacing = 0.5.sp
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             plant?.size?.let {
                                 Text(
                                     text = it,
                                     color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 15.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             Text(
-                                text = stringResource(id = R.string.plant_details_water_label),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                text = stringResource(id = R.string.plant_details_water_label).uppercase(),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 12.sp
+                                fontSize = 11.sp,
+                                letterSpacing = 0.5.sp
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             plant?.waterAmount?.let { waterAmount ->
                                 Text(
                                     text = "$waterAmount${stringResource(id = R.string.plant_details_water_amount_suffix)}",
                                     color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 15.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
-                        Column(modifier = Modifier.weight(2f)) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             Text(
-                                text = stringResource(id = R.string.plant_details_frequency_label),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                text = stringResource(id = R.string.plant_details_frequency_label).uppercase(),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 12.sp
+                                fontSize = 11.sp,
+                                letterSpacing = 0.5.sp
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             plant?.selectedDays?.joinToString(", ") { it.toString().take(3) }?.let {
                                 Text(
                                     text = it,
                                     color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 15.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -377,27 +376,58 @@ fun PlantDetailsScreen(
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
-            Spacer(modifier = Modifier.height(4.dp))
+            plant?.plantName?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                )
+            }
 
-            TabRow(
-                selectedTabIndex = pagerState.currentPage,
-                containerColor = Color.Transparent,
-                contentColor = if (isDarkModeEnabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Custom Tabs Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(0.85f)
+                    .align(Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
-                        text = { Text(title) }
-                    )
+                    val isSelected = pagerState.currentPage == index
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { scope.launch { pagerState.animateScrollToPage(index) } },
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = title,
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(3.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.weight(1f)
+                state = pagerState, modifier = Modifier.weight(1f)
             ) { pageIndex ->
                 when (pageIndex) {
                     0 -> DetailsTab(plant)
@@ -419,8 +449,7 @@ fun PlantDetailsScreen(
                     onClick = {
                         viewModel.onMarkAsWatered()
                         navController.popBackStack()
-                    }
-                ) {
+                    }) {
                     Text(
                         text = stringResource(id = R.string.plant_details_mark_as_watered_button),
                         color = Color.White,
@@ -439,8 +468,7 @@ fun PlantDetailsScreen(
     if (!uiState.isLoading && plant == null && uiState.errorMessage != null) {
         ErrorState(
             message = uiState.errorMessage ?: "Failed to load plant",
-            onRetry = { viewModel.loadPlant(plantId) }
-        )
+            onRetry = { viewModel.loadPlant(plantId) })
     }
 
     if (uiState.isDeleting) {
@@ -448,15 +476,12 @@ fun PlantDetailsScreen(
     }
 
     if (showModal) {
-        DeleteConfirmationDialog(
-            onDismiss = { showModal = false },
-            onConfirm = {
-                DebounceClick.debounceClick {
-                    showModal = false
-                    viewModel.deletePlant()
-                }
+        DeleteConfirmationDialog(onDismiss = { showModal = false }, onConfirm = {
+            DebounceClick.debounceClick {
+                showModal = false
+                viewModel.deletePlant()
             }
-        )
+        })
     }
 }
 
@@ -466,23 +491,39 @@ private fun DetailsTab(plant: com.example.myplants.data.Plant?) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        plant?.plantName?.let {
+        // Description Section
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(
-                text = it,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-        plant?.description?.let {
-            Text(
-                text = it,
+                text = stringResource(id = R.string.add_edit_plant_description_label),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
             )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 100.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.background)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+            ) {
+                Text(
+                    text = plant?.description ?: "",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Normal,
+                    lineHeight = 22.sp
+                )
+            }
         }
     }
 }
@@ -561,8 +602,7 @@ private fun SensorTab(
                             DebounceClick.debounceClick {
                                 navController.navigate(Route.bleLinkRoute(plantId))
                             }
-                        }
-                    ) {
+                        }) {
                         Text(
                             text = stringResource(id = R.string.plant_details_sensor_link_button),
                             color = Color.White
@@ -586,8 +626,7 @@ private fun SensorTab(
                                 SensorReadingRow(
                                     label = stringResource(id = R.string.plant_details_sensor_label_temperature),
                                     value = stringResource(
-                                        id = R.string.plant_details_sensor_value_temperature,
-                                        it
+                                        id = R.string.plant_details_sensor_value_temperature, it
                                     )
                                 )
                             }
@@ -595,8 +634,7 @@ private fun SensorTab(
                                 SensorReadingRow(
                                     label = stringResource(id = R.string.plant_details_sensor_label_moisture),
                                     value = stringResource(
-                                        id = R.string.plant_details_sensor_value_percent,
-                                        it
+                                        id = R.string.plant_details_sensor_value_percent, it
                                     )
                                 )
                             }
@@ -604,8 +642,7 @@ private fun SensorTab(
                                 SensorReadingRow(
                                     label = stringResource(id = R.string.plant_details_sensor_label_light),
                                     value = stringResource(
-                                        id = R.string.plant_details_sensor_value_lux,
-                                        it
+                                        id = R.string.plant_details_sensor_value_lux, it
                                     )
                                 )
                             }
@@ -613,8 +650,7 @@ private fun SensorTab(
                                 SensorReadingRow(
                                     label = stringResource(id = R.string.plant_details_sensor_label_conductivity),
                                     value = stringResource(
-                                        id = R.string.plant_details_sensor_value_conductivity,
-                                        it
+                                        id = R.string.plant_details_sensor_value_conductivity, it
                                     )
                                 )
                             }
@@ -629,16 +665,13 @@ private fun SensorTab(
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedButton(
                             modifier = Modifier.weight(1f),
-                            onClick = { viewModel.connectToLinkedSensor() }
-                        ) {
+                            onClick = { viewModel.connectToLinkedSensor() }) {
                             Text(stringResource(id = R.string.plant_details_sensor_refresh_button))
                         }
                         OutlinedButton(
-                            modifier = Modifier.weight(1f),
-                            onClick = {
+                            modifier = Modifier.weight(1f), onClick = {
                                 DebounceClick.debounceClick { viewModel.unlinkSensor(plantId) }
-                            }
-                        ) {
+                            }) {
                             Text(stringResource(id = R.string.plant_details_sensor_unlink_button))
                         }
                     }
@@ -697,25 +730,20 @@ private fun DeleteConfirmationDialog(onDismiss: () -> Unit, onConfirm: () -> Uni
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background.copy(alpha = 0.6f))
             .graphicsLayer {
-                renderEffect = RenderEffect
-                    .createBlurEffect(100f, 100f, Shader.TileMode.CLAMP)
+                renderEffect = RenderEffect.createBlurEffect(100f, 100f, Shader.TileMode.CLAMP)
                     .asComposeRenderEffect()
             }
-            .clickable { onDismiss() }
-    )
+            .clickable { onDismiss() })
 
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .clickable { }
                 .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+                .padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = stringResource(id = R.string.plant_details_delete_dialog_title),
                 fontWeight = FontWeight.Bold,
@@ -731,15 +759,13 @@ private fun DeleteConfirmationDialog(onDismiss: () -> Unit, onConfirm: () -> Uni
             )
             Spacer(modifier = Modifier.height(20.dp))
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 OutlinedButton(
                     onClick = onDismiss,
                     shape = RoundedCornerShape(8.dp),
                     border = BorderStroke(
-                        1.dp,
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.1F)
+                        1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.1F)
                     ),
                     modifier = Modifier
                         .width(140.dp)

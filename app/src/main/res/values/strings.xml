@@ -22,6 +22,9 @@
     <string name="add_edit_plant_single_plant_image_desc">Single plant</string>
     <string name="add_edit_plant_upload_image_icon_desc">Upload Image</string>
     <string name="add_edit_plant_add_image_button">Add Image</string>
+    <string name="add_edit_plant_change_image_button">Change Image</string>
+    <string name="add_edit_plant_create_button">Create a Plant</string>
+    <string name="add_edit_plant_save_changes_button">Save Changes</string>
     <string name="add_edit_plant_plant_name_label">Plant name*</string>
     <string name="add_edit_plant_dates_label">Dates</string>
     <string name="add_edit_plant_dropdown_icon_desc">Dropdown Icon</string>

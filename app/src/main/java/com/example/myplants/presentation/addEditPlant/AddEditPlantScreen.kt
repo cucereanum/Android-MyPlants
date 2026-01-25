@@ -46,7 +46,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -329,7 +328,12 @@ fun AddEditPlantScreen(
                                 )
                                 Spacer(modifier = Modifier.width(12.dp)) // Space between icon and text
                                 Text(
-                                    text = stringResource(id = R.string.add_edit_plant_add_image_button),
+                                    text = stringResource(
+                                        id = if (state.imageUri != null)
+                                            R.string.add_edit_plant_change_image_button
+                                        else
+                                            R.string.add_edit_plant_add_image_button
+                                    ),
                                     color = Color.White,
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 16.sp
@@ -475,7 +479,12 @@ fun AddEditPlantScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = stringResource(id = R.string.dialog_save), // Changed from "Add a Plant"
+                                text = stringResource(
+                                    id = if (state.plantId != null)
+                                        R.string.add_edit_plant_save_changes_button
+                                    else
+                                        R.string.add_edit_plant_create_button
+                                ),
                                 color = Color.White,
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 16.sp

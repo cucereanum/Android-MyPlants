@@ -56,43 +56,35 @@ class PlantDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
-            repository.getPlantById(plantId).handle(
-                onSuccess = { plant ->
-                    val linkedSensor =
-                        runCatching { bleDatabaseRepository.getDeviceByPlantId(plantId) }
-                            .getOrElse { throwable ->
-                                _state.update {
-                                    it.copy(
-                                        plant = plant,
-                                        isLoading = false,
-                                        errorMessage = throwable.message
-                                    )
-                                }
-                                return@handle
-                            }
+            repository.getPlantById(plantId).handle(onSuccess = { plant ->
+                val linkedSensor =
+                    runCatching { bleDatabaseRepository.getDeviceByPlantId(plantId) }.getOrElse { throwable ->
+                        _state.update {
+                            it.copy(
+                                plant = plant,
+                                isLoading = false,
+                                errorMessage = throwable.message
+                            )
+                        }
+                        return@handle
+                    }
 
-                    _state.update {
-                        it.copy(
-                            plant = plant,
-                            linkedSensor = linkedSensor,
-                            isLoading = false
-                        )
-                    }
-                    hasCompletedInitialLoad = true
-                    lastKnownSensorDeviceId = linkedSensor?.deviceId
-                },
-                onError = { message ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = message ?: "Failed to load plant"
-                        )
-                    }
-                },
-                onLoading = {
-                    _state.update { it.copy(isLoading = true) }
+                _state.update {
+                    it.copy(
+                        plant = plant, linkedSensor = linkedSensor, isLoading = false
+                    )
                 }
-            )
+                hasCompletedInitialLoad = true
+                lastKnownSensorDeviceId = linkedSensor?.deviceId
+            }, onError = { message ->
+                _state.update {
+                    it.copy(
+                        isLoading = false, errorMessage = message ?: "Failed to load plant"
+                    )
+                }
+            }, onLoading = {
+                _state.update { it.copy(isLoading = true) }
+            })
         }
     }
 
@@ -118,46 +110,38 @@ class PlantDetailsViewModel @Inject constructor(
         isConnecting = true
         lastConnectedAddress = address
 
-        connectJob = bleManagerRepository
-            .connect(address, autoConnect = false)
-            .onEach { state ->
-                _state.update { it.copy(connectionState = state, errorMessage = null) }
+        connectJob = bleManagerRepository.connect(address, autoConnect = false).onEach { state ->
+            _state.update { it.copy(connectionState = state, errorMessage = null) }
 
-                when (state) {
-                    is ConnectionState.ServicesDiscovered -> {
-                        isConnecting = false
-                        startLiveReadings()
-                    }
-
-                    is ConnectionState.Disconnected -> {
-                        isConnecting = false
-                        _state.update { it.copy(connectionState = ConnectionState.Idle) }
-                    }
-
-                    else -> {}
+            when (state) {
+                is ConnectionState.ServicesDiscovered -> {
+                    isConnecting = false
+                    startLiveReadings()
                 }
-            }
-            .catch { throwable ->
-                isConnecting = false
-                _state.update {
-                    it.copy(
-                        connectionState = ConnectionState.Disconnected(address, throwable.message),
-                        errorMessage = throwable.message,
-                    )
+
+                is ConnectionState.Disconnected -> {
+                    isConnecting = false
+                    _state.update { it.copy(connectionState = ConnectionState.Idle) }
                 }
+
+                else -> {}
             }
-            .launchIn(viewModelScope)
+        }.catch { throwable ->
+            isConnecting = false
+            _state.update {
+                it.copy(
+                    connectionState = ConnectionState.Disconnected(address, throwable.message),
+                    errorMessage = throwable.message,
+                )
+            }
+        }.launchIn(viewModelScope)
     }
 
     private fun startLiveReadings() {
         liveJob?.cancel()
-        liveJob = bleManagerRepository
-            .startFlowerCareLive()
-            .onEach { parsed ->
-                _state.update { it.copy(sensorReadings = parsed, errorMessage = null) }
-            }
-            .catch { }
-            .launchIn(viewModelScope)
+        liveJob = bleManagerRepository.startFlowerCareLive().onEach { parsed ->
+            _state.update { it.copy(sensorReadings = parsed, errorMessage = null) }
+        }.catch { }.launchIn(viewModelScope)
     }
 
     fun disconnectSensor() {
@@ -185,8 +169,8 @@ class PlantDetailsViewModel @Inject constructor(
 
     fun refreshLinkedSensor(plantId: Int) {
         viewModelScope.launch {
-            val linkedSensor = runCatching { bleDatabaseRepository.getDeviceByPlantId(plantId) }
-                .getOrElse { throwable ->
+            val linkedSensor =
+                runCatching { bleDatabaseRepository.getDeviceByPlantId(plantId) }.getOrElse { throwable ->
                     _state.update { it.copy(errorMessage = throwable.message) }
                     return@launch
                 }
@@ -200,20 +184,21 @@ class PlantDetailsViewModel @Inject constructor(
             delay(100) // Ensure BleScreen cleanup is complete
 
             val device = BleDevice(
-                address = deviceAddress,
-                name = deviceName,
-                rssi = null,
-                serviceUuids = emptyList()
+                address = deviceAddress, name = deviceName, rssi = null, serviceUuids = emptyList()
             )
 
-            runCatching { bleDatabaseRepository.linkDeviceToPlant(plantId, device) }
-                .onFailure { throwable ->
-                    _state.update { it.copy(errorMessage = throwable.message) }
-                    return@launch
-                }
+            runCatching {
+                bleDatabaseRepository.linkDeviceToPlant(
+                    plantId,
+                    device
+                )
+            }.onFailure { throwable ->
+                _state.update { it.copy(errorMessage = throwable.message) }
+                return@launch
+            }
 
-            val linkedSensor = runCatching { bleDatabaseRepository.getDeviceByPlantId(plantId) }
-                .getOrElse { throwable ->
+            val linkedSensor =
+                runCatching { bleDatabaseRepository.getDeviceByPlantId(plantId) }.getOrElse { throwable ->
                     _state.update { it.copy(errorMessage = throwable.message) }
                     return@launch
                 }
@@ -233,31 +218,26 @@ class PlantDetailsViewModel @Inject constructor(
 
             unlinkSensor(plant.id)
 
-            repository.deletePlant(plant).handle(
-                onSuccess = {
-                    _state.update { it.copy(isDeleting = false, errorMessage = null) }
+            repository.deletePlant(plant).handle(onSuccess = {
+                _state.update { it.copy(isDeleting = false, errorMessage = null) }
 
-                    WidgetUpdateManager.updateAllWidgets(application)
+                WidgetUpdateManager.updateAllWidgets(application)
 
-                    _effect.emit(
-                        PlantDetailsEffect.ShowMessage(
-                            R.string.plant_details_deleted_successfully_message
-                        )
+                _effect.emit(
+                    PlantDetailsEffect.ShowMessage(
+                        R.string.plant_details_deleted_successfully_message
                     )
-                    _effect.emit(PlantDetailsEffect.NavigateBack)
-                },
-                onError = { message ->
-                    _state.update {
-                        it.copy(
-                            isDeleting = false,
-                            errorMessage = message ?: "Failed to delete plant"
-                        )
-                    }
-                },
-                onLoading = {
-                    // Already in deleting state
+                )
+                _effect.emit(PlantDetailsEffect.NavigateBack)
+            }, onError = { message ->
+                _state.update {
+                    it.copy(
+                        isDeleting = false, errorMessage = message ?: "Failed to delete plant"
+                    )
                 }
-            )
+            }, onLoading = {
+                // Already in deleting state
+            })
         }
     }
 
@@ -278,20 +258,16 @@ class PlantDetailsViewModel @Inject constructor(
                     // Log but don't fail the operation
                     e.printStackTrace()
                 }
-                
+
                 // Update plant watered status
-                repository.updatePlant(updatedPlant).handle(
-                    onSuccess = {
-                        _state.update { it.copy(plant = updatedPlant, errorMessage = null) }
-                        WidgetUpdateManager.updateAllWidgets(application)
-                    },
-                    onError = { message ->
-                        // Silently fail, could show a toast if needed
-                    },
-                    onLoading = {
-                        // No-op
-                    }
-                )
+                repository.updatePlant(updatedPlant).handle(onSuccess = {
+                    _state.update { it.copy(plant = updatedPlant, errorMessage = null) }
+                    WidgetUpdateManager.updateAllWidgets(application)
+                }, onError = { message ->
+                    // Silently fail, could show a toast if needed
+                }, onLoading = {
+                    // No-op
+                })
             }
         }
     }

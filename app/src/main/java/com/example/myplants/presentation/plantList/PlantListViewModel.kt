@@ -57,14 +57,10 @@ class PlantListViewModel @Inject constructor(
     }
 
     private fun setupSearchDebounce() {
-        _uiState
-            .map { it.searchQuery }
-            .distinctUntilChanged()
-            .debounce(SEARCH_DEBOUNCE_MS)
+        _uiState.map { it.searchQuery }.distinctUntilChanged().debounce(SEARCH_DEBOUNCE_MS)
             .onEach { query ->
                 applyFiltersAndSearch(cachedAllPlants, _uiState.value.selectedFilterType, query)
-            }
-            .launchIn(viewModelScope)
+            }.launchIn(viewModelScope)
     }
 
     fun onSearchQueryChange(query: String) {
@@ -75,47 +71,36 @@ class PlantListViewModel @Inject constructor(
         _uiState.update { it.copy(searchQuery = "") }
     }
 
-    val hasUnreadNotifications = notificationRepository
-        .hasUnreadNotificationsFlow()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
-        )
+    val hasUnreadNotifications = notificationRepository.hasUnreadNotificationsFlow().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
 
     private fun loadInitialPlants() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            repository.getPlants().collectResult(
-                onSuccess = { allPlants ->
-                    cachedAllPlants = allPlants
-                    applyFiltersAndSearch(
-                        allPlants,
-                        _uiState.value.selectedFilterType,
-                        _uiState.value.searchQuery
+            repository.getPlants().collectResult(onSuccess = { allPlants ->
+                cachedAllPlants = allPlants
+                applyFiltersAndSearch(
+                    allPlants, _uiState.value.selectedFilterType, _uiState.value.searchQuery
+                )
+            }, onError = { message ->
+                Log.e("PlantListViewModel", "Failed to load plants: $message")
+                _uiState.update {
+                    it.copy(
+                        isLoading = false, errorMessage = message ?: "Failed to load plants"
                     )
-                },
-                onError = { message ->
-                    Log.e("PlantListViewModel", "Failed to load plants: $message")
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = message ?: "Failed to load plants"
-                        )
-                    }
-                },
-                onLoading = {
-                    _uiState.update { it.copy(isLoading = true) }
                 }
-            )
+            }, onLoading = {
+                _uiState.update { it.copy(isLoading = true) }
+            })
         }
     }
 
     private fun applyFiltersAndSearch(
-        allPlants: List<Plant>,
-        filterType: PlantListFilter,
-        searchQuery: String
+        allPlants: List<Plant>, filterType: PlantListFilter, searchQuery: String
     ) {
         val filtered = filterPlants(allPlants, filterType)
         val searched = if (searchQuery.isBlank()) {
@@ -145,9 +130,7 @@ class PlantListViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                isLoading = true,
-                selectedFilterType = type,
-                errorMessage = null
+                isLoading = true, selectedFilterType = type, errorMessage = null
             )
         }
 
@@ -155,24 +138,19 @@ class PlantListViewModel @Inject constructor(
             applyFiltersAndSearch(cachedAllPlants, type, _uiState.value.searchQuery)
         } else {
             viewModelScope.launch {
-                repository.getPlants().collectResult(
-                    onSuccess = { allPlants ->
-                        cachedAllPlants = allPlants
-                        applyFiltersAndSearch(allPlants, type, _uiState.value.searchQuery)
-                    },
-                    onError = { message ->
-                        Log.e("PlantListViewModel", "Failed to load plants: $message")
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                errorMessage = message ?: "Failed to load plants"
-                            )
-                        }
-                    },
-                    onLoading = {
-                        _uiState.update { it.copy(isLoading = true) }
+                repository.getPlants().collectResult(onSuccess = { allPlants ->
+                    cachedAllPlants = allPlants
+                    applyFiltersAndSearch(allPlants, type, _uiState.value.searchQuery)
+                }, onError = { message ->
+                    Log.e("PlantListViewModel", "Failed to load plants: $message")
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false, errorMessage = message ?: "Failed to load plants"
+                        )
                     }
-                )
+                }, onLoading = {
+                    _uiState.update { it.copy(isLoading = true) }
+                })
             }
         }
     }
@@ -201,8 +179,7 @@ class PlantListViewModel @Inject constructor(
             } else {
                 _uiState.update {
                     it.copy(
-                        isLoadingMore = false,
-                        hasMoreToLoad = false
+                        isLoadingMore = false, hasMoreToLoad = false
                     )
                 }
             }
@@ -217,29 +194,23 @@ class PlantListViewModel @Inject constructor(
         val today = DayOfWeek.today()
         val calendar = Calendar.getInstance()
         val currentTimeOfDayMillis =
-            calendar.get(Calendar.HOUR_OF_DAY) * 60L * 60L * 1000L +
-                    calendar.get(Calendar.MINUTE) * 60L * 1000L +
-                    calendar.get(Calendar.SECOND) * 1000L +
-                    calendar.get(Calendar.MILLISECOND)
+            calendar.get(Calendar.HOUR_OF_DAY) * 60L * 60L * 1000L + calendar.get(Calendar.MINUTE) * 60L * 1000L + calendar.get(
+                Calendar.SECOND
+            ) * 1000L + calendar.get(Calendar.MILLISECOND)
 
         return when (filterType) {
             PlantListFilter.FORGOT_TO_WATER -> allPlants.filter { plant ->
                 !plant.isWatered && plant.selectedDays.any { day ->
-                    day.ordinal < today.ordinal ||
-                            (day == today && plant.time < currentTimeOfDayMillis)
+                    day.ordinal < today.ordinal || (day == today && plant.time < currentTimeOfDayMillis)
                 }
             }
 
             PlantListFilter.UPCOMING -> allPlants.filter { plant ->
-                !plant.isWatered &&
-                        !plant.selectedDays.any { day ->
-                            day.ordinal < today.ordinal ||
-                                    (day == today && plant.time < currentTimeOfDayMillis)
-                        } &&
-                        plant.selectedDays.any { day ->
-                            day.ordinal > today.ordinal ||
-                                    (day == today && plant.time > currentTimeOfDayMillis)
-                        }
+                !plant.isWatered && !plant.selectedDays.any { day ->
+                    day.ordinal < today.ordinal || (day == today && plant.time < currentTimeOfDayMillis)
+                } && plant.selectedDays.any { day ->
+                    day.ordinal > today.ordinal || (day == today && plant.time > currentTimeOfDayMillis)
+                }
             }
 
             PlantListFilter.HISTORY -> allPlants.filter { plant ->

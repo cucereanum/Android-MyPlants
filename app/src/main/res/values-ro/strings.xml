@@ -21,6 +21,9 @@
     <string name="add_edit_plant_single_plant_image_desc">Plantă individuală</string>
     <string name="add_edit_plant_upload_image_icon_desc">Încarcă imagine</string>
     <string name="add_edit_plant_add_image_button">Adaugă imagine</string>
+    <string name="add_edit_plant_change_image_button">Schimbă imaginea</string>
+    <string name="add_edit_plant_create_button">Creează o plantă</string>
+    <string name="add_edit_plant_save_changes_button">Salvează modificările</string>
     <string name="add_edit_plant_plant_name_label">Numele plantei*</string>
     <string name="add_edit_plant_dates_label">Date</string>
     <string name="add_edit_plant_dropdown_icon_desc">Pictogramă listă derulantă</string>
