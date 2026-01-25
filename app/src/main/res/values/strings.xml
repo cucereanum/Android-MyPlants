@@ -53,6 +53,11 @@
     <string name="select_time_dialog_dismiss">Dismiss picker</string>
     <string name="select_time_dialog_confirm">Confirm selection</string>
 
+    <!-- Search -->
+    <string name="search_placeholder">Search</string>
+    <string name="search_icon_desc">Search icon</string>
+    <string name="search_clear_desc">Clear search</string>
+
     <!-- PlantListScreen -->
     <string name="plant_list_debug_worker_triggered_toast">Debug: Worker Triggered</string>
     <string name="plant_list_empty_upcoming_title">No Upcoming Plants</string>
@@ -149,6 +154,8 @@
     <!-- NotificationScreen -->
     <string name="notification_item_daily_title">Daily plant notification</string>
     <string name="notification_item_go_to_plant">Go to the plant</string>
+    <string name="notification_empty_title">No Notifications Yet</string>
+    <string name="notification_empty_message">You\'re all caught up! Watering reminders and plant alerts will appear here.</string>
 
     <!-- Widgets -->
     <string name="widget_plants_today_name">Plants Today</string>

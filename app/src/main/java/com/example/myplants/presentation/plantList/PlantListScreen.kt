@@ -1,6 +1,5 @@
 package com.example.myplants.presentation.plantList
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -46,7 +45,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
@@ -58,7 +56,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -68,17 +66,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import com.example.myplants.R
-import com.example.myplants.infrastructure.worker.WateringCheckWorker
 import com.example.myplants.navigation.Route
 import com.example.myplants.presentation.notifications.RequestNotificationPermission
 import com.example.myplants.presentation.plantList.components.FilterRow
 import com.example.myplants.presentation.plantList.components.PlantListItem
+import com.example.myplants.presentation.plantList.components.SearchBar
 import com.example.myplants.presentation.theme.LocalIsDarkTheme
 import com.example.myplants.presentation.util.DebounceClick
-import kotlinx.coroutines.launch
 
 @Composable
 fun PlantListScreen(
@@ -96,6 +91,14 @@ fun PlantListScreen(
         { filter -> viewModel.selectFilter(filter) }
     }
 
+    val onSearchQueryChange = remember<(String) -> Unit> {
+        { query -> viewModel.onSearchQueryChange(query) }
+    }
+
+    val onClearSearch = remember {
+        { viewModel.clearSearch() }
+    }
+
     val onNavigateToSettings = remember {
         { DebounceClick.debounceClick { navController.navigate(Route.SETTINGS) } }
     }
@@ -108,11 +111,18 @@ fun PlantListScreen(
         { DebounceClick.debounceClick { navController.navigate(Route.ADD_EDIT_PLANT) } }
     }
 
+    val focusManager = LocalFocusManager.current
+
     RequestNotificationPermission()
 
     Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                })
+            }) {
 
         Image(
             modifier = Modifier.fillMaxWidth(),
@@ -198,7 +208,7 @@ fun PlantListScreen(
                                     Box(
                                         modifier = Modifier
                                             .size(10.dp)
-                                            .offset(x = -2.dp, y = 2.dp)
+                                            .offset(x = (-2).dp, y = 2.dp)
                                             .align(Alignment.TopEnd)
                                             .background(Color.Red, CircleShape)
                                     )
@@ -208,12 +218,18 @@ fun PlantListScreen(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    SearchBar(
+                        query = uiState.searchQuery,
+                        onQueryChange = onSearchQueryChange,
+                        onClearClick = onClearSearch
+                    )
+
                     FilterRow(
-                        filterList = viewModel.filterList,
-                        selectFilter = { filter ->
+                        filterList = viewModel.filterList, selectFilter = { filter ->
                             onFilterSelected(filter as PlantListFilter)
-                        },
-                        selectedFilterType = uiState.selectedFilterType
+                        }, selectedFilterType = uiState.selectedFilterType
                     )
                 }
 
@@ -228,25 +244,38 @@ fun PlantListScreen(
                 LaunchedEffect(selectedIndex) { lastIndex = selectedIndex }
 
 
-                @OptIn(ExperimentalAnimationApi::class)
-                AnimatedContent(
-                    targetState = uiState.plants,
+                // Create a combined state for animation - only animate on filter changes
+                val animatedState = remember(uiState.selectedFilterType, uiState.plants) {
+                    uiState.selectedFilterType to uiState.plants
+                }
+
+                @OptIn(ExperimentalAnimationApi::class) AnimatedContent(
+                    targetState = animatedState,
                     transitionSpec = {
-                        val enter = slideIn(
-                            // fullSize: IntSize -> IntOffset
-                            initialOffset = { fullSize -> IntOffset(fullSize.width * dir, 0) },
-                            animationSpec = tween(300)
-                        ) + fadeIn()
+                        // Only animate with slide when filter actually changes
+                        if (initialState.first != targetState.first) {
+                            val enter = slideIn(
+                                initialOffset = { fullSize -> IntOffset(fullSize.width * dir, 0) },
+                                animationSpec = tween(300)
+                            ) + fadeIn(animationSpec = tween(300))
 
-                        val exit = slideOut(
-                            // fullSize: IntSize -> IntOffset
-                            targetOffset = { fullSize -> IntOffset(-fullSize.width * dir, 0) },
-                            animationSpec = tween(300)
-                        ) + fadeOut()
+                            val exit = slideOut(
+                                targetOffset = { fullSize -> IntOffset(-fullSize.width * dir, 0) },
+                                animationSpec = tween(300)
+                            ) + fadeOut(animationSpec = tween(300))
 
-                        enter togetherWith exit
-                    }
-                ) { currentPlants ->
+                            enter togetherWith exit
+                        } else {
+                            // No animation for search - just instant swap
+                            fadeIn(animationSpec = tween(0)) togetherWith fadeOut(
+                                animationSpec = tween(
+                                    0
+                                )
+                            )
+                        }
+                    },
+                    contentKey = { it.first } // Only re-animate when filter changes
+                ) { (currentFilter, currentPlants) ->
 
                     Column {
                         Spacer(modifier = Modifier.padding(top = if (currentPlants.isEmpty()) 40.dp else 0.dp))
@@ -254,7 +283,7 @@ fun PlantListScreen(
                         if (currentPlants.isEmpty()) {
                             EmptyState(
                                 onNavigateToAddPlant = onNavigateToAddPlant,
-                                selectedFilterType = uiState.selectedFilterType
+                                selectedFilterType = currentFilter
                             )
                         } else {
                             LazyVerticalGrid(
@@ -266,15 +295,11 @@ fun PlantListScreen(
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 items(
-                                    items = currentPlants,
-                                    key = { it.id }
-                                ) { plant ->
+                                    items = currentPlants, key = { it.id }) { plant ->
                                     PlantListItem(
-                                        plant,
-                                        onNavigateToPlantDetails = {
+                                        plant, onNavigateToPlantDetails = {
                                             navController.navigate(Route.plantDetailsRoute(plant.id))
-                                        }
-                                    )
+                                        })
                                 }
 
                                 if (uiState.hasMoreToLoad) {
@@ -350,9 +375,7 @@ fun PlantListScreen(
 
 @Composable
 fun ErrorState(
-    message: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
+    message: String, onRetry: () -> Unit, modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
@@ -362,9 +385,7 @@ fun ErrorState(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "⚠️",
-            fontSize = 64.sp,
-            modifier = Modifier.padding(bottom = 16.dp)
+            text = "⚠️", fontSize = 64.sp, modifier = Modifier.padding(bottom = 16.dp)
         )
         Text(
             text = "Oops! Something went wrong",
@@ -400,8 +421,7 @@ fun ErrorState(
 
 @Composable
 fun EmptyState(
-    onNavigateToAddPlant: () -> Unit,
-    selectedFilterType: PlantListFilter
+    onNavigateToAddPlant: () -> Unit, selectedFilterType: PlantListFilter
 ) {
     val title: String
     val message: String

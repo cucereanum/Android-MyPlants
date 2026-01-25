@@ -52,6 +52,11 @@
     <string name="select_time_dialog_dismiss">Închide selectorul</string>
     <string name="select_time_dialog_confirm">Confirmă selecția</string>
 
+    <!-- Search -->
+    <string name="search_placeholder">Caută</string>
+    <string name="search_icon_desc">Pictogramă de căutare</string>
+    <string name="search_clear_desc">Șterge căutarea</string>
+
     <!-- PlantListScreen -->
     <string name="plant_list_debug_worker_triggered_toast">Debug: Worker declanșat</string>
     <string name="plant_list_empty_upcoming_title">Nu există plante programate</string>
@@ -148,6 +153,8 @@
     <!-- NotificationScreen -->
     <string name="notification_item_daily_title">Notificare zilnică pentru plantă</string>
     <string name="notification_item_go_to_plant">Mergi la plantă</string>
+    <string name="notification_empty_title">Nicio notificare încă</string>
+    <string name="notification_empty_message">Ești la curent! Mementourile de udare și alertele pentru plante vor apărea aici.</string>
 
     <!-- Widgets -->
     <string name="widget_plants_today_name">Plantele de azi</string>

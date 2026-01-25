@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -43,6 +44,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -147,34 +149,38 @@ fun NotificationScreen(
                 }
                 Spacer(modifier = Modifier.height(20.dp))
 
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(horizontal = 20.dp),
-                    contentPadding = PaddingValues(bottom = 100.dp)
-                ) {
-                    uiState.groupedNotifications.forEach { (sectionTitle, list) ->
-                        item {
-                            Text(
-                                text = sectionTitle,
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier
-                                    .padding(top = 24.dp, bottom = 8.dp)
-                            )
-                        }
+                if (notifications.isEmpty()) {
+                    NotificationEmptyState()
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(horizontal = 20.dp),
+                        contentPadding = PaddingValues(bottom = 100.dp)
+                    ) {
+                        uiState.groupedNotifications.forEach { (sectionTitle, list) ->
+                            item {
+                                Text(
+                                    text = sectionTitle,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier
+                                        .padding(top = 24.dp, bottom = 8.dp)
+                                )
+                            }
 
-                        items(list, key = { it.id }) { notification ->
-                            NotificationItem(
-                                notification = notification,
-                                onGoToPlantClick = { plantId ->
-                                    navController.navigate(Route.plantDetailsRoute(plantId))
-                                }
-                            )
+                            items(list, key = { it.id }) { notification ->
+                                NotificationItem(
+                                    notification = notification,
+                                    onGoToPlantClick = { plantId ->
+                                        navController.navigate(Route.plantDetailsRoute(plantId))
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -269,6 +275,43 @@ fun NotificationItem(
             modifier = Modifier
                 .padding(top = 8.dp)
                 .clickable { onGoToPlantClick(notification.plantId) }
+        )
+    }
+}
+
+@Composable
+fun NotificationEmptyState() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 140.dp)
+            .padding(horizontal = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.plants_center),
+            contentDescription = null,
+            modifier = Modifier
+                .size(180.dp)
+                .padding(bottom = 24.dp),
+            contentScale = ContentScale.Fit
+        )
+
+        Text(
+            text = stringResource(id = R.string.notification_empty_title),
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Text(
+            text = stringResource(id = R.string.notification_empty_message),
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            lineHeight = 22.sp
         )
     }
 }

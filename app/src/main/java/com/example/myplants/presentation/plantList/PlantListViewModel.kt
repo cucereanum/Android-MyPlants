@@ -12,15 +12,22 @@ import com.example.myplants.domain.repository.NotificationRepository
 import com.example.myplants.domain.repository.PlantRepository
 import com.example.myplants.domain.util.collectResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import javax.inject.Inject
 
+@OptIn(FlowPreview::class)
 @HiltViewModel
 class PlantListViewModel @Inject constructor(
     private val repository: PlantRepository,
@@ -29,6 +36,7 @@ class PlantListViewModel @Inject constructor(
 
     companion object {
         private const val PAGE_SIZE = 10
+        private const val SEARCH_DEBOUNCE_MS = 400L
     }
 
     var filterList by mutableStateOf(PlantListFilter.entries)
@@ -40,8 +48,31 @@ class PlantListViewModel @Inject constructor(
     private var allFilteredPlants: List<Plant> = emptyList()
     private var currentPage = 0
 
+    // Store all plants for filtering/searching
+    private var cachedAllPlants: List<Plant> = emptyList()
+
     init {
         loadInitialPlants()
+        setupSearchDebounce()
+    }
+
+    private fun setupSearchDebounce() {
+        _uiState
+            .map { it.searchQuery }
+            .distinctUntilChanged()
+            .debounce(SEARCH_DEBOUNCE_MS)
+            .onEach { query ->
+                applyFiltersAndSearch(cachedAllPlants, _uiState.value.selectedFilterType, query)
+            }
+            .launchIn(viewModelScope)
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+    }
+
+    fun clearSearch() {
+        _uiState.update { it.copy(searchQuery = "") }
     }
 
     val hasUnreadNotifications = notificationRepository
@@ -58,19 +89,12 @@ class PlantListViewModel @Inject constructor(
 
             repository.getPlants().collectResult(
                 onSuccess = { allPlants ->
-                    val filtered = filterPlants(allPlants, _uiState.value.selectedFilterType)
-                    allFilteredPlants = filtered
-                    currentPage = 0
-
-                    val initialBatch = filtered.take(PAGE_SIZE)
-                    _uiState.update {
-                        it.copy(
-                            plants = initialBatch,
-                            isLoading = false,
-                            hasMoreToLoad = filtered.size > PAGE_SIZE,
-                            errorMessage = null
-                        )
-                    }
+                    cachedAllPlants = allPlants
+                    applyFiltersAndSearch(
+                        allPlants,
+                        _uiState.value.selectedFilterType,
+                        _uiState.value.searchQuery
+                    )
                 },
                 onError = { message ->
                     Log.e("PlantListViewModel", "Failed to load plants: $message")
@@ -88,48 +112,68 @@ class PlantListViewModel @Inject constructor(
         }
     }
 
+    private fun applyFiltersAndSearch(
+        allPlants: List<Plant>,
+        filterType: PlantListFilter,
+        searchQuery: String
+    ) {
+        val filtered = filterPlants(allPlants, filterType)
+        val searched = if (searchQuery.isBlank()) {
+            filtered
+        } else {
+            filtered.filter { plant ->
+                plant.plantName.contains(searchQuery, ignoreCase = true)
+            }
+        }
+
+        allFilteredPlants = searched
+        currentPage = 0
+
+        val initialBatch = searched.take(PAGE_SIZE)
+        _uiState.update {
+            it.copy(
+                plants = initialBatch,
+                isLoading = false,
+                hasMoreToLoad = searched.size > PAGE_SIZE,
+                errorMessage = null
+            )
+        }
+    }
+
     fun selectFilter(type: PlantListFilter) {
         if (_uiState.value.selectedFilterType == type) return
 
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isLoading = true,
-                    selectedFilterType = type,
-                    errorMessage = null
+        _uiState.update {
+            it.copy(
+                isLoading = true,
+                selectedFilterType = type,
+                errorMessage = null
+            )
+        }
+
+        if (cachedAllPlants.isNotEmpty()) {
+            applyFiltersAndSearch(cachedAllPlants, type, _uiState.value.searchQuery)
+        } else {
+            viewModelScope.launch {
+                repository.getPlants().collectResult(
+                    onSuccess = { allPlants ->
+                        cachedAllPlants = allPlants
+                        applyFiltersAndSearch(allPlants, type, _uiState.value.searchQuery)
+                    },
+                    onError = { message ->
+                        Log.e("PlantListViewModel", "Failed to load plants: $message")
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = message ?: "Failed to load plants"
+                            )
+                        }
+                    },
+                    onLoading = {
+                        _uiState.update { it.copy(isLoading = true) }
+                    }
                 )
             }
-
-            repository.getPlants().collectResult(
-                onSuccess = { allPlants ->
-                    val filtered = filterPlants(allPlants, type)
-                    allFilteredPlants = filtered
-                    currentPage = 0
-
-                    val initialBatch = filtered.take(PAGE_SIZE)
-                    _uiState.update {
-                        it.copy(
-                            plants = initialBatch,
-                            isLoading = false,
-                            hasMoreToLoad = filtered.size > PAGE_SIZE,
-                            selectedFilterType = type,
-                            errorMessage = null
-                        )
-                    }
-                },
-                onError = { message ->
-                    Log.e("PlantListViewModel", "Failed to load plants: $message")
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = message ?: "Failed to load plants"
-                        )
-                    }
-                },
-                onLoading = {
-                    _uiState.update { it.copy(isLoading = true) }
-                }
-            )
         }
     }
 
