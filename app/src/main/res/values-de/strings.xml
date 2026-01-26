@@ -29,6 +29,13 @@
     <string name="add_edit_plant_dropdown_icon_desc">Dropdown-Symbol</string>
     <string name="add_edit_plant_time_label">Uhrzeit</string>
     <string name="add_edit_plant_description_label">Beschreibung</string>
+    <string name="add_edit_plant_description_placeholder">Erzähl uns etwas über die Persönlichkeit deiner Pflanze���</string>
+    <string name="add_edit_plant_section_basic_info">GRUNDINFORMATIONEN</string>
+    <string name="add_edit_plant_section_watering">BEWÄSSERUNGSPLAN</string>
+    <string name="add_edit_plant_section_care">PFLEGESPEZIFIKATIONEN</string>
+    <string name="add_edit_plant_frequency_label">Häufigkeit</string>
+    <string name="add_edit_plant_reminder_time_label">Erinnerungszeit</string>
+    <string name="add_edit_plant_save_plant_button">Pflanze speichern</string>
     <string name="add_edit_plant_gallery_title">Pflanzengalerie</string>
     <string name="add_edit_plant_select_image_dialog_title">Bild auswählen</string>
     <string name="add_edit_plant_dialog_okay_button">OK</string>

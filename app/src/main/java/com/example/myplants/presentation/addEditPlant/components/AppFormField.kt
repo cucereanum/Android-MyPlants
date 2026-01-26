@@ -9,8 +9,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -39,12 +41,16 @@ fun AppFormField(
     onClick: (() -> Unit)? = null,          // when provided with readOnly=true → behaves like dropdown
     singleLine: Boolean = true,
     maxLines: Int = if (singleLine) 1 else 5,
+    minLines: Int = 1,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     trailingIcon: (@Composable (() -> Unit))? = null,
     leadingIcon: (@Composable (() -> Unit))? = null,
     supportingText: String? = null,         // error/help text
     isError: Boolean = false,
+    showDropdownIcon: Boolean = false,
+    showClockIcon: Boolean = false,
+    suffix: String? = null,
 ) {
     val shape = RoundedCornerShape(14.dp)
     val interactionSource = remember { MutableInteractionSource() }
@@ -79,26 +85,40 @@ fun AppFormField(
             onValueChange = onValueChange,
             singleLine = singleLine,
             maxLines = maxLines,
+            minLines = minLines,
             readOnly = readOnly,
             interactionSource = interactionSource,
             leadingIcon = leadingIcon,
             trailingIcon = {
                 when {
                     trailingIcon != null -> trailingIcon()
-                    readOnly && onClick != null -> Icon(
+                    showClockIcon -> Icon(
+                        imageVector = Icons.Outlined.Schedule,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    showDropdownIcon || (readOnly && onClick != null) -> Icon(
                         imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = null
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             },
+            suffix = if (suffix != null) {
+                { Text(text = suffix, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            } else null,
             placeholder = {
-                if (placeholder != null) Text(placeholder)
+                if (placeholder != null) Text(
+                    text = placeholder,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
             },
             visualTransformation = visualTransformation,
             keyboardOptions = keyboardOptions,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 60.dp)
+                .heightIn(min = if (minLines > 1) (minLines * 24 + 40).dp else 56.dp)
                 .clip(shape)
                 .border(1.dp, borderColor, shape)
                 // Optional extra click surface for selectors (makes the whole field tappable)

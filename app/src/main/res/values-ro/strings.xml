@@ -29,6 +29,13 @@
     <string name="add_edit_plant_dropdown_icon_desc">Pictogramă listă derulantă</string>
     <string name="add_edit_plant_time_label">Ora</string>
     <string name="add_edit_plant_description_label">Descriere</string>
+    <string name="add_edit_plant_description_placeholder">Spune-ne despre personalitatea plantei tale…</string>
+    <string name="add_edit_plant_section_basic_info">INFORMAȚII DE BAZĂ</string>
+    <string name="add_edit_plant_section_watering">PROGRAM DE UDARE</string>
+    <string name="add_edit_plant_section_care">SPECIFICAȚII DE ÎNGRIJIRE</string>
+    <string name="add_edit_plant_frequency_label">Frecvență</string>
+    <string name="add_edit_plant_reminder_time_label">Ora memento</string>
+    <string name="add_edit_plant_save_plant_button">Salvează planta</string>
     <string name="add_edit_plant_gallery_title">Galeria plantelor</string>
     <string name="add_edit_plant_select_image_dialog_title">Selectează o imagine</string>
     <string name="add_edit_plant_dialog_okay_button">OK</string>

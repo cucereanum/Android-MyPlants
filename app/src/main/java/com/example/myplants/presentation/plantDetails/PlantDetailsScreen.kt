@@ -76,8 +76,11 @@ import coil.compose.AsyncImage
 import com.example.myplants.R
 import com.example.myplants.data.ble.ConnectionState
 import com.example.myplants.navigation.Route
+import com.example.myplants.presentation.components.CircularIconButton
+import com.example.myplants.presentation.components.PrimaryButton
 import com.example.myplants.presentation.util.DebounceClick
 import com.example.myplants.widget.WidgetUtils
+import androidx.compose.material.icons.filled.WaterDrop
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.Lifecycle
@@ -172,89 +175,51 @@ fun PlantDetailsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.DarkGray.copy(alpha = 0.7f))
-                        .clickable { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.Default.ChevronLeft,
-                        contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc),
-                        modifier = Modifier
-                            .size(30.dp)
-                            .align(Alignment.Center),
-                        tint = Color.White
-                    )
-                }
+                CircularIconButton(
+                    icon = Icons.Default.ChevronLeft,
+                    contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc),
+                    onClick = { navController.popBackStack() },
+                    iconSize = 30.dp
+                )
                 Row {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Color.DarkGray.copy(alpha = 0.7f))
-                            .clickable {
-                                DebounceClick.debounceClick {
-                                    if (WidgetUtils.isWidgetPinningSupported(context)) {
-                                        scope.launch {
-                                            WidgetUtils.requestPinSinglePlantWidget(
-                                                context, plantId
-                                            )
-                                        }
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            "Please add widgets manually from your home screen",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                    CircularIconButton(
+                        icon = Icons.Outlined.Widgets,
+                        contentDescription = stringResource(id = R.string.plant_details_add_widget),
+                        onClick = {
+                            DebounceClick.debounceClick {
+                                if (WidgetUtils.isWidgetPinningSupported(context)) {
+                                    scope.launch {
+                                        WidgetUtils.requestPinSinglePlantWidget(context, plantId)
                                     }
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "Please add widgets manually from your home screen",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
-                            }) {
-                        Icon(
-                            imageVector = Icons.Outlined.Widgets,
-                            contentDescription = stringResource(id = R.string.plant_details_add_widget),
-                            modifier = Modifier
-                                .size(22.dp)
-                                .align(Alignment.Center),
-                            tint = Color.White
-                        )
-                    }
+                            }
+                        },
+                        iconSize = 22.dp
+                    )
                     Spacer(modifier = Modifier.width(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Color.DarkGray.copy(alpha = 0.7f))
-                            .clickable {
-                                DebounceClick.debounceClick {
-                                    navController.navigate("${Route.ADD_EDIT_PLANT}/${plantId}")
-                                }
-                            }) {
-                        Icon(
-                            imageVector = Icons.Filled.Edit,
-                            contentDescription = stringResource(id = R.string.plant_details_edit_desc),
-                            modifier = Modifier
-                                .size(22.dp)
-                                .align(Alignment.Center),
-                            tint = Color.White
-                        )
-                    }
+                    CircularIconButton(
+                        icon = Icons.Filled.Edit,
+                        contentDescription = stringResource(id = R.string.plant_details_edit_desc),
+                        onClick = {
+                            DebounceClick.debounceClick {
+                                navController.navigate("${Route.ADD_EDIT_PLANT}/${plantId}")
+                            }
+                        },
+                        iconSize = 22.dp
+                    )
                     Spacer(modifier = Modifier.width(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Color.DarkGray.copy(alpha = 0.7f))
-                            .clickable { showModal = true }) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = stringResource(id = R.string.plant_details_delete_desc),
-                            modifier = Modifier
-                                .size(22.dp)
-                                .align(Alignment.Center),
-                            tint = Color.White
-                        )
-                    }
+                    CircularIconButton(
+                        icon = Icons.Filled.Delete,
+                        contentDescription = stringResource(id = R.string.plant_details_delete_desc),
+                        onClick = { showModal = true },
+                        iconSize = 22.dp
+                    )
                 }
             }
             Box(
@@ -441,22 +406,15 @@ fun PlantDetailsScreen(
             }
 
             if (plant?.isWatered != true) {
-                Button(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp),
-                    shape = RoundedCornerShape(12.dp),
+                PrimaryButton(
+                    text = stringResource(id = R.string.plant_details_mark_as_watered_button),
                     onClick = {
                         viewModel.onMarkAsWatered()
                         navController.popBackStack()
-                    }) {
-                    Text(
-                        text = stringResource(id = R.string.plant_details_mark_as_watered_button),
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp
-                    )
-                }
+                    },
+                    icon = Icons.Filled.WaterDrop,
+                    modifier = Modifier.padding(top = 10.dp)
+                )
             }
         }
     }

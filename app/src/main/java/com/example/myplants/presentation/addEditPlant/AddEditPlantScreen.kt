@@ -11,7 +11,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -24,23 +23,28 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Eco
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -58,9 +62,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -71,11 +73,14 @@ import coil.compose.AsyncImage
 import com.example.myplants.presentation.addEditPlant.components.AppFormField
 import com.example.myplants.presentation.addEditPlant.components.DatesDialog
 import com.example.myplants.presentation.addEditPlant.components.PlantSizeDialog
+import com.example.myplants.presentation.addEditPlant.components.SectionHeader
 import com.example.myplants.presentation.addEditPlant.components.SelectTimeDialog
+import com.example.myplants.presentation.components.CircularIconButton
+import com.example.myplants.presentation.components.PrimaryButton
 import com.example.myplants.presentation.util.DebounceClick
 
 @RequiresApi(Build.VERSION_CODES.O)
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddEditPlantScreen(
     navController: NavController,
@@ -247,7 +252,7 @@ fun AddEditPlantScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.4f)
+                    .weight(0.35f)
                     .background(MaterialTheme.colorScheme.background)
             ) {
                 Box {
@@ -268,29 +273,19 @@ fun AddEditPlantScreen(
                             contentDescription = stringResource(id = R.string.background_plants)
                         )
                     }
-                    Box(
+                    CircularIconButton(
+                        icon = Icons.Default.ChevronLeft,
+                        contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc),
+                        onClick = {
+                            DebounceClick.debounceClick {
+                                navController.popBackStack()
+                            }
+                        },
                         modifier = Modifier
-                            .size(40.dp)
                             .offset(x = 20.dp, y = 60.dp)
-                            .align(Alignment.TopStart)
-                            .background(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                                CircleShape
-                            )
-                            .clickable {
-                                DebounceClick.debounceClick {
-                                    navController.popBackStack()
-                                }
-                            }) {
-                        Icon(
-                            imageVector = Icons.Default.ChevronLeft,
-                            contentDescription = stringResource(id = R.string.add_edit_plant_go_back_desc),
-                            modifier = Modifier
-                                .size(30.dp)
-                                .align(Alignment.Center),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                            .align(Alignment.TopStart),
+                        iconSize = 30.dp
+                    )
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -298,7 +293,7 @@ fun AddEditPlantScreen(
 
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Spacer(modifier = Modifier.height(90.dp))
+                        Spacer(modifier = Modifier.height(40.dp))
 
                         Image(
                             modifier = Modifier
@@ -312,115 +307,129 @@ fun AddEditPlantScreen(
                         )
 
 
-                        Spacer(modifier = Modifier.height(30.dp))
-                        Button(shape = RoundedCornerShape(12.dp), onClick = {
-                            viewModel.onAction(AddEditPlantAction.SetShowImageSourceDialog(true))
-                        }) {
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.CloudUpload,
-                                    contentDescription = stringResource(id = R.string.add_edit_plant_upload_image_icon_desc),
-                                    modifier = Modifier.size(20.dp),
-                                    tint = Color.White
-                                )
-                                Spacer(modifier = Modifier.width(12.dp)) // Space between icon and text
-                                Text(
-                                    text = stringResource(
-                                        id = if (state.imageUri != null)
-                                            R.string.add_edit_plant_change_image_button
-                                        else
-                                            R.string.add_edit_plant_add_image_button
-                                    ),
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 16.sp
-                                )
-                            }
-
-
-                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                        PrimaryButton(
+                            text = stringResource(
+                                id = if (state.imageUri != null)
+                                    R.string.add_edit_plant_change_image_button
+                                else
+                                    R.string.add_edit_plant_add_image_button
+                            ),
+                            onClick = {
+                                viewModel.onAction(AddEditPlantAction.SetShowImageSourceDialog(true))
+                            },
+                            icon = if (state.imageUri != null) Icons.Outlined.CameraAlt else Icons.Default.CloudUpload,
+                            fillMaxWidth = false
+                        )
                     }
                 }
             }
-            Column(
+            // Track keyboard visibility
+            val isKeyboardOpen = WindowInsets.isImeVisible
+
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.6f)
-                    .verticalScroll(scrollState)
-                    .imePadding()
+                    .weight(0.65f)
                     .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                     .background(MaterialTheme.colorScheme.surface)
             ) {
+                // Scrollable content
                 Column(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .imePadding()
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                        .padding(bottom = if (isKeyboardOpen) 0.dp else 80.dp) // Space for sticky button when visible
                 ) {
+                    // Section 1: Basic Information
+                    SectionHeader(
+                        icon = Icons.Outlined.Edit,
+                        title = stringResource(id = R.string.add_edit_plant_section_basic_info)
+                    )
+
                     AppFormField(
                         value = state.plantName,
                         onValueChange = {
                             viewModel.onAction(AddEditPlantAction.OnPlantNameChanged(it))
                         },
                         label = stringResource(id = R.string.add_edit_plant_plant_name_label),
-                        singleLine = true
+                        singleLine = true,
+                        placeholder = "e.g. Monstera Deliciosa"
                     )
+
+                    AppFormField(
+                        value = state.description,
+                        onValueChange = {
+                            viewModel.onAction(AddEditPlantAction.OnDescriptionChanged(it))
+                        },
+                        label = stringResource(id = R.string.add_edit_plant_description_label),
+                        singleLine = false,
+                        maxLines = 6,
+                        placeholder = stringResource(id = R.string.add_edit_plant_description_placeholder),
+                        minLines = 3
+                    )
+
+                    // Section 2: Watering Schedule
+                    SectionHeader(
+                        icon = Icons.Filled.WaterDrop,
+                        title = stringResource(id = R.string.add_edit_plant_section_watering)
+                    )
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.weight(0.45f)
-                        ) {
+                        Column(modifier = Modifier.weight(1f)) {
                             AppFormField(
                                 value = state.selectedDays.joinToString(", ") { it.dayName },
-                                onValueChange = {}, // ignored for selector
-                                label = stringResource(id = R.string.add_edit_plant_dates_label),
+                                onValueChange = {},
+                                label = stringResource(id = R.string.add_edit_plant_frequency_label),
                                 readOnly = true,
                                 onClick = {
                                     viewModel.onAction(AddEditPlantAction.SetShowDatesDialog(true))
-                                })
-
-
+                                },
+                                showDropdownIcon = true
+                            )
                         }
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Column(
-                            modifier = Modifier.weight(0.45f)
-                        ) {
+                        Column(modifier = Modifier.weight(1f)) {
                             AppFormField(
                                 value = state.time.toLocalTime().toString().take(5),
                                 onValueChange = {},
-                                label = stringResource(id = R.string.add_edit_plant_time_label),
+                                label = stringResource(id = R.string.add_edit_plant_reminder_time_label),
                                 readOnly = true,
                                 onClick = {
                                     viewModel.onAction(AddEditPlantAction.SetShowTimeDialog(true))
-                                })
-
+                                },
+                                showClockIcon = true
+                            )
                         }
                     }
+
+                    // Section 3: Care Specifications
+                    SectionHeader(
+                        icon = Icons.Outlined.Eco,
+                        title = stringResource(id = R.string.add_edit_plant_section_care)
+                    )
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.weight(0.45f)
-                        ) {
+                        Column(modifier = Modifier.weight(1f)) {
                             AppFormField(
                                 value = state.waterAmount,
                                 onValueChange = {
                                     viewModel.onAction(AddEditPlantAction.OnWaterAmountChanged(it))
                                 },
                                 label = stringResource(id = R.string.add_edit_plant_water_amount_label),
-                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                                placeholder = "e.g. 200",
+                                suffix = "ml"
                             )
-
                         }
-                        Spacer(modifier = Modifier.padding(5.dp))
-                        Column(
-                            modifier = Modifier.weight(0.45f)
-                        ) {
+                        Column(modifier = Modifier.weight(1f)) {
                             AppFormField(
                                 value = state.plantSize.plantSize,
                                 onValueChange = {},
@@ -432,21 +441,14 @@ fun AddEditPlantScreen(
                                             true
                                         )
                                     )
-                                })
-
+                                },
+                                showDropdownIcon = true
+                            )
                         }
-
                     }
-                    AppFormField(
-                        value = state.description,
-                        onValueChange = {
-                            viewModel.onAction(AddEditPlantAction.OnDescriptionChanged(it))
-                        },
-                        label = stringResource(id = R.string.add_edit_plant_description_label),
-                        singleLine = false,
-                        maxLines = 6   // or whatever you prefer
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     if (errorMessages.isNotEmpty()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -461,39 +463,33 @@ fun AddEditPlantScreen(
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(30.dp))
-
-
-                    Button(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 20.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        onClick = {
-                            DebounceClick.debounceClick {
-                                viewModel.onAction(AddEditPlantAction.OnSaveClicked)
-                            }
-                        }) {
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = stringResource(
-                                    id = if (state.plantId != null)
-                                        R.string.add_edit_plant_save_changes_button
-                                    else
-                                        R.string.add_edit_plant_create_button
-                                ),
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 16.sp
-                            )
-                        }
-
-                    }
                 }
 
+                // Sticky bottom button - hidden when keyboard is open
+                if (!isKeyboardOpen) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(horizontal = 20.dp, vertical = 16.dp)
+                    ) {
+                        PrimaryButton(
+                            text = stringResource(
+                                id = if (state.plantId != null)
+                                    R.string.add_edit_plant_save_plant_button
+                                else
+                                    R.string.add_edit_plant_create_button
+                            ),
+                            onClick = {
+                                DebounceClick.debounceClick {
+                                    viewModel.onAction(AddEditPlantAction.OnSaveClicked)
+                                }
+                            },
+                            icon = if (state.plantId != null) Icons.Default.Check else null
+                        )
+                    }
+                }
             }
         }
     }
