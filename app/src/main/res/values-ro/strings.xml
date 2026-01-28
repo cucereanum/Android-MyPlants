@@ -84,6 +84,10 @@
         plantă, aceasta va apărea aici.
     </string>
     <string name="plant_list_empty_state_image_desc">Plante cactus</string>
+    <string name="plant_card_status_today">Astăzi</string>
+    <string name="plant_card_status_overdue">Întârziat</string>
+    <string name="plant_card_status_tomorrow">Mâine</string>
+    <string name="plant_card_status_watered">Udat</string>
 
     <!-- PlantDetailsScreen -->
     <string name="plant_details_edit_desc">Editează</string>

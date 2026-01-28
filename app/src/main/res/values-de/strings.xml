@@ -84,6 +84,10 @@
         wird sie hier angezeigt.
     </string>
     <string name="plant_list_empty_state_image_desc">Kaktuspflanzen</string>
+    <string name="plant_card_status_today">Heute</string>
+    <string name="plant_card_status_overdue">Überfällig</string>
+    <string name="plant_card_status_tomorrow">Morgen</string>
+    <string name="plant_card_status_watered">Gegossen</string>
 
     <!-- PlantDetailsScreen -->
     <string name="plant_details_edit_desc">Bearbeiten</string>

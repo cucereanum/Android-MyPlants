@@ -21,15 +21,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/**
- * One field that can work as:
- *  - Editable text input, OR
- *  - Read-only selector (dropdown-like) that triggers onClick
- *
- * You control which mode via [readOnly] and [onClick]:
- *  - If readOnly = true and onClick != null → behaves like a selector
- *  - Otherwise → normal editable text field
- */
+
 @Composable
 fun AppFormField(
     value: String,

@@ -33,6 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
@@ -60,17 +62,20 @@ fun SearchBar(
     val borderColor = if (isFocused) {
         MaterialTheme.colorScheme.primary
     } else {
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+        Color.Transparent
     }
-
-    val backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(50.dp)
+            .shadow(
+                elevation = 4.dp,
+                shape = RoundedCornerShape(12.dp),
+                clip = false
+            )
             .clip(RoundedCornerShape(12.dp))
-            .background(backgroundColor)
+            .background(Color.White)
             .border(
                 width = 1.dp,
                 color = borderColor,

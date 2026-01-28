@@ -85,6 +85,10 @@
         plant, it will appear here.
     </string>
     <string name="plant_list_empty_state_image_desc">Cactus plants</string>
+    <string name="plant_card_status_today">Today</string>
+    <string name="plant_card_status_overdue">Overdue</string>
+    <string name="plant_card_status_tomorrow">Tomorrow</string>
+    <string name="plant_card_status_watered">Watered</string>
 
     <!-- PlantDetailsScreen -->
     <string name="plant_details_edit_desc">Edit</string>
